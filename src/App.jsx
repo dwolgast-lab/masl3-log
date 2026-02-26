@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.20
+ * Version: 0.21
  * ========================================================================= */
 
 import { useState, useEffect } from 'react'
@@ -12,7 +12,7 @@ import {
 } from './utils'
 import { generatePDF } from './pdfEngine'
 
-const APP_VERSION = "0.20";
+const APP_VERSION = "0.21";
 
 // --- WEB AUDIO API: SYNTHETIC DESK BELL ---
 let audioCtx = null;
@@ -106,7 +106,6 @@ export default function App() {
                     
                     let nextState = { ...prev, time: newTime };
                     
-                    // Auto-minimize exactly 15 seconds after timer starts
                     if (!prev.minimized && elapsed === 15) {
                         nextState.minimized = true;
                     }
@@ -138,7 +137,6 @@ export default function App() {
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
     };
 
-    // INTELLIGENT TIME VALIDATOR
     const validateAndAdvanceTime = (nextStepStr) => {
         let raw = timeInput || '';
         let padded = raw.padEnd(4, '0');
@@ -152,7 +150,6 @@ export default function App() {
             return true;
         };
 
-        // Clean validation
         if (isValid(mm, ss)) {
             setTimeInput(padded);
             setActiveAction(prev => ({ ...prev, time: padded }));
@@ -162,7 +159,6 @@ export default function App() {
             return;
         }
 
-        // Mathematical Auto-Correction (e.g., 9520 -> 09:52)
         let suggRaw = '0' + padded.substring(0, 3);
         let suggMm = parseInt(suggRaw.substring(0, 2));
         let suggSs = parseInt(suggRaw.substring(2, 4));
@@ -236,27 +232,46 @@ export default function App() {
         }
     };
 
+    // SMART PLAYER ROUTING ENGINE
     const handlePlayerSelect = (entity) => {
-        if (activeAction.type === 'Goal / Assist' && modalStep === 'PLAYER') {
-            if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
+        // Step 1: Identify what modal we are actively in
+        if (modalStep === 'PLAYER') {
+            
+            if (activeAction.type === 'Goal / Assist') {
+                if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
+                else {
+                    setGoalScorer(entity);
+                    setPlayerSearchInput('');
+                    setModalStep('ASSIST'); 
+                }
+            } 
+            else if (activeAction.type === 'Time Penalty') {
+                // Determine if a separate player needs to sit in the box
+                const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || (entity && entity.isGK) || entity === 'Team / Bench';
+                
+                if (needsServer) {
+                    setBenchPenaltyEntity(entity); // Save the offender
+                    setPlayerSearchInput('');
+                    setModalStep('SERVING_PLAYER'); // Route to pick server
+                } else {
+                    finalizeEvent(entity);
+                }
+            } 
             else {
-                setGoalScorer(entity);
-                setPlayerSearchInput('');
-                setModalStep('ASSIST'); 
-            }
-        } else if (activeAction.type === 'Time Penalty') {
-            // Force server selection if offender is a GK, it's a B1, or the sub checkbox was tapped.
-            if (requiresSubstituteServer || penaltyData.code === 'B1' || (entity && entity.isGK)) {
-                setBenchPenaltyEntity(entity);
-                setPlayerSearchInput('');
-                setModalStep('SERVING_PLAYER'); 
-            } else {
                 finalizeEvent(entity);
             }
+
+        } else if (modalStep === 'ASSIST') {
+            // Prevent self-assists
+            if (goalScorer && typeof goalScorer !== 'string' && goalScorer.id === entity.id) {
+                alert("The goal scorer cannot also be credited with the assist.");
+            } else {
+                finalizeEvent(goalScorer, entity);
+            }
+
         } else if (modalStep === 'SERVING_PLAYER') {
+            // entity = the guy going into the box. benchPenaltyEntity = original offender.
             finalizeEvent(benchPenaltyEntity, null, entity);
-        } else {
-            finalizeEvent(entity);
         }
     };
 
@@ -355,7 +370,6 @@ export default function App() {
             updatedEvents = [newEvent, ...gameEvents];
         }
 
-        // Automatic Power Play Release matching logic
         if (activeAction.type === 'Goal / Assist' && !editingEventId && goalFlags.pp) {
             const oppTeam = activeAction.team === 'AWAY' ? 'HOME' : 'AWAY';
             const targetEventIndex = [...updatedEvents].reverse().findIndex(ev => ev.type === 'Time Penalty' && ev.team === oppTeam && ev.isReleasable && !ev.actualReleaseTime);
@@ -396,7 +410,6 @@ export default function App() {
 
         ppGoals.sort((a, b) => toElapsedSeconds(b.quarter, b.time) - toElapsedSeconds(a.quarter, a.time));
 
-        // Detect if goal happens after OR AT THE EXACT SAME SECOND the penalty was assessed
         const validGoal = ppGoals.find(g => {
             const gElapsed = toElapsedSeconds(g.quarter, g.time);
             return gElapsed >= penaltyElapsed && gElapsed <= releaseElapsed;
@@ -440,7 +453,6 @@ export default function App() {
         if (event.type === 'Time Penalty' && event.penalty) setPenaltyData(event.penalty);
         if (event.type === 'Goal / Assist' && event.goalFlags) setGoalFlags(event.goalFlags);
 
-        // All editable events with a time component get routed to TIME keypad first
         if (event.type === 'Log Foul') setModalStep('PLAYER');
         else setModalStep('TIME');
     };
@@ -448,19 +460,58 @@ export default function App() {
     const awayCSSColor = getTeamColor(gameData.awayColor, '#1e40af'); 
     const homeCSSColor = getTeamColor(gameData.homeColor, '#991b1b'); 
 
-    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
-    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
+    // --- ROSTER LOGIC ---
+    const handleAddPlayer = () => {
+        if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
+        const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+        const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
 
+        if (currentRoster.length >= 17) return alert("Max 17 total players.");
+        if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
+        if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
+        
+        if (newPlayer.isStarter) {
+            if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
+            if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
+        }
+        if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
+
+        const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        setRoster(updated);
+        setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
+    };
+
+    const handleAddBench = () => {
+        if (!newBench.name) return alert("Please enter name.");
+        const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
+        const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
+        
+        if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
+        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
+        
+        setBench([...currentBench, { ...newBench, id: Date.now() }]);
+        setNewBench({ name: '', role: 'Assistant Coach' });
+    };
+
+    const removePlayer = (id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id));
+    const removeBench = (id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id));
+
+    const activeRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+    const activeBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
+    
     const flowTeamRoster = activeAction.team === 'AWAY' ? awayRoster : homeRoster;
     const flowTeamColor = activeAction.team === 'AWAY' ? awayCSSColor : homeCSSColor;
     const flowTeamName = activeAction.team === 'AWAY' ? (gameData.awayTeam || 'AWAY') : (gameData.homeTeam || 'HOME');
+    
     const filteredFlowRoster = playerSearchInput ? flowTeamRoster.filter(p => p.number.startsWith(playerSearchInput)) : flowTeamRoster;
-
     const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
         if (a.isGK && !b.isGK) return -1;
         if (!a.isGK && b.isGK) return 1;
         return parseInt(a.number) - parseInt(b.number);
     });
+
+    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
+    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
 
     // --- VIEW 1: PRE-GAME SETUP ---
     if (currentView === 'pregame') {
@@ -532,7 +583,6 @@ export default function App() {
                     </button>
                 </div>
 
-                {/* MODALS RETAINED FOR BREVITY */}
                 {showStartersModal && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -597,25 +647,7 @@ export default function App() {
                                                     <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-4 h-4 accent-yellow-500" /><span className="font-bold text-xs text-gray-700">Capt.</span></label>
                                                 </div>
                                             </div>
-                                            <button onClick={() => {
-                                                if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
-                                                const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
-                                                const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
-
-                                                if (currentRoster.length >= 17) return alert("Max 17 total players.");
-                                                if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
-                                                if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
-                                                
-                                                if (newPlayer.isStarter) {
-                                                    if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
-                                                    if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
-                                                }
-                                                if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
-
-                                                const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
-                                                setRoster(updated);
-                                                setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
-                                            }} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded hover:bg-slate-700 shadow">+ Add</button>
+                                            <button onClick={handleAddPlayer} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded hover:bg-slate-700 shadow">+ Add</button>
                                         </div>
                                     </div>
                                     <div className="p-4 overflow-y-auto flex-1">
@@ -657,17 +689,7 @@ export default function App() {
                                             <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
                                                 {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                             </select>
-                                            <button onClick={() => {
-                                                if (!newBench.name) return alert("Please enter name.");
-                                                const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
-                                                const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
-                                                
-                                                if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
-                                                if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
-                                                
-                                                setBench([...currentBench, { ...newBench, id: Date.now() }]);
-                                                setNewBench({ name: '', role: 'Assistant Coach' });
-                                            }} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
+                                            <button onClick={handleAddBench} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
                                         </div>
                                     </div>
                                     <div className="p-4 overflow-y-auto flex-1">
@@ -989,7 +1011,7 @@ export default function App() {
                                     {editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER")}
                                 </h2>
                                 <span className="text-sm font-bold opacity-80">
-                                    {activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - {quarter} {activeAction.type !== 'Log Foul' && timeInput ? `@ ${formatTime(timeInput)}` : ''}
+                                    {activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - {quarter} {activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''}
                                     {penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}
                                 </span>
                             </div>
@@ -1074,7 +1096,8 @@ export default function App() {
                                 <input type="number" autoFocus value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                {filteredFlowRoster.map(player => (
+                                {/* Exclude the original offender from the serving list */}
+                                {filteredFlowRoster.filter(p => p.id !== benchPenaltyEntity?.id).map(player => (
                                     <button key={player.id} onClick={() => handlePlayerSelect(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
                                         <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
                                         <span className="ml-4 font-bold text-lg text-gray-800 text-left truncate">{player.name}</span>
@@ -1100,20 +1123,14 @@ export default function App() {
                             <button onClick={() => setModalStep('PLAYER')} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">⬅ Back to Scorer</button>
                         </div>
                         <div className="p-6 overflow-y-auto flex-1 bg-gray-50 flex flex-col">
-                            <button onClick={() => finalizeEvent(goalScorer, 'Unassisted')} className="mb-6 w-full p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center font-bold text-blue-700 hover:bg-blue-100 transition">UNASSISTED</button>
+                            <button onClick={() => handlePlayerSelect('Unassisted')} className="mb-6 w-full p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center font-bold text-blue-700 hover:bg-blue-100 transition">UNASSISTED</button>
                             <div className="mb-6">
                                 <label className="block text-sm font-bold text-gray-600 mb-2 uppercase">Quick Jersey # Search:</label>
                                 <input type="number" autoFocus value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 {filteredFlowRoster.map(player => (
-                                    <button key={player.id} onClick={() => {
-                                        if (goalScorer && typeof goalScorer !== 'string' && goalScorer.id === player.id) {
-                                            alert("The goal scorer cannot also be credited with the assist.");
-                                        } else {
-                                            finalizeEvent(goalScorer, player);
-                                        }
-                                    }} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
+                                    <button key={player.id} onClick={() => handlePlayerSelect(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
                                         <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
                                         <span className="ml-4 font-bold text-lg text-gray-800 text-left truncate">{player.name}</span>
                                     </button>
