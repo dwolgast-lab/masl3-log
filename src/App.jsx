@@ -1,3 +1,9 @@
+/* =========================================================================
+ * MASL 3 4th Official Log App
+ * Author: Dave Wolgast
+ * Version: 0.17
+ * ========================================================================= */
+
 import { useState, useEffect } from 'react'
 import { PENALTY_CODES, TEAM_WARNINGS, ACTION_BUTTONS, QUARTERS, BENCH_ROLES } from './config'
 import { 
@@ -5,6 +11,8 @@ import {
     calcReleaseTime, calcInjuryReturn, getTeamColor, getPlayerFouls 
 } from './utils'
 import { generatePDF } from './pdfEngine'
+
+const APP_VERSION = "0.17";
 
 export default function App() {
     // --- STATE MANAGEMENT ---
@@ -42,7 +50,7 @@ export default function App() {
     const [goalScorer, setGoalScorer] = useState(null);
     const [penaltyData, setPenaltyData] = useState({ color: null, code: null, desc: null });
     const [benchPenaltyEntity, setBenchPenaltyEntity] = useState(null); 
-    const [releasingPenaltyId, setReleasingPenaltyId] = useState(null); // For manual PPG entry
+    const [releasingPenaltyId, setReleasingPenaltyId] = useState(null); 
     
     const [goalFlags, setGoalFlags] = useState({ pp: false, shootout: false, pk: false });
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
@@ -96,7 +104,6 @@ export default function App() {
             return;
         }
 
-        // Auto-Correction logic (e.g., 9520 -> 09:52)
         let suggRaw = '0' + padded.substring(0, 3);
         let suggMm = parseInt(suggRaw.substring(0, 2));
         let suggSs = parseInt(suggRaw.substring(2, 4));
@@ -144,12 +151,10 @@ export default function App() {
         const realTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
         if (!isPeriodRunning) {
-            // START QUARTER
             setIsPeriodRunning(true);
             setGameEvents([{ id: Date.now(), type: 'Period Marker', quarter: quarter, action: 'Start', realTime: realTime, team: 'SYSTEM', entity: `Start ${quarter}` }, ...gameEvents]);
             alert(`${quarter} has officially started.`);
         } else {
-            // END QUARTER
             setIsPeriodRunning(false);
             setGameEvents([{ id: Date.now(), type: 'Period Marker', quarter: quarter, action: 'End', realTime: realTime, team: 'SYSTEM', entity: `End ${quarter}` }, ...gameEvents]);
             
@@ -166,7 +171,6 @@ export default function App() {
                 alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
             }
 
-            // Auto-advance quarter
             const nextQ = quarter === 'Q1' ? 'Q2' : quarter === 'Q2' ? 'Q3' : quarter === 'Q3' ? 'Q4' : quarter === 'Q4' ? 'OT' : 'END';
             if (nextQ !== 'END') setQuarter(nextQ);
         }
@@ -260,11 +264,11 @@ export default function App() {
         if (editingEventId) {
             updatedEvents = gameEvents.map(ev => ev.id === editingEventId ? { 
                 ...ev, 
-                time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput), // Update time
+                time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput),
                 entity: selectedEntity, 
                 assist: assistEntity, 
                 servingPlayer: servingPlayerEntity,
-                releaseTime: releaseTime || ev.releaseTime, // Update release time if changed
+                releaseTime: releaseTime || ev.releaseTime, 
                 majorReleaseTime: majorReleaseTime || ev.majorReleaseTime,
                 eligibleReturnTime: eligibleReturnTime || ev.eligibleReturnTime
             } : ev);
@@ -323,7 +327,6 @@ export default function App() {
 
         ppGoals.sort((a, b) => toElapsedSeconds(b.quarter, b.time) - toElapsedSeconds(a.quarter, a.time));
 
-        // Exact match included: >= penaltyElapsed
         const validGoal = ppGoals.find(g => {
             const gElapsed = toElapsedSeconds(g.quarter, g.time);
             return gElapsed >= penaltyElapsed && gElapsed <= releaseElapsed;
@@ -610,6 +613,8 @@ export default function App() {
                         </div>
                     </div>
                 )}
+                {/* VERSION INDICATOR */}
+                <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-50">v{APP_VERSION}</div>
             </div>
         );
     }
@@ -768,7 +773,7 @@ export default function App() {
 
             {/* FLOW MODAL 1: TIME KEYPAD */}
             {modalStep === 'TIME' && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
                     <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center">
                         <h3 className="text-2xl font-bold mb-1 uppercase" style={{ color: activeAction.team === 'SYSTEM' ? '#000' : flowTeamColor }}>
                             {activeAction.team === 'SYSTEM' ? '' : `${flowTeamName} - `}{activeAction.type}
@@ -814,12 +819,12 @@ export default function App() {
 
             {/* FLOW MODAL 1.1: MANUAL PPG TIME KEYPAD */}
             {modalStep === 'MANUAL_PPG_TIME' && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
                     <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center border-4 border-blue-500">
                         <h3 className="text-2xl font-bold mb-1 uppercase text-blue-600">Enter PPG Time</h3>
                         <p className="text-gray-500 font-bold mb-6 text-center text-sm">No auto-match found. When did the goal happen?</p>
 
-                        <div className="text-7xl font-mono font-black mb-6 bg-blue-50 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2 border-blue-200">
+                        <div className="text-7xl font-mono font-black mb-6 bg-blue-50 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2 border-blue-200 text-blue-700">
                             {timeInput.length === 0 ? "00:00" : formatTime(timeInput)}
                         </div>
 
@@ -902,7 +907,7 @@ export default function App() {
                                     {editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER")}
                                 </h2>
                                 <span className="text-sm font-bold opacity-80">
-                                    {activeAction.type} - {quarter} {activeAction.type !== 'Log Foul' && timeInput ? `@ ${formatTime(timeInput)}` : ''}
+                                    {activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - {quarter} {activeAction.type !== 'Log Foul' && timeInput ? `@ ${formatTime(timeInput)}` : ''}
                                     {penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}
                                 </span>
                             </div>
@@ -1199,6 +1204,8 @@ export default function App() {
                     </div>
                 </div>
             )}
+            {/* VERSION INDICATOR */}
+            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">v{APP_VERSION}</div>
         </div>
     );
 }
