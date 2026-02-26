@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.17
+ * Version: 0.18
  * ========================================================================= */
 
 import { useState, useEffect } from 'react'
@@ -12,7 +12,51 @@ import {
 } from './utils'
 import { generatePDF } from './pdfEngine'
 
-const APP_VERSION = "0.17";
+const APP_VERSION = "0.18";
+
+// --- WEB AUDIO API: SYNTHETIC DESK BELL ---
+let audioCtx = null;
+const initAudio = () => {
+    // iOS Safari requires audio context to be initialized/resumed during a user gesture
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+};
+
+const playBells = (count) => {
+    if (!audioCtx) return;
+    for (let i = 0; i < count; i++) {
+        const startTime = audioCtx.currentTime + (i * 0.6); // 0.6 seconds between bells
+        
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        
+        // C6 and C7 harmonics to simulate a metallic bell strike
+        osc1.type = 'sine';
+        osc1.frequency.value = 1046.50; 
+        
+        osc2.type = 'sine';
+        osc2.frequency.value = 2093.00; 
+        
+        // Fast sharp attack, exponential ring out
+        gain.gain.setValueAtTime(0, startTime);
+        gain.gain.linearRampToValueAtTime(0.6, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+        
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        osc1.start(startTime);
+        osc2.start(startTime);
+        osc1.stop(startTime + 0.6);
+        osc2.stop(startTime + 0.6);
+    }
+};
 
 export default function App() {
     // --- STATE MANAGEMENT ---
@@ -61,18 +105,35 @@ export default function App() {
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
     const homeScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'HOME').length;
 
-    // --- MATH ENGINES (Timer Tick) ---
+    // --- MATH ENGINES (Timer Tick & Bell Triggers) ---
     useEffect(() => {
         let interval = null;
-        if (appTimer.active && appTimer.time > 0) {
+        if (appTimer.active) {
             interval = setInterval(() => {
-                setAppTimer(prev => ({ ...prev, time: prev.time - 1 }));
+                setAppTimer(prev => {
+                    const newTime = prev.time - 1;
+                    const isTimeout = prev.label === 'MEDIA TIMEOUT' || prev.label === 'TEAM TIMEOUT';
+                    
+                    if (isTimeout) {
+                        if (newTime === 30) playBells(1);
+                        if (newTime === 15) playBells(2);
+                        if (newTime === 0) playBells(4);
+                        if (newTime <= -15) { // Auto-Dismiss 15 seconds after zero
+                            return { ...prev, active: false, time: 0, minimized: false };
+                        }
+                        return { ...prev, time: newTime };
+                    } else {
+                        // Standard breaks (Halftime/Quarters) stop exactly at 0
+                        if (newTime <= 0) {
+                            return { ...prev, active: false, time: 0, minimized: false };
+                        }
+                        return { ...prev, time: newTime };
+                    }
+                });
             }, 1000);
-        } else if (appTimer.time === 0 && appTimer.active) {
-            clearInterval(interval);
         }
         return () => clearInterval(interval);
-    }, [appTimer.active, appTimer.time]);
+    }, [appTimer.active]); // Only re-bind when activity status changes
 
     // --- HANDLERS ---
     const handleInputChange = (e) => setGameData({ ...gameData, [e.target.name]: e.target.value });
@@ -82,7 +143,6 @@ export default function App() {
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
     };
 
-    // TIME VALIDATION ENGINE
     const validateAndAdvanceTime = (nextStepStr) => {
         let raw = timeInput || '';
         let padded = raw.padEnd(4, '0');
@@ -146,7 +206,6 @@ export default function App() {
         }
     };
 
-    // --- EVENT LOGGING, EDITING & ALERTS ---
     const togglePeriod = () => {
         const realTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
@@ -227,6 +286,7 @@ export default function App() {
             setGameEvents([newEvent, ...gameEvents]);
             setModalStep(null);
             
+            initAudio(); // Unlocks iOS audio constraints
             if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, label: 'MEDIA TIMEOUT', minimized: false });
             if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, label: 'TEAM TIMEOUT', minimized: false });
             return;
@@ -500,7 +560,6 @@ export default function App() {
                     </button>
                 </div>
 
-                {/* MODALS RETAINED FOR BREVITY */}
                 {showStartersModal && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -614,7 +673,7 @@ export default function App() {
                     </div>
                 )}
                 {/* VERSION INDICATOR */}
-                <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-50">v{APP_VERSION}</div>
+                <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-50">Author: Dave Wolgast | v{APP_VERSION}</div>
             </div>
         );
     }
@@ -628,7 +687,7 @@ export default function App() {
                 <div className="bg-slate-900 text-white flex justify-between items-center px-8 py-3 shadow-lg z-40 border-b border-slate-950">
                     <div className="flex items-center space-x-6">
                         <span className="font-black tracking-widest text-blue-400 uppercase text-sm">{appTimer.label}</span>
-                        <span className="text-3xl font-mono font-black tabular-nums tracking-wider">{formatTimer(appTimer.time)}</span>
+                        <span className="text-3xl font-mono font-black tabular-nums tracking-wider">{appTimer.time > 0 ? formatTimer(appTimer.time) : "0:00"}</span>
                     </div>
                     <div className="flex space-x-4">
                         <button onClick={() => setAppTimer(prev => ({...prev, minimized: false}))} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded font-bold text-sm shadow transition">
@@ -649,9 +708,12 @@ export default function App() {
                             ⬇ Minimize to Top
                         </button>
                         <h2 className="text-4xl font-black uppercase text-gray-800 mb-6 tracking-widest">{appTimer.label}</h2>
-                        <div className="text-9xl font-mono font-black text-blue-600 mb-12 tracking-tighter tabular-nums drop-shadow-md">
-                            {formatTimer(appTimer.time)}
+                        
+                        <div className="text-9xl font-mono font-black text-blue-600 mb-12 tracking-tighter tabular-nums drop-shadow-md flex flex-col items-center">
+                            {appTimer.time > 0 ? formatTimer(appTimer.time) : "0:00"}
+                            {appTimer.time <= 0 && <span className="text-red-500 text-3xl mt-4 animate-pulse uppercase tracking-widest">Expired</span>}
                         </div>
+                        
                         <div className="flex space-x-6 w-full">
                             <button onClick={() => setAppTimer({ active: false, time: 0, label: '', minimized: false })} className="flex-1 py-5 bg-blue-600 font-black text-xl text-white rounded-2xl shadow-xl hover:bg-blue-700 transition">
                                 Close Timer
@@ -1204,8 +1266,11 @@ export default function App() {
                     </div>
                 </div>
             )}
+            
             {/* VERSION INDICATOR */}
-            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">v{APP_VERSION}</div>
+            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
+                Author: Dave Wolgast | v{APP_VERSION}
+            </div>
         </div>
     );
 }
