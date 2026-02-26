@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.21
+ * Version: 0.22
  * ========================================================================= */
 
 import { useState, useEffect } from 'react'
@@ -12,7 +12,7 @@ import {
 } from './utils'
 import { generatePDF } from './pdfEngine'
 
-const APP_VERSION = "0.21";
+const APP_VERSION = "0.22";
 
 // --- WEB AUDIO API: SYNTHETIC DESK BELL ---
 let audioCtx = null;
@@ -75,6 +75,7 @@ export default function App() {
     const [modalStep, setModalStep] = useState(null); 
     const [activeAction, setActiveAction] = useState({ team: '', type: '', time: null });
     const [timeInput, setTimeInput] = useState('');
+    const [modalQuarter, setModalQuarter] = useState('Q1'); // Contextual Quarter for Data Entry
     const [playerSearchInput, setPlayerSearchInput] = useState('');
     const [editingEventId, setEditingEventId] = useState(null);
     const [summaryTeam, setSummaryTeam] = useState(null); 
@@ -179,6 +180,7 @@ export default function App() {
 
     const triggerAction = (teamIdentifier, actionType) => {
         setActiveAction({ team: teamIdentifier, type: actionType, time: null });
+        setModalQuarter(quarter); // Set data-entry quarter to match global clock
         setPlayerSearchInput('');
         setGoalScorer(null); 
         setPenaltyData({ color: null, code: null, desc: null }); 
@@ -232,11 +234,8 @@ export default function App() {
         }
     };
 
-    // SMART PLAYER ROUTING ENGINE
     const handlePlayerSelect = (entity) => {
-        // Step 1: Identify what modal we are actively in
         if (modalStep === 'PLAYER') {
-            
             if (activeAction.type === 'Goal / Assist') {
                 if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
                 else {
@@ -244,33 +243,25 @@ export default function App() {
                     setPlayerSearchInput('');
                     setModalStep('ASSIST'); 
                 }
-            } 
-            else if (activeAction.type === 'Time Penalty') {
-                // Determine if a separate player needs to sit in the box
+            } else if (activeAction.type === 'Time Penalty') {
                 const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || (entity && entity.isGK) || entity === 'Team / Bench';
-                
                 if (needsServer) {
-                    setBenchPenaltyEntity(entity); // Save the offender
+                    setBenchPenaltyEntity(entity);
                     setPlayerSearchInput('');
-                    setModalStep('SERVING_PLAYER'); // Route to pick server
+                    setModalStep('SERVING_PLAYER'); 
                 } else {
                     finalizeEvent(entity);
                 }
-            } 
-            else {
+            } else {
                 finalizeEvent(entity);
             }
-
         } else if (modalStep === 'ASSIST') {
-            // Prevent self-assists
             if (goalScorer && typeof goalScorer !== 'string' && goalScorer.id === entity.id) {
                 alert("The goal scorer cannot also be credited with the assist.");
             } else {
                 finalizeEvent(goalScorer, entity);
             }
-
         } else if (modalStep === 'SERVING_PLAYER') {
-            // entity = the guy going into the box. benchPenaltyEntity = original offender.
             finalizeEvent(benchPenaltyEntity, null, entity);
         }
     };
@@ -282,7 +273,7 @@ export default function App() {
 
         const newEvent = {
             id: Date.now(), team: activeAction.team, type: activeAction.type,
-            quarter: quarter, time: finalTimeStr,
+            quarter: modalQuarter, time: finalTimeStr,
             entity: 'Team / Bench', warningReason: reason
         };
         
@@ -304,7 +295,7 @@ export default function App() {
         if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') {
             const newEvent = {
                 id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: quarter, time: finalTimeStr, entity: 'Team'
+                quarter: modalQuarter, time: finalTimeStr, entity: 'Team'
             };
             setGameEvents([newEvent, ...gameEvents]);
             setModalStep(null);
@@ -330,7 +321,7 @@ export default function App() {
                 else if (penaltyData.color === 'Yellow') {
                     duration = 5; isReleasable = false;
                     if (penaltyData.code === 'Y6') { 
-                        duration = 2; majorReleaseTime = calcReleaseTime(quarter, finalTimeStr, 7); 
+                        duration = 2; majorReleaseTime = calcReleaseTime(modalQuarter, finalTimeStr, 7); 
                     }
                 } else if (penaltyData.color === 'Red') {
                     if (penaltyData.code !== 'R8' && penaltyData.code !== 'R9') {
@@ -338,15 +329,16 @@ export default function App() {
                     }
                 }
             }
-            if (duration > 0) releaseTime = calcReleaseTime(quarter, finalTimeStr, duration);
+            if (duration > 0) releaseTime = calcReleaseTime(modalQuarter, finalTimeStr, duration);
         }
 
         let eligibleReturnTime = null;
-        if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(quarter, finalTimeStr);
+        if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(modalQuarter, finalTimeStr);
 
         if (editingEventId) {
             updatedEvents = gameEvents.map(ev => ev.id === editingEventId ? { 
                 ...ev, 
+                quarter: modalQuarter,
                 time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, 
                 assist: assistEntity, 
@@ -359,7 +351,7 @@ export default function App() {
         } else {
             const newEvent = {
                 id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: quarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
+                quarter: modalQuarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: assistEntity, 
                 penalty: activeAction.type === 'Time Penalty' ? penaltyData : null,
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null,
@@ -376,14 +368,14 @@ export default function App() {
 
             if (targetEventIndex !== -1) {
                 const actualIndex = updatedEvents.length - 1 - targetEventIndex;
-                updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: quarter, time: finalTimeStr } };
+                updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: modalQuarter, time: finalTimeStr } };
             }
         }
         
         setGameEvents(updatedEvents);
         
         if (activeAction.type === 'Log Foul' && selectedEntity !== 'Unattributed') {
-            const isFirstHalf = quarter === 'Q1' || quarter === 'Q2';
+            const isFirstHalf = modalQuarter === 'Q1' || modalQuarter === 'Q2';
             const playerFouls = updatedEvents.filter(ev => ev.type === 'Log Foul' && ev.team === activeAction.team && ev.entity?.id === selectedEntity.id);
             const halfFouls = playerFouls.filter(ev => isFirstHalf ? (ev.quarter === 'Q1' || ev.quarter === 'Q2') : (ev.quarter === 'Q3' || ev.quarter === 'Q4' || ev.quarter === 'OT')).length;
             const totalFouls = playerFouls.length;
@@ -419,6 +411,7 @@ export default function App() {
             setGameEvents(gameEvents.map(ev => ev.id === eventId ? { ...ev, actualReleaseTime: { quarter: validGoal.quarter, time: validGoal.time }, clearedFromBoard: true } : ev));
             alert(`Penalty successfully released based on PPG at ${validGoal.quarter} ${validGoal.time}.`);
         } else {
+            setModalQuarter(quarter);
             setReleasingPenaltyId(eventId);
             setTimeInput('');
             setModalStep('MANUAL_PPG_TIME');
@@ -426,7 +419,7 @@ export default function App() {
     };
 
     const processManualPPG = (validTimeStr) => {
-        setGameEvents(gameEvents.map(ev => ev.id === releasingPenaltyId ? { ...ev, actualReleaseTime: { quarter, time: formatTime(validTimeStr) }, clearedFromBoard: true } : ev));
+        setGameEvents(gameEvents.map(ev => ev.id === releasingPenaltyId ? { ...ev, actualReleaseTime: { quarter: modalQuarter, time: formatTime(validTimeStr) }, clearedFromBoard: true } : ev));
         setReleasingPenaltyId(null);
         setModalStep(null);
     };
@@ -444,6 +437,7 @@ export default function App() {
     const startEditingEvent = (event) => {
         setActiveAction({ team: event.team, type: event.type, time: null });
         setEditingEventId(event.id);
+        setModalQuarter(event.quarter);
         setGoalScorer(null);
         setPlayerSearchInput('');
         
@@ -583,6 +577,7 @@ export default function App() {
                     </button>
                 </div>
 
+                {/* MODALS RETAINED FOR BREVITY */}
                 {showStartersModal && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -714,7 +709,6 @@ export default function App() {
                         </div>
                     </div>
                 )}
-                {/* VERSION INDICATOR */}
                 <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-50">Author: Dave Wolgast | v{APP_VERSION}</div>
             </div>
         );
@@ -837,9 +831,14 @@ export default function App() {
                         <div key={ev.id} className="flex justify-between items-center bg-white p-2 mb-2 rounded shadow-sm border-l-4" style={{ borderColor: awayCSSColor }}>
                             <div>
                                 <span className="font-bold text-gray-800 mr-2">#{ev.entity?.number} {ev.entity?.name}</span>
-                                <span className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</span>
+                                {ev.servingPlayer && (
+                                    <div className="text-xs text-gray-500 font-bold italic mb-1">
+                                        (Served by: #{ev.servingPlayer.number} {ev.servingPlayer.name})
+                                    </div>
+                                )}
+                                <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -853,9 +852,14 @@ export default function App() {
                         <div key={ev.id} className="flex justify-between items-center bg-white p-2 mb-2 rounded shadow-sm border-l-4" style={{ borderColor: homeCSSColor }}>
                             <div>
                                 <span className="font-bold text-gray-800 mr-2">#{ev.entity?.number} {ev.entity?.name}</span>
-                                <span className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</span>
+                                {ev.servingPlayer && (
+                                    <div className="text-xs text-gray-500 font-bold italic mb-1">
+                                        (Served by: #{ev.servingPlayer.number} {ev.servingPlayer.name})
+                                    </div>
+                                )}
+                                <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -882,7 +886,19 @@ export default function App() {
                         <h3 className="text-2xl font-bold mb-1 uppercase" style={{ color: activeAction.team === 'SYSTEM' ? '#000' : flowTeamColor }}>
                             {activeAction.team === 'SYSTEM' ? '' : `${flowTeamName} - `}{activeAction.type}
                         </h3>
-                        <p className="text-gray-500 font-bold mb-6">Quarter: <span className="text-black">{quarter}</span></p>
+                        
+                        {(!isPeriodRunning || editingEventId) ? (
+                            <div className="w-full mb-6">
+                                <label className="block text-xs font-bold text-gray-600 mb-2 uppercase text-center tracking-widest">Event Quarter</label>
+                                <div className="flex bg-gray-200 rounded-lg p-1 w-full justify-between shadow-inner border border-gray-300">
+                                    {QUARTERS.map(q => (
+                                        <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 py-2 rounded-md font-bold text-sm transition-colors ${modalQuarter === q ? 'bg-black text-white shadow-md' : 'text-gray-600 hover:bg-gray-300'}`}>{q}</button>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 font-bold mb-6">Quarter: <span className="text-black">{modalQuarter}</span></p>
+                        )}
 
                         <div className="text-7xl font-mono font-black mb-4 bg-gray-100 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2" style={{ borderColor: activeAction.team === 'SYSTEM' ? '#ccc' : flowTeamColor }}>
                             {timeInput.length === 0 ? "00:00" : formatTime(timeInput)}
@@ -927,6 +943,15 @@ export default function App() {
                     <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center border-4 border-blue-500">
                         <h3 className="text-2xl font-bold mb-1 uppercase text-blue-600">Enter PPG Time</h3>
                         <p className="text-gray-500 font-bold mb-6 text-center text-sm">No auto-match found. When did the goal happen?</p>
+
+                        <div className="w-full mb-6">
+                            <label className="block text-xs font-bold text-blue-800 mb-2 uppercase text-center tracking-widest">Quarter Scored:</label>
+                            <div className="flex bg-blue-100 rounded-lg p-1 w-full justify-between shadow-inner">
+                                {QUARTERS.map(q => (
+                                    <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 py-2 rounded-md font-bold text-sm transition-colors ${modalQuarter === q ? 'bg-blue-600 text-white shadow-md' : 'text-blue-800 hover:bg-blue-200'}`}>{q}</button>
+                                ))}
+                            </div>
+                        </div>
 
                         <div className="text-7xl font-mono font-black mb-6 bg-blue-50 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2 border-blue-200 text-blue-700">
                             {timeInput.length === 0 ? "00:00" : formatTime(timeInput)}
@@ -1011,7 +1036,7 @@ export default function App() {
                                     {editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER")}
                                 </h2>
                                 <span className="text-sm font-bold opacity-80">
-                                    {activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - {quarter} {activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''}
+                                    {activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - {modalQuarter} {activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''}
                                     {penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}
                                 </span>
                             </div>
@@ -1026,6 +1051,18 @@ export default function App() {
                         </div>
 
                         <div className="p-6 overflow-y-auto flex-1 bg-gray-50 flex flex-col">
+                            
+                            {activeAction.type === 'Log Foul' && (!isPeriodRunning || editingEventId) && (
+                                <div className="w-full mb-6">
+                                    <label className="block text-xs font-bold text-gray-600 mb-2 uppercase text-center tracking-widest">Event Quarter</label>
+                                    <div className="flex bg-gray-200 rounded-lg p-1 w-full justify-between shadow-inner border border-gray-300">
+                                        {QUARTERS.map(q => (
+                                            <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 py-2 rounded-md font-bold text-sm transition-colors ${modalQuarter === q ? 'bg-black text-white shadow-md' : 'text-gray-600 hover:bg-gray-300'}`}>{q}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="mb-6">
                                 <label className="block text-sm font-bold text-gray-600 mb-2 uppercase">Quick Jersey # Search:</label>
                                 <input type="number" autoFocus value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
@@ -1096,7 +1133,6 @@ export default function App() {
                                 <input type="number" autoFocus value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                {/* Exclude the original offender from the serving list */}
                                 {filteredFlowRoster.filter(p => p.id !== benchPenaltyEntity?.id).map(player => (
                                     <button key={player.id} onClick={() => handlePlayerSelect(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
                                         <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
