@@ -22,9 +22,10 @@ export default function App() {
     const [homeBench, setHomeBench] = useStickyState([], 'masl-homeBench');
     
     const [quarter, setQuarter] = useStickyState('Q1', 'masl-quarter');
+    const [isPeriodRunning, setIsPeriodRunning] = useStickyState(false, 'masl-period-running');
     const [gameEvents, setGameEvents] = useStickyState([], 'masl-events'); 
 
-    // Temporary UI states (Not saved across reloads)
+    // Temporary UI states 
     const [activeRosterModal, setActiveRosterModal] = useState(null); 
     const [showStartersModal, setShowStartersModal] = useState(false);
     const [newPlayer, setNewPlayer] = useState({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
@@ -41,11 +42,11 @@ export default function App() {
     const [goalScorer, setGoalScorer] = useState(null);
     const [penaltyData, setPenaltyData] = useState({ color: null, code: null, desc: null });
     const [benchPenaltyEntity, setBenchPenaltyEntity] = useState(null); 
+    const [releasingPenaltyId, setReleasingPenaltyId] = useState(null); // For manual PPG entry
     
     const [goalFlags, setGoalFlags] = useState({ pp: false, shootout: false, pk: false });
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     
-    // Universal Timer System
     const [appTimer, setAppTimer] = useState({ active: false, time: 0, label: '', minimized: false });
 
     // --- SCORE CALCULATORS ---
@@ -71,6 +72,46 @@ export default function App() {
         if (num === 'clear') setTimeInput('');
         else if (num === 'del') setTimeInput(prev => prev.slice(0, -1));
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
+    };
+
+    // TIME VALIDATION ENGINE
+    const validateAndAdvanceTime = (nextStepStr) => {
+        let raw = timeInput || '';
+        let padded = raw.padEnd(4, '0');
+        let mm = parseInt(padded.substring(0, 2));
+        let ss = parseInt(padded.substring(2, 4));
+
+        const isValid = (m, s) => {
+            if (m > 15) return false;
+            if (m === 15 && s > 0) return false;
+            if (s > 59) return false;
+            return true;
+        };
+
+        if (isValid(mm, ss)) {
+            setTimeInput(padded);
+            if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team');
+            else if (nextStepStr === 'FINALIZE_MANUAL_PPG') processManualPPG(padded);
+            else setModalStep(nextStepStr);
+            return;
+        }
+
+        // Auto-Correction logic (e.g., 9520 -> 09:52)
+        let suggRaw = '0' + padded.substring(0, 3);
+        let suggMm = parseInt(suggRaw.substring(0, 2));
+        let suggSs = parseInt(suggRaw.substring(2, 4));
+        
+        if (isValid(suggMm, suggSs)) {
+            const suggFormat = `${String(suggMm).padStart(2, '0')}:${String(suggSs).padStart(2, '0')}`;
+            if (window.confirm(`Invalid time entered (${formatTime(raw)}).\n\nDid you mean ${suggFormat}?`)) {
+                setTimeInput(suggRaw);
+                if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team');
+                else if (nextStepStr === 'FINALIZE_MANUAL_PPG') processManualPPG(suggRaw);
+                else setModalStep(nextStepStr);
+            }
+        } else {
+            alert("Invalid Time. Please enter a valid match time between 15:00 and 00:00.");
+        }
     };
 
     const triggerAction = (teamIdentifier, actionType) => {
@@ -99,21 +140,22 @@ export default function App() {
     };
 
     // --- EVENT LOGGING, EDITING & ALERTS ---
-    const logPeriodMarker = (action) => {
+    const togglePeriod = () => {
         const realTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        const newEvent = {
-            id: Date.now(), type: 'Period Marker', quarter: quarter, action: action, 
-            realTime: realTime, team: 'SYSTEM', entity: `${action} ${quarter}`
-        };
         
-        setGameEvents([newEvent, ...gameEvents]);
-        
-        if (action === 'Start') {
+        if (!isPeriodRunning) {
+            // START QUARTER
+            setIsPeriodRunning(true);
+            setGameEvents([{ id: Date.now(), type: 'Period Marker', quarter: quarter, action: 'Start', realTime: realTime, team: 'SYSTEM', entity: `Start ${quarter}` }, ...gameEvents]);
             alert(`${quarter} has officially started.`);
-        } else if (action === 'End') {
+        } else {
+            // END QUARTER
+            setIsPeriodRunning(false);
+            setGameEvents([{ id: Date.now(), type: 'Period Marker', quarter: quarter, action: 'End', realTime: realTime, team: 'SYSTEM', entity: `End ${quarter}` }, ...gameEvents]);
+            
             const unattributed = gameEvents.filter(ev => ev.quarter === quarter && ev.type === 'Log Foul' && ev.entity === 'Unattributed');
             if (unattributed.length > 0) {
-                alert(`WARNING: There are ${unattributed.length} Unattributed Foul(s) in ${quarter}. Please assign them to a player via the Game Log.`);
+                alert(`WARNING: There are ${unattributed.length} Unattributed Foul(s) in ${quarter}. Please assign them to a player via the Game Log before generating the final report.`);
             }
 
             if (quarter === 'Q1' || quarter === 'Q3') {
@@ -121,8 +163,12 @@ export default function App() {
             } else if (quarter === 'Q2') {
                 setAppTimer({ active: true, time: 600, label: 'HALFTIME', minimized: false }); 
             } else if (quarter === 'Q4') {
-                alert("The 4th Quarter has ended.");
+                alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
             }
+
+            // Auto-advance quarter
+            const nextQ = quarter === 'Q1' ? 'Q2' : quarter === 'Q2' ? 'Q3' : quarter === 'Q3' ? 'Q4' : quarter === 'Q4' ? 'OT' : 'END';
+            if (nextQ !== 'END') setQuarter(nextQ);
         }
     };
 
@@ -190,7 +236,6 @@ export default function App() {
 
         if (activeAction.type === 'Time Penalty' && penaltyData.color) {
             const isBenchStaff = activeBench.some(b => b.id === selectedEntity?.id) || selectedEntity === 'Team / Bench';
-            
             if (isBenchStaff && penaltyData.code !== 'B1') {
                 duration = 0; 
             } else {
@@ -213,12 +258,21 @@ export default function App() {
         if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(quarter, formatTime(timeInput));
 
         if (editingEventId) {
-            updatedEvents = gameEvents.map(ev => ev.id === editingEventId ? { ...ev, entity: selectedEntity, assist: assistEntity, servingPlayer: servingPlayerEntity } : ev);
+            updatedEvents = gameEvents.map(ev => ev.id === editingEventId ? { 
+                ...ev, 
+                time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput), // Update time
+                entity: selectedEntity, 
+                assist: assistEntity, 
+                servingPlayer: servingPlayerEntity,
+                releaseTime: releaseTime || ev.releaseTime, // Update release time if changed
+                majorReleaseTime: majorReleaseTime || ev.majorReleaseTime,
+                eligibleReturnTime: eligibleReturnTime || ev.eligibleReturnTime
+            } : ev);
             setEditingEventId(null);
         } else {
             const newEvent = {
                 id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: quarter, time: activeAction.type === 'Log Foul' ? null : (timeInput.length === 0 ? "00:00" : formatTime(timeInput)),
+                quarter: quarter, time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput),
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: assistEntity, 
                 penalty: activeAction.type === 'Time Penalty' ? penaltyData : null,
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null,
@@ -269,20 +323,26 @@ export default function App() {
 
         ppGoals.sort((a, b) => toElapsedSeconds(b.quarter, b.time) - toElapsedSeconds(a.quarter, a.time));
 
+        // Exact match included: >= penaltyElapsed
         const validGoal = ppGoals.find(g => {
             const gElapsed = toElapsedSeconds(g.quarter, g.time);
-            return gElapsed > penaltyElapsed && gElapsed <= releaseElapsed;
+            return gElapsed >= penaltyElapsed && gElapsed <= releaseElapsed;
         });
 
         if (validGoal) {
             setGameEvents(gameEvents.map(ev => ev.id === eventId ? { ...ev, actualReleaseTime: { quarter: validGoal.quarter, time: validGoal.time }, clearedFromBoard: true } : ev));
             alert(`Penalty successfully released based on PPG at ${validGoal.quarter} ${validGoal.time}.`);
         } else {
-            const timeInput = window.prompt("No automatic Power Play Goal found in that window. Manually enter time of the PPG (mm:ss):");
-            if (timeInput) {
-                setGameEvents(gameEvents.map(ev => ev.id === eventId ? { ...ev, actualReleaseTime: { quarter, time: formatTime(timeInput) }, clearedFromBoard: true } : ev));
-            }
+            setReleasingPenaltyId(eventId);
+            setTimeInput('');
+            setModalStep('MANUAL_PPG_TIME');
         }
+    };
+
+    const processManualPPG = (validTimeStr) => {
+        setGameEvents(gameEvents.map(ev => ev.id === releasingPenaltyId ? { ...ev, actualReleaseTime: { quarter, time: formatTime(validTimeStr) }, clearedFromBoard: true } : ev));
+        setReleasingPenaltyId(null);
+        setModalStep(null);
     };
 
     const handlePenaltyExpired = (eventId) => {
@@ -300,8 +360,19 @@ export default function App() {
         setEditingEventId(event.id);
         setGoalScorer(null);
         setPlayerSearchInput('');
-        setModalStep('PLAYER');
+        
+        if (event.time) setTimeInput(event.time.replace(':', ''));
+        else setTimeInput('');
+        
+        if (event.type === 'Time Penalty' && event.penalty) setPenaltyData(event.penalty);
+        if (event.type === 'Goal / Assist' && event.goalFlags) setGoalFlags(event.goalFlags);
+
+        if (event.type === 'Log Foul') setModalStep('PLAYER');
+        else setModalStep('TIME');
     };
+
+    const awayCSSColor = getTeamColor(gameData.awayColor, '#1e40af'); 
+    const homeCSSColor = getTeamColor(gameData.homeColor, '#991b1b'); 
 
     // --- ROSTER LOGIC ---
     const handleAddPlayer = () => {
@@ -343,8 +414,6 @@ export default function App() {
     const activeBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
     
     const flowTeamRoster = activeAction.team === 'AWAY' ? awayRoster : homeRoster;
-    const awayCSSColor = getTeamColor(gameData.awayColor, '#1e40af'); 
-    const homeCSSColor = getTeamColor(gameData.homeColor, '#991b1b'); 
     const flowTeamColor = activeAction.team === 'AWAY' ? awayCSSColor : homeCSSColor;
     const flowTeamName = activeAction.team === 'AWAY' ? (gameData.awayTeam || 'AWAY') : (gameData.homeTeam || 'HOME');
     
@@ -530,7 +599,7 @@ export default function App() {
                                             {activeBench.map(person => (
                                                 <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
                                                     <span className="font-bold text-sm text-gray-800">{person.name}</span>
-                                                    <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 border">{person.role}</span>
+                                                    <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
                                                     <button onClick={() => removeBench(person.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
                                                 </div>
                                             ))}
@@ -689,14 +758,9 @@ export default function App() {
 
             {/* DYNAMIC GLOBAL FOOTER */}
             <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200">
-                <div className="flex space-x-4">
-                    <button onClick={() => logPeriodMarker('Start')} className="px-8 py-3 bg-green-50 border-2 border-green-500 text-green-700 font-black tracking-wide rounded-lg hover:bg-green-100 transition shadow-sm">
-                        ▶ START {quarter}
-                    </button>
-                    <button onClick={() => logPeriodMarker('End')} className="px-8 py-3 bg-red-50 border-2 border-red-500 text-red-700 font-black tracking-wide rounded-lg hover:bg-red-100 transition shadow-sm">
-                        ⏹ END {quarter}
-                    </button>
-                </div>
+                <button onClick={togglePeriod} className={`px-12 py-3 border-2 font-black tracking-wide rounded-lg transition shadow-sm ${isPeriodRunning ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100'}`}>
+                    {isPeriodRunning ? `⏹ END ${quarter}` : `▶ START ${quarter}`}
+                </button>
                 <button onClick={() => triggerAction('SYSTEM', 'Media Timeout')} className="px-8 py-3 bg-orange-500 text-white font-black text-lg rounded-lg shadow hover:bg-orange-600 transition">
                     MEDIA TIMEOUT
                 </button>
@@ -704,7 +768,7 @@ export default function App() {
 
             {/* FLOW MODAL 1: TIME KEYPAD */}
             {modalStep === 'TIME' && (
-                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
                     <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center">
                         <h3 className="text-2xl font-bold mb-1 uppercase" style={{ color: activeAction.team === 'SYSTEM' ? '#000' : flowTeamColor }}>
                             {activeAction.team === 'SYSTEM' ? '' : `${flowTeamName} - `}{activeAction.type}
@@ -735,13 +799,42 @@ export default function App() {
                         <div className="flex space-x-4 w-full">
                             <button onClick={() => setModalStep(null)} className="flex-1 py-3 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50">Cancel</button>
                             <button onClick={() => {
-                                if (activeAction.type === 'Time Penalty') setModalStep('CARD_COLOR');
-                                else if (activeAction.type === 'Team Warnings') setModalStep('WARNING_REASON');
-                                else if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') finalizeEvent('Team');
-                                else setModalStep('PLAYER');
+                                let nextStr = 'PLAYER';
+                                if (activeAction.type === 'Time Penalty') nextStr = 'CARD_COLOR';
+                                else if (activeAction.type === 'Team Warnings') nextStr = 'WARNING_REASON';
+                                else if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') nextStr = 'FINALIZE_TEAM_EVENT';
+                                validateAndAdvanceTime(nextStr);
                             }} className="flex-1 py-3 text-white font-bold rounded-lg shadow" style={{ backgroundColor: activeAction.team === 'SYSTEM' ? '#000' : flowTeamColor }}>
                                 {activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout' ? 'Log Event' : 'Next ➔'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* FLOW MODAL 1.1: MANUAL PPG TIME KEYPAD */}
+            {modalStep === 'MANUAL_PPG_TIME' && (
+                <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+                    <div className="bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center border-4 border-blue-500">
+                        <h3 className="text-2xl font-bold mb-1 uppercase text-blue-600">Enter PPG Time</h3>
+                        <p className="text-gray-500 font-bold mb-6 text-center text-sm">No auto-match found. When did the goal happen?</p>
+
+                        <div className="text-7xl font-mono font-black mb-6 bg-blue-50 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2 border-blue-200">
+                            {timeInput.length === 0 ? "00:00" : formatTime(timeInput)}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3 w-full mb-6">
+                            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                                <button key={num} onClick={() => handleKeypad(num.toString())} className="bg-gray-200 hover:bg-gray-300 text-2xl font-bold py-4 rounded-lg">{num}</button>
+                            ))}
+                            <button onClick={() => handleKeypad('clear')} className="bg-red-100 text-red-600 hover:bg-red-200 text-lg font-bold py-4 rounded-lg">Clear</button>
+                            <button onClick={() => handleKeypad('0')} className="bg-gray-200 hover:bg-gray-300 text-2xl font-bold py-4 rounded-lg">0</button>
+                            <button onClick={() => handleKeypad('del')} className="bg-gray-200 hover:bg-gray-300 text-lg font-bold py-4 rounded-lg">Del</button>
+                        </div>
+
+                        <div className="flex space-x-4 w-full">
+                            <button onClick={() => setModalStep(null)} className="flex-1 py-3 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50">Cancel</button>
+                            <button onClick={() => validateAndAdvanceTime('FINALIZE_MANUAL_PPG')} className="flex-1 py-3 text-white font-bold rounded-lg shadow bg-blue-600 hover:bg-blue-700">Confirm</button>
                         </div>
                     </div>
                 </div>
@@ -1033,7 +1126,7 @@ export default function App() {
                                                 </div>
                                                 
                                                 <span className="text-xl font-black text-gray-800 uppercase flex items-center">
-                                                    {event.type}
+                                                    {event.type === 'Log Foul' ? 'FOUL' : event.type}
                                                 </span>
                                                 
                                                 {event.penalty?.code && (
