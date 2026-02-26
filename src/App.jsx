@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.18
+ * Version: 0.20
  * ========================================================================= */
 
 import { useState, useEffect } from 'react'
@@ -12,12 +12,11 @@ import {
 } from './utils'
 import { generatePDF } from './pdfEngine'
 
-const APP_VERSION = "0.18";
+const APP_VERSION = "0.20";
 
 // --- WEB AUDIO API: SYNTHETIC DESK BELL ---
 let audioCtx = null;
 const initAudio = () => {
-    // iOS Safari requires audio context to be initialized/resumed during a user gesture
     if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
@@ -29,32 +28,22 @@ const initAudio = () => {
 const playBells = (count) => {
     if (!audioCtx) return;
     for (let i = 0; i < count; i++) {
-        const startTime = audioCtx.currentTime + (i * 0.6); // 0.6 seconds between bells
-        
+        const startTime = audioCtx.currentTime + (i * 0.6); 
         const osc1 = audioCtx.createOscillator();
         const osc2 = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         
-        // C6 and C7 harmonics to simulate a metallic bell strike
-        osc1.type = 'sine';
-        osc1.frequency.value = 1046.50; 
+        osc1.type = 'sine'; osc1.frequency.value = 1046.50; 
+        osc2.type = 'sine'; osc2.frequency.value = 2093.00; 
         
-        osc2.type = 'sine';
-        osc2.frequency.value = 2093.00; 
-        
-        // Fast sharp attack, exponential ring out
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(0.6, startTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
         
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(audioCtx.destination);
+        osc1.connect(gain); osc2.connect(gain); gain.connect(audioCtx.destination);
         
-        osc1.start(startTime);
-        osc2.start(startTime);
-        osc1.stop(startTime + 0.6);
-        osc2.stop(startTime + 0.6);
+        osc1.start(startTime); osc2.start(startTime);
+        osc1.stop(startTime + 0.6); osc2.stop(startTime + 0.6);
     }
 };
 
@@ -84,7 +73,7 @@ export default function App() {
     const [newBench, setNewBench] = useState({ name: '', role: 'Head Coach' });
     
     const [modalStep, setModalStep] = useState(null); 
-    const [activeAction, setActiveAction] = useState({ team: '', type: '' });
+    const [activeAction, setActiveAction] = useState({ team: '', type: '', time: null });
     const [timeInput, setTimeInput] = useState('');
     const [playerSearchInput, setPlayerSearchInput] = useState('');
     const [editingEventId, setEditingEventId] = useState(null);
@@ -99,7 +88,7 @@ export default function App() {
     const [goalFlags, setGoalFlags] = useState({ pp: false, shootout: false, pk: false });
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     
-    const [appTimer, setAppTimer] = useState({ active: false, time: 0, label: '', minimized: false });
+    const [appTimer, setAppTimer] = useState({ active: false, time: 0, initialTime: 0, label: '', minimized: false });
 
     // --- SCORE CALCULATORS ---
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
@@ -112,28 +101,34 @@ export default function App() {
             interval = setInterval(() => {
                 setAppTimer(prev => {
                     const newTime = prev.time - 1;
+                    const elapsed = prev.initialTime - newTime;
                     const isTimeout = prev.label === 'MEDIA TIMEOUT' || prev.label === 'TEAM TIMEOUT';
+                    
+                    let nextState = { ...prev, time: newTime };
+                    
+                    // Auto-minimize exactly 15 seconds after timer starts
+                    if (!prev.minimized && elapsed === 15) {
+                        nextState.minimized = true;
+                    }
                     
                     if (isTimeout) {
                         if (newTime === 30) playBells(1);
                         if (newTime === 15) playBells(2);
                         if (newTime === 0) playBells(4);
-                        if (newTime <= -15) { // Auto-Dismiss 15 seconds after zero
-                            return { ...prev, active: false, time: 0, minimized: false };
+                        if (newTime <= -15) { 
+                            return { active: false, time: 0, initialTime: 0, label: '', minimized: false };
                         }
-                        return { ...prev, time: newTime };
                     } else {
-                        // Standard breaks (Halftime/Quarters) stop exactly at 0
                         if (newTime <= 0) {
-                            return { ...prev, active: false, time: 0, minimized: false };
+                            return { active: false, time: 0, initialTime: 0, label: '', minimized: false };
                         }
-                        return { ...prev, time: newTime };
                     }
+                    return nextState;
                 });
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [appTimer.active]); // Only re-bind when activity status changes
+    }, [appTimer.active]);
 
     // --- HANDLERS ---
     const handleInputChange = (e) => setGameData({ ...gameData, [e.target.name]: e.target.value });
@@ -143,6 +138,7 @@ export default function App() {
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
     };
 
+    // INTELLIGENT TIME VALIDATOR
     const validateAndAdvanceTime = (nextStepStr) => {
         let raw = timeInput || '';
         let padded = raw.padEnd(4, '0');
@@ -156,23 +152,27 @@ export default function App() {
             return true;
         };
 
+        // Clean validation
         if (isValid(mm, ss)) {
             setTimeInput(padded);
-            if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team');
+            setActiveAction(prev => ({ ...prev, time: padded }));
+            if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, padded);
             else if (nextStepStr === 'FINALIZE_MANUAL_PPG') processManualPPG(padded);
             else setModalStep(nextStepStr);
             return;
         }
 
+        // Mathematical Auto-Correction (e.g., 9520 -> 09:52)
         let suggRaw = '0' + padded.substring(0, 3);
         let suggMm = parseInt(suggRaw.substring(0, 2));
         let suggSs = parseInt(suggRaw.substring(2, 4));
         
         if (isValid(suggMm, suggSs)) {
             const suggFormat = `${String(suggMm).padStart(2, '0')}:${String(suggSs).padStart(2, '0')}`;
-            if (window.confirm(`Invalid time entered (${formatTime(raw)}).\n\nDid you mean ${suggFormat}?`)) {
+            if (window.confirm(`Invalid time entered (${formatTime(padded)}).\n\nDid you mean ${suggFormat}?`)) {
                 setTimeInput(suggRaw);
-                if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team');
+                setActiveAction(prev => ({ ...prev, time: suggRaw }));
+                if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, suggRaw);
                 else if (nextStepStr === 'FINALIZE_MANUAL_PPG') processManualPPG(suggRaw);
                 else setModalStep(nextStepStr);
             }
@@ -182,7 +182,7 @@ export default function App() {
     };
 
     const triggerAction = (teamIdentifier, actionType) => {
-        setActiveAction({ team: teamIdentifier, type: actionType });
+        setActiveAction({ team: teamIdentifier, type: actionType, time: null });
         setPlayerSearchInput('');
         setGoalScorer(null); 
         setPenaltyData({ color: null, code: null, desc: null }); 
@@ -206,6 +206,7 @@ export default function App() {
         }
     };
 
+    // --- EVENT LOGGING, EDITING & ALERTS ---
     const togglePeriod = () => {
         const realTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
@@ -223,9 +224,9 @@ export default function App() {
             }
 
             if (quarter === 'Q1' || quarter === 'Q3') {
-                setAppTimer({ active: true, time: 180, label: 'QUARTER BREAK', minimized: false }); 
+                setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false }); 
             } else if (quarter === 'Q2') {
-                setAppTimer({ active: true, time: 600, label: 'HALFTIME', minimized: false }); 
+                setAppTimer({ active: true, time: 600, initialTime: 600, label: 'HALFTIME', minimized: false }); 
             } else if (quarter === 'Q4') {
                 alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
             }
@@ -244,7 +245,8 @@ export default function App() {
                 setModalStep('ASSIST'); 
             }
         } else if (activeAction.type === 'Time Penalty') {
-            if (requiresSubstituteServer || penaltyData.code === 'B1') {
+            // Force server selection if offender is a GK, it's a B1, or the sub checkbox was tapped.
+            if (requiresSubstituteServer || penaltyData.code === 'B1' || (entity && entity.isGK)) {
                 setBenchPenaltyEntity(entity);
                 setPlayerSearchInput('');
                 setModalStep('SERVING_PLAYER'); 
@@ -260,9 +262,12 @@ export default function App() {
 
     const finalizeWarning = (reason) => {
         const prevWarning = gameEvents.find(ev => ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason);
+        const finalTimeRaw = activeAction.time || timeInput;
+        const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
+
         const newEvent = {
             id: Date.now(), team: activeAction.team, type: activeAction.type,
-            quarter: quarter, time: timeInput.length === 0 ? "00:00" : formatTime(timeInput),
+            quarter: quarter, time: finalTimeStr,
             entity: 'Team / Bench', warningReason: reason
         };
         
@@ -277,18 +282,21 @@ export default function App() {
         setModalStep(null);
     };
 
-    const finalizeEvent = (selectedEntity, assistEntity = null, servingPlayerEntity = null) => {
+    const finalizeEvent = (selectedEntity, assistEntity = null, servingPlayerEntity = null, overrideTimeStr = null) => {
+        const finalTimeRaw = overrideTimeStr || activeAction.time || timeInput;
+        const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
+
         if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') {
             const newEvent = {
                 id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: quarter, time: timeInput.length === 0 ? "00:00" : formatTime(timeInput), entity: 'Team'
+                quarter: quarter, time: finalTimeStr, entity: 'Team'
             };
             setGameEvents([newEvent, ...gameEvents]);
             setModalStep(null);
             
-            initAudio(); // Unlocks iOS audio constraints
-            if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, label: 'MEDIA TIMEOUT', minimized: false });
-            if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, label: 'TEAM TIMEOUT', minimized: false });
+            initAudio(); 
+            if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, initialTime: 90, label: 'MEDIA TIMEOUT', minimized: false });
+            if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, initialTime: 60, label: 'TEAM TIMEOUT', minimized: false });
             return;
         }
 
@@ -307,7 +315,7 @@ export default function App() {
                 else if (penaltyData.color === 'Yellow') {
                     duration = 5; isReleasable = false;
                     if (penaltyData.code === 'Y6') { 
-                        duration = 2; majorReleaseTime = calcReleaseTime(quarter, formatTime(timeInput), 7); 
+                        duration = 2; majorReleaseTime = calcReleaseTime(quarter, finalTimeStr, 7); 
                     }
                 } else if (penaltyData.color === 'Red') {
                     if (penaltyData.code !== 'R8' && penaltyData.code !== 'R9') {
@@ -315,16 +323,16 @@ export default function App() {
                     }
                 }
             }
-            if (duration > 0) releaseTime = calcReleaseTime(quarter, formatTime(timeInput), duration);
+            if (duration > 0) releaseTime = calcReleaseTime(quarter, finalTimeStr, duration);
         }
 
         let eligibleReturnTime = null;
-        if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(quarter, formatTime(timeInput));
+        if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(quarter, finalTimeStr);
 
         if (editingEventId) {
             updatedEvents = gameEvents.map(ev => ev.id === editingEventId ? { 
                 ...ev, 
-                time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput),
+                time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, 
                 assist: assistEntity, 
                 servingPlayer: servingPlayerEntity,
@@ -336,7 +344,7 @@ export default function App() {
         } else {
             const newEvent = {
                 id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: quarter, time: activeAction.type === 'Log Foul' ? null : formatTime(timeInput),
+                quarter: quarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: assistEntity, 
                 penalty: activeAction.type === 'Time Penalty' ? penaltyData : null,
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null,
@@ -347,13 +355,14 @@ export default function App() {
             updatedEvents = [newEvent, ...gameEvents];
         }
 
+        // Automatic Power Play Release matching logic
         if (activeAction.type === 'Goal / Assist' && !editingEventId && goalFlags.pp) {
             const oppTeam = activeAction.team === 'AWAY' ? 'HOME' : 'AWAY';
             const targetEventIndex = [...updatedEvents].reverse().findIndex(ev => ev.type === 'Time Penalty' && ev.team === oppTeam && ev.isReleasable && !ev.actualReleaseTime);
 
             if (targetEventIndex !== -1) {
                 const actualIndex = updatedEvents.length - 1 - targetEventIndex;
-                updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: quarter, time: formatTime(timeInput) } };
+                updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: quarter, time: finalTimeStr } };
             }
         }
         
@@ -387,6 +396,7 @@ export default function App() {
 
         ppGoals.sort((a, b) => toElapsedSeconds(b.quarter, b.time) - toElapsedSeconds(a.quarter, a.time));
 
+        // Detect if goal happens after OR AT THE EXACT SAME SECOND the penalty was assessed
         const validGoal = ppGoals.find(g => {
             const gElapsed = toElapsedSeconds(g.quarter, g.time);
             return gElapsed >= penaltyElapsed && gElapsed <= releaseElapsed;
@@ -419,7 +429,7 @@ export default function App() {
     };
 
     const startEditingEvent = (event) => {
-        setActiveAction({ team: event.team, type: event.type });
+        setActiveAction({ team: event.team, type: event.type, time: null });
         setEditingEventId(event.id);
         setGoalScorer(null);
         setPlayerSearchInput('');
@@ -430,6 +440,7 @@ export default function App() {
         if (event.type === 'Time Penalty' && event.penalty) setPenaltyData(event.penalty);
         if (event.type === 'Goal / Assist' && event.goalFlags) setGoalFlags(event.goalFlags);
 
+        // All editable events with a time component get routed to TIME keypad first
         if (event.type === 'Log Foul') setModalStep('PLAYER');
         else setModalStep('TIME');
     };
@@ -437,58 +448,19 @@ export default function App() {
     const awayCSSColor = getTeamColor(gameData.awayColor, '#1e40af'); 
     const homeCSSColor = getTeamColor(gameData.homeColor, '#991b1b'); 
 
-    // --- ROSTER LOGIC ---
-    const handleAddPlayer = () => {
-        if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
-        const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
-        const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
+    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
 
-        if (currentRoster.length >= 17) return alert("Max 17 total players.");
-        if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
-        if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
-        
-        if (newPlayer.isStarter) {
-            if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
-            if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
-        }
-        if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
-
-        const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
-        setRoster(updated);
-        setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
-    };
-
-    const handleAddBench = () => {
-        if (!newBench.name) return alert("Please enter name.");
-        const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
-        const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
-        
-        if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
-        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
-        
-        setBench([...currentBench, { ...newBench, id: Date.now() }]);
-        setNewBench({ name: '', role: 'Assistant Coach' });
-    };
-
-    const removePlayer = (id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id));
-    const removeBench = (id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id));
-
-    const activeRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
-    const activeBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
-    
     const flowTeamRoster = activeAction.team === 'AWAY' ? awayRoster : homeRoster;
     const flowTeamColor = activeAction.team === 'AWAY' ? awayCSSColor : homeCSSColor;
     const flowTeamName = activeAction.team === 'AWAY' ? (gameData.awayTeam || 'AWAY') : (gameData.homeTeam || 'HOME');
-    
     const filteredFlowRoster = playerSearchInput ? flowTeamRoster.filter(p => p.number.startsWith(playerSearchInput)) : flowTeamRoster;
+
     const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
         if (a.isGK && !b.isGK) return -1;
         if (!a.isGK && b.isGK) return 1;
         return parseInt(a.number) - parseInt(b.number);
     });
-
-    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
-    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
 
     // --- VIEW 1: PRE-GAME SETUP ---
     if (currentView === 'pregame') {
@@ -560,6 +532,7 @@ export default function App() {
                     </button>
                 </div>
 
+                {/* MODALS RETAINED FOR BREVITY */}
                 {showStartersModal && (
                     <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                         <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -624,12 +597,43 @@ export default function App() {
                                                     <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-4 h-4 accent-yellow-500" /><span className="font-bold text-xs text-gray-700">Capt.</span></label>
                                                 </div>
                                             </div>
-                                            <button onClick={handleAddPlayer} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded hover:bg-slate-700 shadow">+ Add</button>
+                                            <button onClick={() => {
+                                                if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
+                                                const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+                                                const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+
+                                                if (currentRoster.length >= 17) return alert("Max 17 total players.");
+                                                if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
+                                                if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
+                                                
+                                                if (newPlayer.isStarter) {
+                                                    if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
+                                                    if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
+                                                }
+                                                if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
+
+                                                const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+                                                setRoster(updated);
+                                                setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
+                                            }} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded hover:bg-slate-700 shadow">+ Add</button>
                                         </div>
                                     </div>
                                     <div className="p-4 overflow-y-auto flex-1">
                                         <div className="space-y-2">
-                                            {activeRoster.map(player => (
+                                            {activeRosterModal === 'AWAY' ? awayRoster.map(player => (
+                                                <div key={player.id} className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded shadow-sm">
+                                                    <div className="flex items-center space-x-3">
+                                                        <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700">{player.number}</span>
+                                                        <span className="font-bold text-sm text-gray-800">{player.name}</span>
+                                                        <div className="flex space-x-1 ml-2">
+                                                            {player.isGK && <span className="bg-orange-100 text-orange-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-orange-200">GK</span>}
+                                                            {player.isStarter && <span className="bg-green-100 text-green-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-green-200">STARTER</span>}
+                                                            {player.isCaptain && <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-yellow-300">© CAPTAIN</span>}
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                                </div>
+                                            )) : homeRoster.map(player => (
                                                 <div key={player.id} className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded shadow-sm">
                                                     <div className="flex items-center space-x-3">
                                                         <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700">{player.number}</span>
@@ -653,12 +657,28 @@ export default function App() {
                                             <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
                                                 {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                             </select>
-                                            <button onClick={handleAddBench} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
+                                            <button onClick={() => {
+                                                if (!newBench.name) return alert("Please enter name.");
+                                                const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
+                                                const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
+                                                
+                                                if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
+                                                if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
+                                                
+                                                setBench([...currentBench, { ...newBench, id: Date.now() }]);
+                                                setNewBench({ name: '', role: 'Assistant Coach' });
+                                            }} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
                                         </div>
                                     </div>
                                     <div className="p-4 overflow-y-auto flex-1">
                                         <div className="space-y-2">
-                                            {activeBench.map(person => (
+                                            {activeRosterModal === 'AWAY' ? awayBench.map(person => (
+                                                <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
+                                                    <span className="font-bold text-sm text-gray-800">{person.name}</span>
+                                                    <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
+                                                    <button onClick={() => removeBench(person.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                                </div>
+                                            )) : homeBench.map(person => (
                                                 <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
                                                     <span className="font-bold text-sm text-gray-800">{person.name}</span>
                                                     <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
@@ -693,7 +713,7 @@ export default function App() {
                         <button onClick={() => setAppTimer(prev => ({...prev, minimized: false}))} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded font-bold text-sm shadow transition">
                             ⤢ Expand Fullscreen
                         </button>
-                        <button onClick={() => setAppTimer({active: false, time: 0, label: '', minimized: false})} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-bold text-sm shadow transition">
+                        <button onClick={() => setAppTimer({active: false, time: 0, initialTime: 0, label: '', minimized: false})} className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-bold text-sm shadow transition">
                             Dismiss
                         </button>
                     </div>
@@ -715,7 +735,7 @@ export default function App() {
                         </div>
                         
                         <div className="flex space-x-6 w-full">
-                            <button onClick={() => setAppTimer({ active: false, time: 0, label: '', minimized: false })} className="flex-1 py-5 bg-blue-600 font-black text-xl text-white rounded-2xl shadow-xl hover:bg-blue-700 transition">
+                            <button onClick={() => setAppTimer({ active: false, time: 0, initialTime: 0, label: '', minimized: false })} className="flex-1 py-5 bg-blue-600 font-black text-xl text-white rounded-2xl shadow-xl hover:bg-blue-700 transition">
                                 Close Timer
                             </button>
                         </div>
@@ -732,7 +752,7 @@ export default function App() {
                         {foulAlert.type === 'red' && <div className="bg-red-600 text-white p-6"><h2 className="text-4xl font-black uppercase tracking-wider">Red Card</h2></div>}
                         {foulAlert.type === 'warning' && <div className="bg-yellow-400 text-black p-6"><h2 className="text-3xl font-black uppercase tracking-wider">{foulAlert.title}</h2></div>}
                         <div className="p-8">
-                            <p className="text-3xl font-black text-gray-800 mb-2">#{foulAlert.player.number} {foulAlert.player.name}</p>
+                            <p className="text-3xl font-black text-gray-800 mb-2">#{foulAlert.player?.number} {foulAlert.player?.name}</p>
                             <p className="text-xl font-bold text-gray-600 mb-8">{foulAlert.message}</p>
                             <button onClick={() => setFoulAlert(null)} className="w-full py-4 bg-slate-800 text-white font-black text-xl rounded-xl hover:bg-slate-700 transition shadow-lg">Acknowledge</button>
                         </div>
@@ -1087,7 +1107,13 @@ export default function App() {
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 {filteredFlowRoster.map(player => (
-                                    <button key={player.id} onClick={() => finalizeEvent(goalScorer, player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
+                                    <button key={player.id} onClick={() => {
+                                        if (goalScorer && typeof goalScorer !== 'string' && goalScorer.id === player.id) {
+                                            alert("The goal scorer cannot also be credited with the assist.");
+                                        } else {
+                                            finalizeEvent(goalScorer, player);
+                                        }
+                                    }} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
                                         <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
                                         <span className="ml-4 font-bold text-lg text-gray-800 text-left truncate">{player.name}</span>
                                     </button>
