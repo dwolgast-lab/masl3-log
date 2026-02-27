@@ -4,8 +4,12 @@ import { ACTION_BUTTONS, QUARTERS } from '../config';
 export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents,
     setModalStep, setSummaryTeam, triggerAction, activePenaltiesAway, activePenaltiesHome,
-    handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView
+    handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView,
+    handleInjuryCleared
 }) {
+    // Determine active injuries
+    const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
+
     return (
         <>
             <header className="flex justify-between items-center p-4 bg-white shadow z-10">
@@ -70,7 +74,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -91,7 +95,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -100,6 +104,24 @@ export default function InGameDashboard({
                     {activePenaltiesHome.length === 0 && <p className="text-xs text-gray-400 font-bold italic">No active penalties</p>}
                 </div>
             </div>
+
+            {/* INJURY DASHBOARD (CONDITIONAL) */}
+            {activeInjuries.length > 0 && (
+                <div className="bg-red-50 border-t-4 border-red-300 flex flex-col p-3 overflow-x-auto min-h-24">
+                    <h3 className="text-xs font-black text-red-800 uppercase mb-2 shrink-0">Active Injuries (Return Eligibility)</h3>
+                    <div className="flex space-x-4">
+                        {activeInjuries.map(ev => (
+                            <div key={ev.id} className="flex justify-between items-center bg-white p-2 rounded shadow-sm border-l-4 border-red-500 min-w-[250px]">
+                                <div>
+                                    <span className="font-bold text-gray-800 mr-2">#{ev.entity?.number} {ev.entity?.name}</span>
+                                    <div className="text-xs font-bold text-red-600 mt-1">Return: {ev.eligibleReturnTime.quarter} @ {ev.eligibleReturnTime.time}</div>
+                                </div>
+                                <button onClick={() => handleInjuryCleared(ev.id)} className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded border border-red-200 hover:bg-red-200 transition ml-4">Dismiss</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* DYNAMIC GLOBAL FOOTER */}
             <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200">

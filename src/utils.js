@@ -1,4 +1,3 @@
-// src/utils.js
 import { useState, useEffect } from 'react';
 
 export function useStickyState(defaultValue, key) {
@@ -27,14 +26,12 @@ export const toElapsedSeconds = (q, timeStr) => {
     if (!timeStr) return 0;
     const [m, s] = timeStr.split(':').map(Number);
     const quarterSecs = m * 60 + s; 
-    
     let base = 0;
     if (q === 'Q1') base = 0;
     else if (q === 'Q2') base = 15 * 60;
     else if (q === 'Q3') base = 30 * 60;
     else if (q === 'Q4') base = 45 * 60;
     else if (q === 'OT') base = 60 * 60;
-    
     const quarterDuration = (q === 'OT') ? 10 * 60 : 15 * 60;
     return base + (quarterDuration - quarterSecs);
 };
@@ -44,7 +41,6 @@ export const calcReleaseTime = (startQuarter, startTime, durationMins) => {
     const [min, sec] = startTime.split(':').map(Number);
     let remSecs = (min * 60 + sec) - (durationMins * 60);
     let q = startQuarter;
-
     while (remSecs < 0) {
         if (q === 'Q1') { q = 'Q2'; remSecs += 15 * 60; }
         else if (q === 'Q2') { q = 'Q3'; remSecs += 15 * 60; }
@@ -52,7 +48,6 @@ export const calcReleaseTime = (startQuarter, startTime, durationMins) => {
         else if (q === 'Q4') { q = 'OT'; remSecs += 10 * 60; } 
         else { q = 'END'; remSecs = 0; break; } 
     }
-
     const eMin = Math.floor(remSecs / 60);
     const eSec = remSecs % 60;
     return { quarter: q, time: `${String(eMin).padStart(2,'0')}:${String(eSec).padStart(2,'0')}` };
@@ -82,7 +77,9 @@ export const getTeamColor = (colorString, defaultColor) => {
 };
 
 export const getPlayerFouls = (player, teamIdentifier, gameEvents) => {
-    const playerFouls = gameEvents.filter(ev => ev.type === 'Log Foul' && ev.team === teamIdentifier && ev.entity?.id === player.id);
+    const playerEvents = gameEvents.filter(ev => ev.team === teamIdentifier && ev.entity?.id === player.id);
+    const playerFouls = playerEvents.filter(ev => ev.type === 'Log Foul');
+    
     const q1 = playerFouls.filter(ev => ev.quarter === 'Q1').length;
     const q2 = playerFouls.filter(ev => ev.quarter === 'Q2').length;
     const q3 = playerFouls.filter(ev => ev.quarter === 'Q3').length;
@@ -90,5 +87,12 @@ export const getPlayerFouls = (player, teamIdentifier, gameEvents) => {
     const ot = playerFouls.filter(ev => ev.quarter === 'OT').length;
     const firstHalf = q1 + q2;
     const secondHalf = q3 + q4 + ot;
-    return { q1, q2, q3, q4, ot, firstHalf, secondHalf, total: firstHalf + secondHalf };
+
+    // Track Cards (Ignore 'isJustServing' sub events so they don't get penalized)
+    const penaltyEvents = playerEvents.filter(ev => ev.type === 'Time Penalty' && !ev.isJustServing);
+    const blueCards = penaltyEvents.filter(ev => ev.penalty?.color === 'Blue' || ev.penalty?.code === 'Y6').length;
+    const yellowCards = penaltyEvents.filter(ev => ev.penalty?.color === 'Yellow').length;
+    const redCards = penaltyEvents.filter(ev => ev.penalty?.color === 'Red').length;
+
+    return { q1, q2, q3, q4, ot, firstHalf, secondHalf, total: firstHalf + secondHalf, blueCards, yellowCards, redCards };
 };

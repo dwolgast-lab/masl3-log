@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function EventLog({ gameEvents, setModalStep, awayCSSColor, homeCSSColor, gameData, startEditingEvent, deleteEvent }) {
+export default function EventLog({ gameEvents, setModalStep, awayCSSColor, homeCSSColor, gameData, startEditingEvent, deleteEvent, startEditingReleaseTime }) {
     return (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[85vh] overflow-hidden">
@@ -47,6 +47,7 @@ export default function EventLog({ gameEvents, setModalStep, awayCSSColor, homeC
                                         {event.penalty?.code && (
                                             <div className="text-sm font-bold mt-1" style={{ color: event.penalty.color === 'Yellow' ? '#b45309' : event.penalty.color.toLowerCase() }}>
                                                 [{event.penalty.code} - {event.penalty.desc}]
+                                                {event.penalty.blueCode && <span className="text-blue-600 ml-2 border-l-2 border-gray-300 pl-2">+{event.penalty.blueCode}</span>}
                                             </div>
                                         )}
                                         {event.type === 'Team Warnings' && event.warningReason && (
@@ -56,7 +57,11 @@ export default function EventLog({ gameEvents, setModalStep, awayCSSColor, homeC
                                         )}
                                         
                                         <span className="font-bold text-gray-600 mt-1 flex items-center flex-wrap">
-                                            {typeof event.entity === 'string' ? event.entity : `#${event.entity?.number} - ${event.entity?.name}`}
+                                            {event.entity === 'Unattributed' ? (
+                                                <span className="font-black text-red-600 mr-1 uppercase bg-red-50 border border-red-200 px-2 py-0.5 rounded">UNATTRIBUTED FOUL</span>
+                                            ) : (
+                                                typeof event.entity === 'string' ? event.entity : `#${event.entity?.number} - ${event.entity?.name}`
+                                            )}
                                             
                                             {event.servingPlayer && (
                                                 <span className="text-sm font-bold text-gray-500 ml-2 italic">
@@ -102,7 +107,10 @@ export default function EventLog({ gameEvents, setModalStep, awayCSSColor, homeC
                                 </div>
                             )}
 
-                            <div className="flex space-x-3 shrink-0 ml-4">
+                            <div className="flex space-x-3 shrink-0 ml-4 items-center">
+                                {event.type === 'Time Penalty' && event.releaseTime && !event.actualReleaseTime && (
+                                    <button onClick={() => startEditingReleaseTime(event.id)} className="px-4 py-2 bg-purple-50 text-purple-600 font-bold rounded-lg hover:bg-purple-100 transition whitespace-nowrap">Edit Exp</button>
+                                )}
                                 {event.entity && event.type !== 'Period Marker' && event.entity !== 'Team' && (
                                     <button onClick={() => startEditingEvent(event)} className="px-4 py-2 bg-blue-50 text-blue-600 font-bold rounded-lg hover:bg-blue-100 transition">Edit</button>
                                 )}

@@ -3,12 +3,44 @@
 
 ---
 
-## [v0.23] - UI Refactoring Phase 1
+## [v0.27] - 2026-02-27 - Timeouts, Release Overrides & Warning Fixes
+**Features & Logic Upgrades**
+* **Manual Expiration Override (Rule 12.11):** Added an "Edit Exp" button to all Time Penalties in the Game Log. This allows the official to manually adjust the release time to accommodate MASL Rule 12.11 (delayed penalty start times when a team has 3 or more active penalties).
+* **Media Timeout Validation:** The app now mathematically blocks any attempt to log a Media Timeout if the inputted time is greater than `08:00` remaining in the quarter.
+* **Warning Edit Fix:** Fixed a logic loop where editing a team warning would duplicate the entry and falsely trigger a "Second Warning" Yellow Card escalation. Edits now cleanly overwrite the original entry.
+
+---
+
+## [v0.26] - 2026-02-27 - Advanced Y6 & Accumulation Engine
+**Features & Logic Upgrades**
+* **Y6 Major Penalty Split Engine:** Assigning a Y6 now automatically generates *two* independent active penalties: a 7-minute Non-Releasable penalty for the original offender, and a 2-minute Releasable penalty for the field player serving the time.
+* **Penalty Accumulation Engine:** The app now strictly tracks total penalties per individual (where a Y6 mathematically counts as 2 penalties: one Blue, one Yellow). Reaching 2 penalties triggers a Warning Alert, and reaching 3 penalties triggers a Red Card Ejection Alert.
+* **Bench Personnel Restrictions:** The Player Select modal now dynamically hides Bench Personnel unless the "Yellow Card" color is actively selected, preventing improper card assignments.
+* **Foul Summary Accuracy:** The `B`, `Y`, and `R` card tracking columns now accurately reflect accumulations (and properly exclude substitute players who are merely serving time for a teammate).
+
+---
+
+## [v0.25] - 2026-02-27 - Advanced Penalty & Injury Management
+**Features & Logic Upgrades**
+* **Y6 Major Penal Upgrades:** Selecting a Y6 Yellow Card now immediately prompts the official to select the accompanying Blue Card reason. It then automatically forces a substitute player selection to serve the 2-minute releasable portion, while the original offender serves the strict 5-minute non-releasable portion.
+* **Foul Summary Dashboard:** The Foul Summary screen now tracks and displays `B` (Blue), `Y` (Yellow), and `R` (Red) card accumulations alongside standard fouls.
+* **Injury Dashboard:** Added a dynamic "Active Injuries" section that appears immediately below the penalty dashboard whenever a player is ruled out for a time duration. It displays their eligible return time and includes a manual "Dismiss" override button.
+* **Timeout Limits:** The app now strictly enforces the MASL standard 2 Team Timeouts per team, per match, and blocks the logging of a 3rd.
+* **Log Styling:** Unattributed fouls now appear in bold Red styling inside the Game Log to visually remind the official they must be assigned before the final report is generated.
+
+---
+
+## [v0.24] - 2026-02-27 - Architecture Refactoring Phase 2
+**Performance & Maintainability**
+* **Modal Extraction:** Abstracted `TimeKeypadModal`, `WarningModal`, `PenaltyModal`, and `PlayerSelectModal` out of the main logic block.
+* **Component Optimization:** `App.jsx` was successfully reduced from 1,300+ lines down to ~300 lines of pure state and routing logic. UI files are now isolated for easy CSS styling and debugging.
+
+---
+
+## [v0.23] - 2026-02-27 - UI Refactoring Phase 1
 **Architecture & Modularization**
 * **Massive Codebase Refactor:** Split the monolithic `App.jsx` into a modern, modular React structure.
 * **Extracted Utilities:** Moved static arrays (penalty codes, team warnings) to `config.js` and math/time engines to `utils.js`.
-* **Extracted PDF Engine:** Moved the `pdf-lib` generation logic to its own dedicated `pdfEngine.js` service.
-* **Component Extraction:** Separated the major UI overlays (`TimerOverlay`, `AlertOverlay`, `FoulSummary`) and screens (`PregameSetup`) into independent files to dramatically improve maintainability and performance.
 
 ---
 
