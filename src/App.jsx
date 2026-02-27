@@ -15,10 +15,10 @@ import AlertOverlay from './components/AlertOverlay';
 import FoulSummary from './components/FoulSummary';
 import EventLog from './components/EventLog';
 
-import WarningModal from './components/Modals/WarningModal';
-import PenaltyModal from './components/Modals/PenaltyModal';
-import TimeKeypadModal from './components/Modals/TimeKeypadModal';
-import PlayerSelectModal from './components/Modals/PlayerSelectModal';
+import WarningModal from './components/modals/WarningModal';
+import PenaltyModal from './components/modals/PenaltyModal';
+import TimeKeypadModal from './components/modals/TimeKeypadModal';
+import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
 const APP_VERSION = "0.28";
 
