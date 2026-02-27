@@ -7,8 +7,17 @@ export default function InGameDashboard({
     handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView,
     handleInjuryCleared
 }) {
-    // Determine active injuries
     const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
+
+    // HELPER: Renders the colored squares for the Active Penalty dashboard
+    const renderCardSquares = (penalty, isJustServing) => {
+        if (!penalty) return null;
+        if (penalty.code === 'Y6' && !isJustServing) return '🟦 🟨'; 
+        if (penalty.color === 'Blue') return '🟦';
+        if (penalty.color === 'Yellow') return '🟨';
+        if (penalty.color === 'Red') return '🟥';
+        return '';
+    };
 
     return (
         <>
@@ -66,7 +75,10 @@ export default function InGameDashboard({
                     {activePenaltiesAway.map(ev => (
                         <div key={ev.id} className="flex justify-between items-center bg-white p-2 mb-2 rounded shadow-sm border-l-4" style={{ borderColor: awayCSSColor }}>
                             <div>
-                                <span className="font-bold text-gray-800 mr-2">#{ev.entity?.number} {ev.entity?.name}</span>
+                                <span className="font-bold text-gray-800 mr-2">
+                                    <span className="mr-1 text-sm">{renderCardSquares(ev.penalty, ev.isJustServing)}</span> 
+                                    #{ev.entity?.number} {ev.entity?.name}
+                                </span>
                                 {ev.servingPlayer && (
                                     <div className="text-xs text-gray-500 font-bold italic mb-1">
                                         (Served by: #{ev.servingPlayer.number} {ev.servingPlayer.name})
@@ -74,7 +86,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex flex-col space-y-1">
+                            <div className="flex space-x-2">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -87,7 +99,10 @@ export default function InGameDashboard({
                     {activePenaltiesHome.map(ev => (
                         <div key={ev.id} className="flex justify-between items-center bg-white p-2 mb-2 rounded shadow-sm border-l-4" style={{ borderColor: homeCSSColor }}>
                             <div>
-                                <span className="font-bold text-gray-800 mr-2">#{ev.entity?.number} {ev.entity?.name}</span>
+                                <span className="font-bold text-gray-800 mr-2">
+                                    <span className="mr-1 text-sm">{renderCardSquares(ev.penalty, ev.isJustServing)}</span> 
+                                    #{ev.entity?.number} {ev.entity?.name}
+                                </span>
                                 {ev.servingPlayer && (
                                     <div className="text-xs text-gray-500 font-bold italic mb-1">
                                         (Served by: #{ev.servingPlayer.number} {ev.servingPlayer.name})
@@ -95,7 +110,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex flex-col space-y-1">
+                            <div className="flex space-x-2">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>

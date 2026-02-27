@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.28] - 2026-02-27 - Red Card Intercept & Penalty Icons
+**Features & Visual Upgrades**
+* **Active Penalty Icons:** The Active Penalties dashboard now renders colored squares (🟦, 🟨, 🟥) next to the player's name based on the assigned card color. A Y6 Major Penalty offender automatically renders both Blue and Yellow (🟦 🟨).
+* **Red Card Ejection Server:** The app now automatically intercepts all standard Red Cards (R1 through R7) and forces the 4th official to select a substitute field player to serve the accompanying 2-minute penalty time, strictly enforcing the MASL shorthanded rule.
+
+---
+
 ## [v0.27] - 2026-02-27 - Timeouts, Release Overrides & Warning Fixes
 **Features & Logic Upgrades**
 * **Manual Expiration Override (Rule 12.11):** Added an "Edit Exp" button to all Time Penalties in the Game Log. This allows the official to manually adjust the release time to accommodate MASL Rule 12.11 (delayed penalty start times when a team has 3 or more active penalties).

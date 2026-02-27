@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.27 (Timeouts, Release Overrides, Warning Fixes)
+ * Version: 0.28 (Red Card Intercept & Penalty Icons)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -15,12 +15,12 @@ import AlertOverlay from './components/AlertOverlay';
 import FoulSummary from './components/FoulSummary';
 import EventLog from './components/EventLog';
 
-import WarningModal from './components/modals/WarningModal';
-import PenaltyModal from './components/modals/PenaltyModal';
-import TimeKeypadModal from './components/modals/TimeKeypadModal';
-import PlayerSelectModal from './components/modals/PlayerSelectModal';
+import WarningModal from './components/Modals/WarningModal';
+import PenaltyModal from './components/Modals/PenaltyModal';
+import TimeKeypadModal from './components/Modals/TimeKeypadModal';
+import PlayerSelectModal from './components/Modals/PlayerSelectModal';
 
-const APP_VERSION = "0.27";
+const APP_VERSION = "0.28";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -75,8 +75,8 @@ export default function App() {
     const [goalScorer, setGoalScorer] = useState(null);
     const [penaltyData, setPenaltyData] = useState({ color: null, code: null, desc: null, blueCode: null, blueDesc: null });
     const [benchPenaltyEntity, setBenchPenaltyEntity] = useState(null); 
-    const [targetPenaltyId, setTargetPenaltyId] = useState(null); // Used for PPG and Exp edits
-    const [manualTimeMode, setManualTimeMode] = useState(null); // 'PPG' or 'RELEASE'
+    const [targetPenaltyId, setTargetPenaltyId] = useState(null); 
+    const [manualTimeMode, setManualTimeMode] = useState(null); 
     const [goalFlags, setGoalFlags] = useState({ pp: false, shootout: false, pk: false });
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     const [appTimer, setAppTimer] = useState({ active: false, time: 0, initialTime: 0, label: '', minimized: false });
@@ -135,12 +135,10 @@ export default function App() {
         const isValid = (m, s) => (m <= 15 && !(m === 15 && s > 0) && s <= 59);
 
         if (isValid(mm, ss)) {
-            // NEW: Media Timeout > 8:00 validation
             if (activeAction.type === 'Media Timeout' && (mm * 60 + ss > 8 * 60)) {
                 alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
                 return; 
             }
-
             setTimeInput(padded); setActiveAction(prev => ({ ...prev, time: padded }));
             if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, padded);
             else if (nextStepStr === 'FINALIZE_MANUAL_TIME') processManualTime(padded);
@@ -158,7 +156,6 @@ export default function App() {
                     alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
                     return; 
                 }
-
                 setTimeInput(suggRaw); setActiveAction(prev => ({ ...prev, time: suggRaw }));
                 if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, suggRaw);
                 else if (nextStepStr === 'FINALIZE_MANUAL_TIME') processManualTime(suggRaw);
@@ -214,7 +211,10 @@ export default function App() {
                 if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
                 else { setGoalScorer(entity); setPlayerSearchInput(''); setModalStep('ASSIST'); }
             } else if (activeAction.type === 'Time Penalty') {
-                const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || penaltyData.code === 'Y6' || (entity && entity.isGK) || entity === 'Team / Bench';
+                // RED CARD ENFORCEMENT: R1-R7 requires a teammate to serve 2 mins.
+                const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
+                const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || penaltyData.code === 'Y6' || isRedPowerPlay || (entity && entity.isGK) || entity === 'Team / Bench';
+                
                 if (needsServer) { setBenchPenaltyEntity(entity); setPlayerSearchInput(''); setModalStep('SERVING_PLAYER'); } 
                 else { finalizeEvent(entity); }
             } else { finalizeEvent(entity); }
@@ -231,24 +231,16 @@ export default function App() {
         const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
 
         if (editingEventId) {
-            // Check for duplicate warning excluding the current editing event
             const prevWarning = gameEvents.find(ev => ev.id !== editingEventId && ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason);
-            
             setGameEvents(gameEvents.map(ev => ev.id === editingEventId ? {
                 ...ev, quarter: modalQuarter, time: finalTimeStr, warningReason: reason
             } : ev));
-            
             if (prevWarning) setFoulAlert({ type: 'yellow', title: 'WARNING ESCALATION', player: { number: 'TEAM', name: 'WARNING' }, message: `Second warning given for [${reason}]. Issue a 5-Minute Yellow Card to the player or coach who committed the offense.` });
-            setEditingEventId(null);
-            setModalStep('EVENT_LOG');
+            setEditingEventId(null); setModalStep('EVENT_LOG');
         } else {
             const prevWarning = gameEvents.find(ev => ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason);
-            const newEvent = {
-                id: Date.now(), team: activeAction.team, type: activeAction.type,
-                quarter: modalQuarter, time: finalTimeStr, entity: 'Team / Bench', warningReason: reason
-            };
+            const newEvent = { id: Date.now(), team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team / Bench', warningReason: reason };
             setGameEvents([newEvent, ...gameEvents]);
-            
             if (prevWarning) setFoulAlert({ type: 'yellow', title: 'WARNING ESCALATION', player: { number: 'TEAM', name: 'WARNING' }, message: `Second warning given for [${reason}]. Issue a 5-Minute Yellow Card to the player or coach who committed the offense.` });
             setModalStep(null);
         }
@@ -318,7 +310,6 @@ export default function App() {
                         else if (ev.penalty.color === 'Red' && ev.penalty.code !== 'R8' && ev.penalty.code !== 'R9') duration = 2;
                     }
                     let rTime = ev.releaseTime;
-                    // Only auto-recalculate release time if it hasn't been manually cleared
                     if (duration > 0 && !ev.clearedFromBoard) rTime = calcReleaseTime(modalQuarter, finalTimeStr, duration);
                     let eReturn = ev.eligibleReturnTime;
                     if (ev.type === 'Injury' && !ev.clearedInjury) eReturn = calcInjuryReturn(modalQuarter, finalTimeStr);
@@ -419,17 +410,14 @@ export default function App() {
         if (event.type === 'Log Foul') setModalStep('PLAYER'); else setModalStep('TIME');
     };
 
-    const handleAddPlayer = () => { /* Logic hidden in setup component */ };
-    const handleAddBench = () => { /* Logic hidden in setup component */ };
-
     if (currentView === 'pregame') {
         return (
             <PregameSetup 
                 gameData={gameData} handleInputChange={handleInputChange} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
                 awayRoster={awayRoster} homeRoster={homeRoster} awayBench={awayBench} homeBench={homeBench}
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
-                newPlayer={newPlayer} setNewPlayer={setNewPlayer} handleAddPlayer={() => { /* Moved logic to PregameSetup previously */ }} removePlayer={(id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id))}
-                newBench={newBench} setNewBench={setNewBench} handleAddBench={() => { /* Moved logic to PregameSetup previously */ }} removeBench={(id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id))}
+                newPlayer={newPlayer} setNewPlayer={setNewPlayer} handleAddPlayer={() => { /* Logic hidden */ }} removePlayer={(id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id))}
+                newBench={newBench} setNewBench={setNewBench} handleAddBench={() => { /* Logic hidden */ }} removeBench={(id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id))}
                 setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} onExportPDF={() => generatePDF(gameData, homeRoster, awayRoster, gameEvents)}
             />
         );
