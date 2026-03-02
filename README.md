@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.31] - 2026-03-02 - Team Selection Validation
+**Features & Logic Upgrades**
+* **Duplicate Team Validation:** Added strict validation to the Setup screen. The app now alerts the user and prevents selection if the same franchise is chosen for both the Home and Away teams.
+* **Kickoff Safety Check:** Added a secondary validation check to the "Proceed to Kickoff" button that ensures manually typed custom entries also do not match before allowing the game to start.
+* **Version UI Restoration:** Restored the floating version and author indicator to the pregame setup screen that was accidentally omitted during Phase 1 refactoring.
+
+---
+
 ## [v0.30] - 2026-03-02 - Smart Selectors & Fixes
 **Features & Logic Upgrades**
 * **Smart Dropdown Selectors:** Updated the Team Setup screen to use controlled, smart dropdown menus. Selecting a team from the database instantly maps the franchise properties. The menus dynamically fall back to a "Custom Entry" option if the user manually overrides the team name via the text input for exhibition matches.

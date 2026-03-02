@@ -2,13 +2,14 @@ import React from 'react';
 import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
 
 export default function PregameSetup({
-    gameData, handleInputChange, setGameData, awayCSSColor, homeCSSColor,
-    awayRoster, homeRoster, awayBench, homeBench,
+    gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
+    awayRoster, setAwayRoster, homeRoster, setHomeRoster,
+    awayBench, setAwayBench, homeBench, setHomeBench,
     activeRosterModal, setActiveRosterModal,
     showStartersModal, setShowStartersModal,
-    newPlayer, setNewPlayer, handleAddPlayer, removePlayer,
-    newBench, setNewBench, handleAddBench, removeBench,
-    setCurrentView, clearAllGameData, onExportPDF
+    newPlayer, setNewPlayer,
+    newBench, setNewBench,
+    setCurrentView, clearAllGameData, onExportPDF, appVersion
 }) {
     const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
         if (a.isGK && !b.isGK) return -1;
@@ -19,20 +20,81 @@ export default function PregameSetup({
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     const availableTeams = TEAMS.filter(t => t.league === gameData.league);
 
+    const getTeamSelectValue = (type) => {
+        const teamName = gameData[`${type}Team`];
+        const team = availableTeams.find(t => t.name === teamName);
+        return team ? team.id : 'custom';
+    };
+
     const handleTeamSelect = (type, e) => {
         const teamId = e.target.value;
-        if (!teamId) {
-             setGameData({...gameData, [`${type}Team`]: '', [`${type}Color`]: '', [`${type}Logo`]: ''});
-             return;
+        const otherType = type === 'away' ? 'home' : 'away';
+
+        if (teamId === 'custom') {
+            setGameData({ ...gameData, [`${type}Logo`]: '' });
+            return;
         }
+        
         const selected = TEAMS.find(t => t.id === teamId);
-        setGameData({
-            ...gameData,
-            [`${type}Team`]: selected.name,
-            [`${type}Color`]: selected.color,
-            [`${type}Logo`]: selected.logo
-        });
+        if (selected) {
+            // VALIDATION: Prevent duplicate team selection
+            if (selected.name === gameData[`${otherType}Team`]) {
+                alert(`The ${selected.name} are already selected as the ${otherType === 'away' ? 'Away' : 'Home'} team. Please choose a different team.`);
+                return;
+            }
+
+            setGameData({
+                ...gameData,
+                [`${type}Team`]: selected.name,
+                [`${type}Color`]: selected.color,
+                [`${type}Logo`]: selected.logo
+            });
+        }
     };
+
+    const handleProceedToKickoff = () => {
+        // VALIDATION: Check manually typed duplicates
+        if (gameData.awayTeam && gameData.homeTeam && gameData.awayTeam.trim().toLowerCase() === gameData.homeTeam.trim().toLowerCase()) {
+            alert("Home and Away teams cannot be the same. Please change one of the team names before proceeding to kickoff.");
+            return;
+        }
+        setCurrentView('ingame');
+    };
+
+    const handleAddPlayer = () => {
+        if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
+        const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+        const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+
+        if (currentRoster.length >= 17) return alert("Max 17 total players.");
+        if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
+        if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
+        
+        if (newPlayer.isStarter) {
+            if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
+            if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
+        }
+        if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
+
+        const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        setRoster(updated);
+        setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
+    };
+
+    const handleAddBench = () => {
+        if (!newBench.name) return alert("Please enter name.");
+        const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
+        const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
+        
+        if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
+        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
+        
+        setBench([...currentBench, { ...newBench, id: Date.now() }]);
+        setNewBench({ name: '', role: 'Assistant Coach' });
+    };
+
+    const removePlayer = (id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id));
+    const removeBench = (id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id));
 
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans relative flex flex-col items-center">
@@ -75,39 +137,39 @@ export default function PregameSetup({
                         </div>
                         <div className="grid grid-cols-2 gap-8">
                             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
-                                {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80" />}
+                                {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80 drop-shadow-sm" />}
                                 <h3 className="font-black mb-4 uppercase" style={{ color: awayCSSColor }}>AWAY TEAM</h3>
                                 
-                                <select onChange={(e) => handleTeamSelect('away', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm">
-                                    <option value="">-- Select Team from Database --</option>
+                                <select value={getTeamSelectValue('away')} onChange={(e) => handleTeamSelect('away', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm outline-none focus:border-blue-500">
+                                    <option value="custom">-- Custom / Manual Entry --</option>
                                     {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                 </select>
                                 
                                 <div className="flex space-x-2 mb-4">
-                                    <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm" />
-                                    <input type="text" name="awayColor" placeholder="Color Hex/Name" value={gameData.awayColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm" />
+                                    <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="awayColor" placeholder="Color Hex/Name" value={gameData.awayColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
                                 </div>
 
-                                <button onClick={() => setActiveRosterModal('AWAY')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: awayCSSColor }}>
+                                <button onClick={() => setActiveRosterModal('AWAY')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: awayCSSColor }}>
                                     <span>Edit Roster & Bench</span>
                                     <span>{awayRoster.length} Plyrs / {awayBench.length} Staff</span>
                                 </button>
                             </div>
                             <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
-                                {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80" />}
+                                {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80 drop-shadow-sm" />}
                                 <h3 className="font-black mb-4 uppercase" style={{ color: homeCSSColor }}>HOME TEAM</h3>
                                 
-                                <select onChange={(e) => handleTeamSelect('home', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm">
-                                    <option value="">-- Select Team from Database --</option>
+                                <select value={getTeamSelectValue('home')} onChange={(e) => handleTeamSelect('home', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm outline-none focus:border-blue-500">
+                                    <option value="custom">-- Custom / Manual Entry --</option>
                                     {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                 </select>
 
                                 <div className="flex space-x-2 mb-4">
-                                    <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm" />
-                                    <input type="text" name="homeColor" placeholder="Color Hex/Name" value={gameData.homeColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm" />
+                                    <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="homeColor" placeholder="Color Hex/Name" value={gameData.homeColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
                                 </div>
 
-                                <button onClick={() => setActiveRosterModal('HOME')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: homeCSSColor }}>
+                                <button onClick={() => setActiveRosterModal('HOME')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: homeCSSColor }}>
                                     <span>Edit Roster & Bench</span>
                                     <span>{homeRoster.length} Plyrs / {homeBench.length} Staff</span>
                                 </button>
@@ -120,13 +182,11 @@ export default function PregameSetup({
                     <span className="text-sm font-bold text-green-600 flex items-center">
                         <span className="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></span> Auto-Saving Enabled
                     </span>
-                    <button onClick={() => setCurrentView('ingame')} className="px-8 py-4 bg-green-600 text-white font-black text-lg rounded-xl shadow-lg hover:bg-green-700 transition">
+                    <button onClick={handleProceedToKickoff} className="px-8 py-4 bg-green-600 text-white font-black text-lg rounded-xl shadow-lg hover:bg-green-700 transition">
                         PROCEED TO KICKOFF ➔
                     </button>
                 </div>
             </div>
-            
-            {/* The rest of your Modals in this file remain unchanged */}
 
             <div className="w-full max-w-5xl flex justify-between px-4">
                 <button onClick={clearAllGameData} className="text-red-500 font-bold border-b border-transparent hover:border-red-500 transition">
@@ -137,6 +197,7 @@ export default function PregameSetup({
                 </button>
             </div>
 
+            {/* MODALS RETAINED FOR BREVITY */}
             {showStartersModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -179,7 +240,6 @@ export default function PregameSetup({
                     </div>
                 </div>
             )}
-
             {activeRosterModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden">
@@ -250,6 +310,11 @@ export default function PregameSetup({
                     </div>
                 </div>
             )}
+            
+            {/* VERSION INDICATOR - RESTORED FOR SETUP SCREEN */}
+            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
+                Author: Dave Wolgast | v{appVersion}
+            </div>
         </div>
     );
 }
