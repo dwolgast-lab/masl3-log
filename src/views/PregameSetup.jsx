@@ -20,6 +20,14 @@ export default function PregameSetup({
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     const availableTeams = TEAMS.filter(t => t.league === gameData.league);
 
+    // --- NEW: Group teams by division ---
+    const teamsByDivision = availableTeams.reduce((acc, team) => {
+        const div = team.division || 'Other';
+        if (!acc[div]) acc[div] = [];
+        acc[div].push(team);
+        return acc;
+    }, {});
+
     const getTeamSelectValue = (type) => {
         const teamName = gameData[`${type}Team`];
         const team = availableTeams.find(t => t.name === teamName);
@@ -37,7 +45,6 @@ export default function PregameSetup({
         
         const selected = TEAMS.find(t => t.id === teamId);
         if (selected) {
-            // VALIDATION: Prevent duplicate team selection
             if (selected.name === gameData[`${otherType}Team`]) {
                 alert(`The ${selected.name} are already selected as the ${otherType === 'away' ? 'Away' : 'Home'} team. Please choose a different team.`);
                 return;
@@ -53,7 +60,6 @@ export default function PregameSetup({
     };
 
     const handleProceedToKickoff = () => {
-        // VALIDATION: Check manually typed duplicates
         if (gameData.awayTeam && gameData.homeTeam && gameData.awayTeam.trim().toLowerCase() === gameData.homeTeam.trim().toLowerCase()) {
             alert("Home and Away teams cannot be the same. Please change one of the team names before proceeding to kickoff.");
             return;
@@ -142,7 +148,13 @@ export default function PregameSetup({
                                 
                                 <select value={getTeamSelectValue('away')} onChange={(e) => handleTeamSelect('away', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm outline-none focus:border-blue-500">
                                     <option value="custom">-- Custom / Manual Entry --</option>
-                                    {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    {Object.keys(teamsByDivision).map(division => (
+                                        <optgroup key={division} label={`${division} Division`}>
+                                            {teamsByDivision[division].map(t => (
+                                                <option key={t.id} value={t.id}>{t.name}</option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
                                 </select>
                                 
                                 <div className="flex space-x-2 mb-4">
@@ -161,7 +173,13 @@ export default function PregameSetup({
                                 
                                 <select value={getTeamSelectValue('home')} onChange={(e) => handleTeamSelect('home', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm outline-none focus:border-blue-500">
                                     <option value="custom">-- Custom / Manual Entry --</option>
-                                    {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    {Object.keys(teamsByDivision).map(division => (
+                                        <optgroup key={division} label={`${division} Division`}>
+                                            {teamsByDivision[division].map(t => (
+                                                <option key={t.id} value={t.id}>{t.name}</option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
                                 </select>
 
                                 <div className="flex space-x-2 mb-4">
@@ -311,7 +329,6 @@ export default function PregameSetup({
                 </div>
             )}
             
-            {/* VERSION INDICATOR - RESTORED FOR SETUP SCREEN */}
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
                 Author: Dave Wolgast | v{appVersion}
             </div>

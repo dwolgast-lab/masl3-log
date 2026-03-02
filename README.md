@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.33] - 2026-03-02 - Division Grouping
+**UI & Experience Enhancements**
+* **Division Headers:** Re-engineered the team dropdowns to utilize HTML `<optgroup>` tags. The dropdown now dynamically sorts and categorizes teams under their respective Division headers (Atlantic, East, Great Lakes North, South) based on the database object.
+
+---
+
 ## [v0.32] - 2026-03-02 - Hotfix: Player Select Modal Crash
 **Bug Fixes**
 * **Foul Logging Crash Fixed:** Resolved a fatal crash (blank screen) that occurred when logging a foul. The `PlayerSelectModal` was missing the import for the `QUARTERS` database, causing the render to fail when attempting to draw the contextual quarter selector.
