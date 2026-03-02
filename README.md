@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.29] - 2026-03-02 - Franchise Databases & UI Branding
+**Architecture & UI Upgrades**
+* **League & Team Databases:** Implemented hardcoded structural databases within `config.js` to replace manual data entry.
+* **Dropdown Selection Flow:** Replaced the free-text Setup fields with smart dropdown selectors. Selecting a team dynamically populates their name, team color, and franchise logo based on the selected League context.
+* **In-Game Branding:** The Active Scoreboard now dynamically renders the selected league logo and franchise logos adjacent to the team names, providing immediate visual confirmation and a broadcast-quality UI feel.
+
+---
+
 ## [v0.28] - 2026-02-27 - Red Card Intercept & Penalty Icons
 **Features & Visual Upgrades**
 * **Active Penalty Icons:** The Active Penalties dashboard now renders colored squares (🟦, 🟨, 🟥) next to the player's name based on the assigned card color. A Y6 Major Penalty offender automatically renders both Blue and Yellow (🟦 🟨).

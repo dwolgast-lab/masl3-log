@@ -62,3 +62,27 @@ export const TEAM_WARNINGS = ["Bench Dissent", "Delay of Game", "Embellishment",
 export const ACTION_BUTTONS = ['Goal / Assist', 'Log Foul', 'Time Penalty', 'Injury', 'Team Timeout', 'Team Warnings'];
 export const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'OT'];
 export const BENCH_ROLES = ['Head Coach', 'Assistant Coach', 'Trainer', 'Other'];
+
+// --- LEAGUE & TEAM DATABASES ---
+export const LEAGUES = [
+    { id: 'MASL', name: 'MASL', logo: '/logos/masl_logo.png' },
+    { id: 'MASL2', name: 'MASL 2', logo: '/logos/masl2_logo.png' },
+    { id: 'MASL3', name: 'MASL 3', logo: '/logos/masl3_logo.png' },
+    { id: 'MASLW', name: 'MASLW', logo: '/logos/maslw_logo.png' }
+];
+
+export const TEAMS = [
+    // MASL 3 Teams
+    { id: 'baltimore_kings', name: 'Baltimore Kings', league: 'MASL3', color: '#FFD700', logo: '/logos/Baltimore_Kings_logo.png' },
+    { id: 'buffalo_gunners', name: 'Buffalo Gunners FC', league: 'MASL3', color: '#E31837', logo: '/logos/Buffalo_Gunners_FC_logo.png' },
+    { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', logo: '/logos/Cleveland_Samba_logo.png' },
+    { id: 'cumberland_valley', name: 'Cumberland Valley SC', league: 'MASL3', color: '#111827', logo: '/logos/Cumberland_Valley_logo.png' },
+    { id: 'delaware_city', name: 'Delaware City FC', league: 'MASL3', color: '#00A3E0', logo: '/logos/Delaware_City_FC_logo.png' },
+    { id: 'maryland_storm', name: 'Maryland Storm', league: 'MASL3', color: '#B91C1C', logo: '/logos/Maryland_Storm_logo.png' },
+    { id: 'northern_virginia', name: 'Northern Virginia FC', league: 'MASL3', color: '#B8860B', logo: '/logos/Northern_Virginia_FC_logo.png' },
+    { id: 'roc_city_boom', name: 'ROC City Boom', league: 'MASL3', color: '#1D4ED8', logo: '/logos/ROC_City_Boom_logo.png' },
+    { id: 'virginia_marauders', name: 'Virginia Marauders FC', league: 'MASL3', color: '#1E3A8A', logo: '/logos/Virginia_Marauders_FC_logo.png' },
+    { id: 'youngstown_nighthawks', name: 'Youngstown Nighthawks', league: 'MASL3', color: '#4B5563', logo: '/logos/Youngstown_Nighthawks_logo.png' }
+    
+    // Future teams for MASL, MASL2, and MASLW can be added right here!
+];

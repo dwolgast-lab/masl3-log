@@ -1,8 +1,8 @@
 import React from 'react';
-import { BENCH_ROLES } from '../config';
+import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
 
 export default function PregameSetup({
-    gameData, handleInputChange, awayCSSColor, homeCSSColor,
+    gameData, handleInputChange, setGameData, awayCSSColor, homeCSSColor,
     awayRoster, homeRoster, awayBench, homeBench,
     activeRosterModal, setActiveRosterModal,
     showStartersModal, setShowStartersModal,
@@ -16,17 +16,48 @@ export default function PregameSetup({
         return parseInt(a.number) - parseInt(b.number);
     });
 
+    const activeLeague = LEAGUES.find(l => l.id === gameData.league);
+    const availableTeams = TEAMS.filter(t => t.league === gameData.league);
+
+    const handleTeamSelect = (type, e) => {
+        const teamId = e.target.value;
+        if (!teamId) {
+             setGameData({...gameData, [`${type}Team`]: '', [`${type}Color`]: '', [`${type}Logo`]: ''});
+             return;
+        }
+        const selected = TEAMS.find(t => t.id === teamId);
+        setGameData({
+            ...gameData,
+            [`${type}Team`]: selected.name,
+            [`${type}Color`]: selected.color,
+            [`${type}Logo`]: selected.logo
+        });
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans relative flex flex-col items-center">
             <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-                <div className="bg-slate-800 p-6 text-white flex justify-between items-center">
-                    <h1 className="text-3xl font-black tracking-wider">MASL3 PRE-GAME SETUP</h1>
-                    <span className="font-bold text-slate-300">4th Official Log</span>
+                <div className="bg-slate-800 p-6 text-white flex justify-between items-center relative">
+                    <div className="flex items-center space-x-4 z-10">
+                        {activeLeague?.logo && <img src={activeLeague.logo} alt="League Logo" className="w-16 h-16 object-contain bg-white rounded-full p-1" />}
+                        <div>
+                            <h1 className="text-3xl font-black tracking-wider">{activeLeague?.name || 'MASL'} PRE-GAME SETUP</h1>
+                            <span className="font-bold text-slate-300">4th Official Log</span>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="p-8 space-y-8">
                     <section>
-                        <h2 className="text-xl font-bold text-slate-700 border-b-2 border-slate-200 pb-2 mb-4">Match Information</h2>
+                        <div className="flex justify-between items-end border-b-2 border-slate-200 pb-2 mb-4">
+                            <h2 className="text-xl font-bold text-slate-700">Match Information</h2>
+                            <div className="flex items-center space-x-2">
+                                <label className="text-sm font-bold text-gray-600">Select League:</label>
+                                <select name="league" value={gameData.league || 'MASL3'} onChange={handleInputChange} className="p-2 border rounded bg-gray-50 font-bold shadow-sm">
+                                    {LEAGUES.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
                         <div className="grid grid-cols-4 gap-4">
                             <div><label className="block text-sm font-bold text-gray-600 mb-1">Date</label><input type="date" name="date" value={gameData.date} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
                             <div><label className="block text-sm font-bold text-gray-600 mb-1">Scheduled KO</label><input type="time" name="scheduledKO" onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
@@ -43,20 +74,40 @@ export default function PregameSetup({
                             </button>
                         </div>
                         <div className="grid grid-cols-2 gap-8">
-                            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
+                                {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80" />}
                                 <h3 className="font-black mb-4 uppercase" style={{ color: awayCSSColor }}>AWAY TEAM</h3>
-                                <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="w-full p-3 border rounded-lg mb-3" />
-                                <input type="text" name="awayColor" placeholder="Uniform Color (e.g. Navy / White)" value={gameData.awayColor} onChange={handleInputChange} className="w-full p-3 border rounded-lg mb-4" />
-                                <button onClick={() => setActiveRosterModal('AWAY')} className="w-full py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: awayCSSColor }}>
+                                
+                                <select onChange={(e) => handleTeamSelect('away', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm">
+                                    <option value="">-- Select Team from Database --</option>
+                                    {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+                                
+                                <div className="flex space-x-2 mb-4">
+                                    <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm" />
+                                    <input type="text" name="awayColor" placeholder="Color Hex/Name" value={gameData.awayColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm" />
+                                </div>
+
+                                <button onClick={() => setActiveRosterModal('AWAY')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: awayCSSColor }}>
                                     <span>Edit Roster & Bench</span>
                                     <span>{awayRoster.length} Plyrs / {awayBench.length} Staff</span>
                                 </button>
                             </div>
-                            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+                            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
+                                {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home Logo" className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80" />}
                                 <h3 className="font-black mb-4 uppercase" style={{ color: homeCSSColor }}>HOME TEAM</h3>
-                                <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="w-full p-3 border rounded-lg mb-3" />
-                                <input type="text" name="homeColor" placeholder="Uniform Color (e.g. Orange / Black)" value={gameData.homeColor} onChange={handleInputChange} className="w-full p-3 border rounded-lg mb-4" />
-                                <button onClick={() => setActiveRosterModal('HOME')} className="w-full py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: homeCSSColor }}>
+                                
+                                <select onChange={(e) => handleTeamSelect('home', e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm">
+                                    <option value="">-- Select Team from Database --</option>
+                                    {availableTeams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+
+                                <div className="flex space-x-2 mb-4">
+                                    <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm" />
+                                    <input type="text" name="homeColor" placeholder="Color Hex/Name" value={gameData.homeColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm" />
+                                </div>
+
+                                <button onClick={() => setActiveRosterModal('HOME')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4" style={{ backgroundColor: homeCSSColor }}>
                                     <span>Edit Roster & Bench</span>
                                     <span>{homeRoster.length} Plyrs / {homeBench.length} Staff</span>
                                 </button>
@@ -74,6 +125,8 @@ export default function PregameSetup({
                     </button>
                 </div>
             </div>
+            
+            {/* The rest of your Modals in this file remain unchanged */}
 
             <div className="w-full max-w-5xl flex justify-between px-4">
                 <button onClick={clearAllGameData} className="text-red-500 font-bold border-b border-transparent hover:border-red-500 transition">

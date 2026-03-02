@@ -48,8 +48,12 @@ const playBells = (count) => {
 
 export default function App() {
     const [currentView, setCurrentView] = useStickyState('pregame', 'masl-view'); 
-    const [gameData, setGameData] = useStickyState({
-        date: new Date().toISOString().split('T')[0], venue: '', city: '', awayTeam: '', awayColor: '', homeTeam: '', homeColor: '', crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
+   const [gameData, setGameData] = useStickyState({
+        date: new Date().toISOString().split('T')[0], venue: '', city: '', 
+        league: 'MASL3', // NEW
+        awayTeam: '', awayColor: '', awayLogo: '', // NEW logo fields
+        homeTeam: '', homeColor: '', homeLogo: '',
+        crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
     }, 'masl-data');
 
     const [awayRoster, setAwayRoster] = useStickyState([], 'masl-awayRoster');

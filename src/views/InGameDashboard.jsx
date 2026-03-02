@@ -1,5 +1,5 @@
 import React from 'react';
-import { ACTION_BUTTONS, QUARTERS } from '../config';
+import { ACTION_BUTTONS, QUARTERS, LEAGUES } from '../config';
 
 export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents,
@@ -8,8 +8,8 @@ export default function InGameDashboard({
     handleInjuryCleared
 }) {
     const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
+    const activeLeague = LEAGUES.find(l => l.id === gameData.league);
 
-    // HELPER: Renders the colored squares for the Active Penalty dashboard
     const renderCardSquares = (penalty, isJustServing) => {
         if (!penalty) return null;
         if (penalty.code === 'Y6' && !isJustServing) return '🟦 🟨'; 
@@ -22,26 +22,46 @@ export default function InGameDashboard({
     return (
         <>
             <header className="flex justify-between items-center p-4 bg-white shadow z-10">
-                <button onClick={() => setCurrentView('pregame')} className="px-4 py-2 border-2 border-gray-300 text-gray-600 font-bold rounded hover:bg-gray-100">⚙️ Setup</button>
-                <h1 className="text-4xl font-black tracking-wider uppercase flex items-center">
-                    <span style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</span> 
-                    <span className="text-gray-400 mx-4 font-mono text-5xl bg-gray-100 px-4 py-1 rounded-xl shadow-inner border border-gray-200">{awayScore} - {homeScore}</span> 
-                    <span style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME'}</span>
-                </h1>
-                <div className="flex bg-gray-200 rounded-lg p-1">
-                    {QUARTERS.map(q => (
-                        <div key={q} className={`px-6 py-2 rounded-md font-bold transition-colors ${quarter === q ? 'bg-black text-white shadow' : 'text-gray-400'}`}>{q}</div>
-                    ))}
+                <div className="flex items-center space-x-4">
+                    {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className="w-10 h-10 object-contain hidden md:block" />}
+                    <button onClick={() => setCurrentView('pregame')} className="px-4 py-2 border-2 border-gray-300 text-gray-600 font-bold rounded hover:bg-gray-100">⚙️ Setup</button>
                 </div>
-                <button onClick={() => setModalStep('EVENT_LOG')} className="flex items-center px-6 py-2 bg-slate-800 text-white font-bold rounded-lg shadow hover:bg-slate-700">
-                    Game Log <span className="ml-2 bg-white text-slate-800 px-2 py-0.5 rounded-full text-sm">{gameEvents.length}</span>
-                </button>
+                
+                <h1 className="text-4xl font-black tracking-wider uppercase flex items-center space-x-6">
+                    <div className="flex items-center space-x-3">
+                        {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-12 h-12 object-contain drop-shadow-md" />}
+                        <span style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</span> 
+                    </div>
+
+                    <span className="text-gray-400 font-mono text-5xl bg-gray-100 px-6 py-1 rounded-xl shadow-inner border border-gray-200">
+                        {awayScore} - {homeScore}
+                    </span> 
+
+                    <div className="flex items-center space-x-3">
+                        <span style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME'}</span>
+                        {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home" className="w-12 h-12 object-contain drop-shadow-md" />}
+                    </div>
+                </h1>
+
+                <div className="flex items-center space-x-4">
+                    <div className="flex bg-gray-200 rounded-lg p-1">
+                        {QUARTERS.map(q => (
+                            <div key={q} className={`px-4 py-2 rounded-md font-bold transition-colors ${quarter === q ? 'bg-black text-white shadow' : 'text-gray-400'}`}>{q}</div>
+                        ))}
+                    </div>
+                    <button onClick={() => setModalStep('EVENT_LOG')} className="flex items-center px-6 py-2 bg-slate-800 text-white font-bold rounded-lg shadow hover:bg-slate-700">
+                        Log <span className="ml-2 bg-white text-slate-800 px-2 py-0.5 rounded-full text-sm">{gameEvents.length}</span>
+                    </button>
+                </div>
             </header>
 
             <div className="flex flex-1 overflow-hidden">
                 <div className="w-1/2 p-4 flex flex-col border-r-4 border-gray-800 bg-white">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-3xl font-black uppercase" style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY TEAM'}</h2>
+                        <h2 className="text-3xl font-black uppercase flex items-center space-x-3" style={{ color: awayCSSColor }}>
+                            {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-8 h-8 object-contain" />}
+                            <span>{gameData.awayTeam || 'AWAY TEAM'}</span>
+                        </h2>
                         <button onClick={() => {setSummaryTeam('AWAY'); setModalStep('FOUL_SUMMARY');}} className="px-4 py-2 font-bold rounded shadow-sm border" style={{ color: awayCSSColor, borderColor: awayCSSColor }}>Foul Summary</button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 flex-1">
@@ -55,7 +75,10 @@ export default function InGameDashboard({
 
                 <div className="w-1/2 p-4 flex flex-col bg-white">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-3xl font-black uppercase" style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME TEAM'}</h2>
+                        <h2 className="text-3xl font-black uppercase flex items-center space-x-3" style={{ color: homeCSSColor }}>
+                            {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home" className="w-8 h-8 object-contain" />}
+                            <span>{gameData.homeTeam || 'HOME TEAM'}</span>
+                        </h2>
                         <button onClick={() => {setSummaryTeam('HOME'); setModalStep('FOUL_SUMMARY');}} className="px-4 py-2 font-bold rounded shadow-sm border" style={{ color: homeCSSColor, borderColor: homeCSSColor }}>Foul Summary</button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 flex-1">
@@ -86,7 +109,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -110,7 +133,7 @@ export default function InGameDashboard({
                                 )}
                                 <div className="text-xs font-bold text-gray-500">Exp: {ev.releaseTime?.quarter} {ev.releaseTime?.time}</div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col space-y-1">
                                 {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
                                 <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                             </div>
@@ -120,7 +143,7 @@ export default function InGameDashboard({
                 </div>
             </div>
 
-            {/* INJURY DASHBOARD (CONDITIONAL) */}
+            {/* INJURY DASHBOARD */}
             {activeInjuries.length > 0 && (
                 <div className="bg-red-50 border-t-4 border-red-300 flex flex-col p-3 overflow-x-auto min-h-24">
                     <h3 className="text-xs font-black text-red-800 uppercase mb-2 shrink-0">Active Injuries (Return Eligibility)</h3>
@@ -138,7 +161,6 @@ export default function InGameDashboard({
                 </div>
             )}
 
-            {/* DYNAMIC GLOBAL FOOTER */}
             <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200">
                 <button onClick={togglePeriod} className={`px-12 py-3 border-2 font-black tracking-wide rounded-lg transition shadow-sm ${isPeriodRunning ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100'}`}>
                     {isPeriodRunning ? `⏹ END ${quarter}` : `▶ START ${quarter}`}
