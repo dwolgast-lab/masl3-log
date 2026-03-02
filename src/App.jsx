@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.28 (Red Card Intercept & Penalty Icons)
+ * Version: 0.30 (Smart Selectors & Fixes)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.28";
+const APP_VERSION = "0.30";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -48,12 +48,8 @@ const playBells = (count) => {
 
 export default function App() {
     const [currentView, setCurrentView] = useStickyState('pregame', 'masl-view'); 
-   const [gameData, setGameData] = useStickyState({
-        date: new Date().toISOString().split('T')[0], venue: '', city: '', 
-        league: 'MASL3', // NEW
-        awayTeam: '', awayColor: '', awayLogo: '', // NEW logo fields
-        homeTeam: '', homeColor: '', homeLogo: '',
-        crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
+    const [gameData, setGameData] = useStickyState({
+        date: new Date().toISOString().split('T')[0], venue: '', city: '', league: 'MASL3', awayTeam: '', awayColor: '', awayLogo: '', homeTeam: '', homeColor: '', homeLogo: '', crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
     }, 'masl-data');
 
     const [awayRoster, setAwayRoster] = useStickyState([], 'masl-awayRoster');
@@ -215,7 +211,6 @@ export default function App() {
                 if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
                 else { setGoalScorer(entity); setPlayerSearchInput(''); setModalStep('ASSIST'); }
             } else if (activeAction.type === 'Time Penalty') {
-                // RED CARD ENFORCEMENT: R1-R7 requires a teammate to serve 2 mins.
                 const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
                 const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || penaltyData.code === 'Y6' || isRedPowerPlay || (entity && entity.isGK) || entity === 'Team / Bench';
                 
@@ -417,11 +412,12 @@ export default function App() {
     if (currentView === 'pregame') {
         return (
             <PregameSetup 
-                gameData={gameData} handleInputChange={handleInputChange} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
-                awayRoster={awayRoster} homeRoster={homeRoster} awayBench={awayBench} homeBench={homeBench}
+                gameData={gameData} setGameData={setGameData} handleInputChange={handleInputChange} 
+                awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
+                awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster} 
+                awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench}
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
-                newPlayer={newPlayer} setNewPlayer={setNewPlayer} handleAddPlayer={() => { /* Logic hidden */ }} removePlayer={(id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id))}
-                newBench={newBench} setNewBench={setNewBench} handleAddBench={() => { /* Logic hidden */ }} removeBench={(id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id))}
+                newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} 
                 setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} onExportPDF={() => generatePDF(gameData, homeRoster, awayRoster, gameEvents)}
             />
         );

@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.30] - 2026-03-02 - Smart Selectors & Fixes
+**Features & Logic Upgrades**
+* **Smart Dropdown Selectors:** Updated the Team Setup screen to use controlled, smart dropdown menus. Selecting a team from the database instantly maps the franchise properties. The menus dynamically fall back to a "Custom Entry" option if the user manually overrides the team name via the text input for exhibition matches.
+* **Missing Props Fix:** Restored missing state-setter functions that were dropped during the Phase 1 refactoring to ensure the setup views correctly route player additions to the core game data engine.
+
+---
+
 ## [v0.29] - 2026-03-02 - Franchise Databases & UI Branding
 **Architecture & UI Upgrades**
 * **League & Team Databases:** Implemented hardcoded structural databases within `config.js` to replace manual data entry.
