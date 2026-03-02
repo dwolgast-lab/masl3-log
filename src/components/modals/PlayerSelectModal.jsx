@@ -1,11 +1,12 @@
 import React from 'react';
 import { formatTime } from '../../utils';
+import { QUARTERS } from '../../config'; // <-- THE FIX IS RIGHT HERE
 
 export default function PlayerSelectModal({
     modalStep, setModalStep, activeAction, flowTeamColor, modalQuarter, timeInput,
     penaltyData, editingEventId, playerSearchInput, setPlayerSearchInput, filteredFlowRoster,
     handlePlayerSelect, activeBench, requiresSubstituteServer, setRequiresSubstituteServer,
-    benchPenaltyEntity, goalScorer
+    benchPenaltyEntity, goalScorer, isPeriodRunning, setModalQuarter
 }) {
     if (modalStep !== 'PLAYER' && modalStep !== 'SERVING_PLAYER' && modalStep !== 'ASSIST') return null;
 

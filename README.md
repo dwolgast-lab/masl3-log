@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.32] - 2026-03-02 - Hotfix: Player Select Modal Crash
+**Bug Fixes**
+* **Foul Logging Crash Fixed:** Resolved a fatal crash (blank screen) that occurred when logging a foul. The `PlayerSelectModal` was missing the import for the `QUARTERS` database, causing the render to fail when attempting to draw the contextual quarter selector.
+
+---
+
 ## [v0.31] - 2026-03-02 - Team Selection Validation
 **Features & Logic Upgrades**
 * **Duplicate Team Validation:** Added strict validation to the Setup screen. The app now alerts the user and prevents selection if the same franchise is chosen for both the Home and Away teams.
