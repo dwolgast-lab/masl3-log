@@ -72,17 +72,34 @@ export const LEAGUES = [
 ];
 
 export const TEAMS = [
-    // MASL 3 Teams
+    // --- ATLANTIC DIVISION ---
     { id: 'baltimore_kings', name: 'Baltimore Kings', league: 'MASL3', color: '#FFD700', logo: '/logos/Baltimore_Kings_logo.png' },
-    { id: 'buffalo_gunners', name: 'Buffalo Gunners FC', league: 'MASL3', color: '#E31837', logo: '/logos/Buffalo_Gunners_FC_logo.png' },
-    { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', logo: '/logos/Cleveland_Samba_logo.png' },
     { id: 'cumberland_valley', name: 'Cumberland Valley SC', league: 'MASL3', color: '#111827', logo: '/logos/Cumberland_Valley_logo.png' },
     { id: 'delaware_city', name: 'Delaware City FC', league: 'MASL3', color: '#00A3E0', logo: '/logos/Delaware_City_FC_logo.png' },
     { id: 'maryland_storm', name: 'Maryland Storm', league: 'MASL3', color: '#B91C1C', logo: '/logos/Maryland_Storm_logo.png' },
     { id: 'northern_virginia', name: 'Northern Virginia FC', league: 'MASL3', color: '#B8860B', logo: '/logos/Northern_Virginia_FC_logo.png' },
-    { id: 'roc_city_boom', name: 'ROC City Boom', league: 'MASL3', color: '#1D4ED8', logo: '/logos/ROC_City_Boom_logo.png' },
     { id: 'virginia_marauders', name: 'Virginia Marauders FC', league: 'MASL3', color: '#1E3A8A', logo: '/logos/Virginia_Marauders_FC_logo.png' },
-    { id: 'youngstown_nighthawks', name: 'Youngstown Nighthawks', league: 'MASL3', color: '#4B5563', logo: '/logos/Youngstown_Nighthawks_logo.png' }
+    
+    // --- EAST DIVISION ---
+    { id: 'buffalo_gunners', name: 'Buffalo Gunners FC', league: 'MASL3', color: '#E31837', logo: '/logos/Buffalo_Gunners_FC_logo.png' },
+    { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', logo: '/logos/Cleveland_Samba_logo.png' },
+    { id: 'roc_city_boom', name: 'ROC City Boom', league: 'MASL3', color: '#1D4ED8', logo: '/logos/ROC_City_Boom_logo.png' },
+    { id: 'youngstown_nighthawks', name: 'Youngstown Nighthawks', league: 'MASL3', color: '#4B5563', logo: '/logos/Youngstown_Nighthawks_logo.png' },
+
+    // --- GREAT LAKES NORTH DIVISION ---
+    { id: 'cincinnati_swerve', name: 'Cincinnati Swerve', league: 'MASL3', color: '#000000', logo: '/logos/Cincinnati_Swerve_logo.png' },
+    { id: 'detroit_waza_flo', name: 'Detroit Waza Flo', league: 'MASL3', color: '#1D4ED8', logo: '/logos/Detroit_Waza_Flow_logo.png' },
+    { id: 'kalamazoo_united', name: 'Kalamazoo United', league: 'MASL3', color: '#FBBF24', logo: '/logos/Kalamazoo_United_logo.png' },
+    { id: 'muskegon_risers', name: 'Muskegon Risers', league: 'MASL3', color: '#000000', logo: '/logos/Muskegon_Risers_FC.png' },
+
+    // --- SOUTH DIVISION ---
+    { id: 'deportivo_shaolin', name: 'Deportivo Shaolin (Kansas City)', league: 'MASL3', color: '#B91C1C', logo: '/logos/Deportivo_Shaolin_logo.png' },
+    { id: 'okc_certified_lions', name: 'OKC Certified Lions', league: 'MASL3', color: '#B8860B', logo: '/logos/OKC_Certified_Lions_logo.png' },
+    { id: 'rgv_barracudas', name: 'RGV Barracudas', league: 'MASL3', color: '#1E3A8A', logo: '/logos/RGV_Barracudas_FC_logo.png' },
+    { id: 'springfield_demize', name: 'Springfield Demize', league: 'MASL3', color: '#60A5FA', logo: '/logos/Springfield_Demize_logo.png' },
+    { id: 'bold_dream_fc', name: 'The Bold Dream FC (Austin)', league: 'MASL3', color: '#D97706', logo: '/logos/The_Bold_Dream_FC_logo.png' },
+    { id: 'wichita_selection', name: 'Wichita Selection', league: 'MASL3', color: '#E31837', logo: '/logos/Wichita_Selection_logo.png' }
+];
     
     // Future teams for MASL, MASL2, and MASLW can be added right here!
 ];
