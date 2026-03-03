@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.35 (Dynamic Blue+Yellow Accumulation Math)
+ * Version: 0.36 (UX Refinements for Combo Engine)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.35";
+const APP_VERSION = "0.36";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -273,7 +273,8 @@ export default function App() {
                     ...ev, 
                     isReleasable: false, 
                     releaseTime: newOffenderRelease, 
-                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})` } 
+                    // Add isCombo true flag so the dashboard displays 🟦 🟨
+                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})`, isCombo: true } 
                 } : ev
             );
 
@@ -289,7 +290,7 @@ export default function App() {
                 clearedFromBoard: false, isJustServing: true
             };
 
-            // 3. Log the Yellow Event purely for player accumulation/reporting (hidden from dashboard to prevent duplicate timers)
+            // 3. Log the Yellow Event purely for player accumulation/reporting (hidden from active dashboard)
             const yellowEvent = {
                 id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,

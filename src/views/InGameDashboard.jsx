@@ -12,7 +12,7 @@ export default function InGameDashboard({
 
     const renderCardSquares = (penalty, isJustServing) => {
         if (!penalty) return null;
-        if (penalty.code === 'Y6' && !isJustServing) return '🟦 🟨'; 
+        if ((penalty.code === 'Y6' || penalty.isCombo) && !isJustServing) return '🟦 🟨'; 
         if (penalty.color === 'Blue') return '🟦';
         if (penalty.color === 'Yellow') return '🟨';
         if (penalty.color === 'Red') return '🟥';
@@ -143,7 +143,7 @@ export default function InGameDashboard({
                 </div>
             </div>
 
-            {/* INJURY DASHBOARD */}
+            {/* INJURY DASHBOARD (CONDITIONAL) */}
             {activeInjuries.length > 0 && (
                 <div className="bg-red-50 border-t-4 border-red-300 flex flex-col p-3 overflow-x-auto min-h-24">
                     <h3 className="text-xs font-black text-red-800 uppercase mb-2 shrink-0">Active Injuries (Return Eligibility)</h3>
@@ -161,6 +161,7 @@ export default function InGameDashboard({
                 </div>
             )}
 
+            {/* DYNAMIC GLOBAL FOOTER */}
             <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200">
                 <button onClick={togglePeriod} className={`px-12 py-3 border-2 font-black tracking-wide rounded-lg transition shadow-sm ${isPeriodRunning ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100'}`}>
                     {isPeriodRunning ? `⏹ END ${quarter}` : `▶ START ${quarter}`}

@@ -13,27 +13,12 @@ export default function PlayerSelectModal({
     let headerTitle = "";
     let subTitle = "";
 
-    // Determine if the current selected entity triggers the Blue+Yellow combo
-    const isCombo = benchPenaltyEntity && gameEvents?.some(ev => 
-        ev.type === 'Time Penalty' && 
-        ev.entity?.id === benchPenaltyEntity.id && 
-        ev.penalty?.color === 'Blue' && 
-        !ev.isJustServing && 
-        !ev.clearedFromBoard
-    );
-
     if (modalStep === 'PLAYER') {
         headerTitle = editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER");
         subTitle = `${activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - ${modalQuarter} ${activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''} ${penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}`;
     } else if (modalStep === 'SERVING_PLAYER') {
         headerTitle = "SELECT SUBSTITUTE SERVER";
-        if (penaltyData.code === 'Y6' || (penaltyData.color === 'Yellow' && isCombo)) {
-            subTitle = "Offender is serving Major non-releasable time. Select a teammate to serve the Power Play.";
-        } else if (penaltyData.color === 'Red') {
-            subTitle = "Offender is Ejected. Select a teammate to serve the Power Play.";
-        } else {
-            subTitle = "Please select the field player reporting to the penalty box.";
-        }
+        subTitle = "Please select the teammate reporting to the penalty box.";
     } else if (modalStep === 'ASSIST') {
         headerTitle = "SELECT ASSIST";
         subTitle = `Goal by: ${typeof goalScorer === 'string' ? goalScorer : `#${goalScorer?.number} ${goalScorer?.name}`}`;
@@ -83,26 +68,40 @@ export default function PlayerSelectModal({
     return (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden">
-                <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: flowTeamColor }}>
-                    <div className="flex flex-col" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
-                        <h2 className="text-2xl font-black uppercase">{headerTitle}</h2>
-                        <span className="text-sm font-bold opacity-80">{subTitle}</span>
+                
+                {/* DYNAMIC HEADER - ADDS MASSIVE CONFIRMATION FOR COMBO/SERVERS */}
+                {modalStep === 'SERVING_PLAYER' && benchPenaltyEntity ? (
+                    <div className="bg-yellow-400 p-4 text-black text-center border-b-4 border-yellow-600 shrink-0 shadow-md z-10 relative">
+                        <button onClick={() => setModalStep('PLAYER')} className="absolute left-4 top-1/2 -translate-y-1/2 font-bold bg-yellow-500 px-3 py-1.5 rounded hover:bg-yellow-600 shadow-sm transition text-sm text-yellow-900">⬅ Back</button>
+                        <div className="text-xl font-black uppercase tracking-wider mb-1">
+                            ✅ {benchPenaltyEntity.name || 'PLAYER'} ASSIGNED TO PENALTY
+                        </div>
+                        <div className="text-sm font-bold text-yellow-900">
+                            {penaltyData.color === 'Yellow' ? 'Serving Non-Releasable Major.' : 'Requires a substitute server.'} Please select the teammate to serve the 2-minute power play.
+                        </div>
                     </div>
-                    <button onClick={() => {
-                        if (modalStep === 'PLAYER') {
-                            if (editingEventId) setModalStep('EVENT_LOG');
-                            else if (activeAction.type === 'Log Foul') setModalStep(null);
-                            else if (activeAction.type === 'Time Penalty') setModalStep('PENALTY_CODE');
-                            else setModalStep('TIME');
-                        } else {
-                            setModalStep('PLAYER');
-                        }
-                    }} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">
-                        {modalStep === 'PLAYER' ? (editingEventId ? "Cancel Edit" : (activeAction.type === 'Log Foul' ? "Cancel Foul" : "⬅ Back")) : "⬅ Back"}
-                    </button>
-                </div>
+                ) : (
+                    <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: flowTeamColor }}>
+                        <div className="flex flex-col" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                            <h2 className="text-2xl font-black uppercase">{headerTitle}</h2>
+                            <span className="text-sm font-bold opacity-80">{subTitle}</span>
+                        </div>
+                        <button onClick={() => {
+                            if (modalStep === 'PLAYER') {
+                                if (editingEventId) setModalStep('EVENT_LOG');
+                                else if (activeAction.type === 'Log Foul') setModalStep(null);
+                                else if (activeAction.type === 'Time Penalty') setModalStep('PENALTY_CODE');
+                                else setModalStep('TIME');
+                            } else {
+                                setModalStep('PLAYER');
+                            }
+                        }} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">
+                            {modalStep === 'PLAYER' ? (editingEventId ? "Cancel Edit" : (activeAction.type === 'Log Foul' ? "Cancel Foul" : "⬅ Back")) : "⬅ Back"}
+                        </button>
+                    </div>
+                )}
 
-                <div className="p-6 overflow-y-auto flex-1 bg-gray-50 flex flex-col">
+                <div className="p-6 overflow-y-auto flex-1 bg-gray-50 flex flex-col relative">
                     
                     {activeAction.type === 'Log Foul' && (!isPeriodRunning || editingEventId) && (
                         <div className="w-full mb-6">
