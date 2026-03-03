@@ -160,7 +160,6 @@ export default function PregameSetup({
                                 
                                 <div className="flex space-x-2 mb-4">
                                     <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-[2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
-                                    <input type="text" name="awayColor" placeholder="Brand Hex" value={gameData.awayColor} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="UI Display Color" />
                                     <input type="text" name="awayColorName" placeholder="Jersey Color" value={gameData.awayColorName || ''} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="Report Color Name" />
                                 </div>
 
@@ -186,7 +185,6 @@ export default function PregameSetup({
 
                                 <div className="flex space-x-2 mb-4">
                                     <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-[2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
-                                    <input type="text" name="homeColor" placeholder="Brand Hex" value={gameData.homeColor} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="UI Display Color" />
                                     <input type="text" name="homeColorName" placeholder="Jersey Color" value={gameData.homeColorName || ''} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="Report Color Name" />
                                 </div>
 

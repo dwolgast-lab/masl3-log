@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.39.1] - 2026-03-03 - UI Declutter
+**UI Enhancements**
+* **Hidden Hex Code:** Removed the direct "Brand Hex" input from the Pregame Setup interface. The UI now only displays the Team Name and the English "Jersey Color" field. The app still perfectly handles the hex mapping silently in the background when selecting a team from the dropdown, ensuring a cleaner visual experience for the official.
+
+---
+
 ## [v0.39] - 2026-03-03 - Jersey Color Names vs Brand Hex
 **Data & Setup UI**
 * **Color Separation:** Separated the team `color` properties into two distinct variables: the "Brand Hex" (used exclusively for coloring the app's internal UI) and the "Jersey Color Name" (a simple English string used for the official report).
