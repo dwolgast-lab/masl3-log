@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.34] - 2026-03-02 - Official Penalty Codes & Combo Engine
+**Features & Data Updates**
+* **Official Code Database:** Replaced the generic placeholder penalty list with the official MASL 2024-2025 Penalty Codes document.
+* **Blue + Yellow Combo Engine:** Engineered a sequential logic interceptor. If a player is assigned a Blue Card, and then receives an additional Yellow Card at the exact same clock time, the app automatically converts the original Blue Card into a 7-minute Non-Releasable Major, forces the official to assign a teammate to serve the 2-minute Releasable power play, and cleanly logs the Yellow Card for game accumulation without duplicating dashboard timers.
+
+---
+
 ## [v0.33] - 2026-03-02 - Division Grouping
 **UI & Experience Enhancements**
 * **Division Headers:** Re-engineered the team dropdowns to utilize HTML `<optgroup>` tags. The dropdown now dynamically sorts and categorizes teams under their respective Division headers (Atlantic, East, Great Lakes North, South) based on the database object.

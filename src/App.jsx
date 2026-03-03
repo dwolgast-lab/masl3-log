@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.31 (Team Validation & Version Fix)
+ * Version: 0.34 (Official Penalties & Blue+Yellow Combo Engine)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.33";
+const APP_VERSION = "0.34";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -211,11 +211,7 @@ export default function App() {
                 if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
                 else { setGoalScorer(entity); setPlayerSearchInput(''); setModalStep('ASSIST'); }
             } else if (activeAction.type === 'Time Penalty') {
-                const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
-                const needsServer = requiresSubstituteServer || penaltyData.code === 'B1' || penaltyData.code === 'Y6' || isRedPowerPlay || (entity && entity.isGK) || entity === 'Team / Bench';
-                
-                if (needsServer) { setBenchPenaltyEntity(entity); setPlayerSearchInput(''); setModalStep('SERVING_PLAYER'); } 
-                else { finalizeEvent(entity); }
+                finalizeEvent(entity);
             } else { finalizeEvent(entity); }
         } else if (modalStep === 'ASSIST') {
             if (goalScorer && typeof goalScorer !== 'string' && goalScorer.id === entity.id) alert("The goal scorer cannot also be credited with the assist.");
@@ -259,7 +255,42 @@ export default function App() {
 
         let updatedEvents = [...gameEvents];
 
-        if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.code === 'Y6') {
+        // --- COMBO DETECTION: BLUE + YELLOW AT SAME TIME ---
+        let existingBlueCombo = null;
+        if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && selectedEntity?.id) {
+            existingBlueCombo = updatedEvents.find(ev => 
+                ev.type === 'Time Penalty' && ev.entity?.id === selectedEntity.id && 
+                ev.quarter === modalQuarter && ev.time === finalTimeStr && 
+                ev.penalty?.color === 'Blue' && !ev.isJustServing
+            );
+        }
+
+        if (existingBlueCombo) {
+            // Upgrade existing blue to 7-min non-releasable
+            updatedEvents = updatedEvents.map(ev => 
+                ev.id === existingBlueCombo.id ? { 
+                    ...ev, isReleasable: false, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 7), 
+                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ' (+ Yellow)' } 
+                } : ev
+            );
+            // Add Substitute Server
+            const serverEvent = {
+                id: Date.now() + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                entity: servingPlayerEntity, servingPlayer: null, assist: null, 
+                penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving ${existingBlueCombo.penalty.code} for ${selectedEntity.name}` }, 
+                goalFlags: null, eligibleReturnTime: null, isReleasable: true, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 2), majorReleaseTime: null, actualReleaseTime: null,
+                clearedFromBoard: false, isJustServing: true
+            };
+            // Add Yellow log entry (hidden from active dashboard to avoid 7+5 stacking)
+            const yellowEvent = {
+                id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                entity: selectedEntity, servingPlayer: null, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
+                isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true 
+            };
+            updatedEvents = [serverEvent, yellowEvent, ...updatedEvents];
+        } 
+        // --- Y6 MAJOR SPLIT ---
+        else if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.code === 'Y6') {
             const offenderEvent = {
                 id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: null, assist: null, 
@@ -276,7 +307,9 @@ export default function App() {
                 clearedFromBoard: false, isJustServing: true
             };
             updatedEvents = [serverEvent, offenderEvent, ...gameEvents];
-        } else if (!editingEventId) {
+        } 
+        // --- STANDARD LOGGING ---
+        else if (!editingEventId) {
             let duration = 0, isReleasable = false, releaseTime = null; 
             if (activeAction.type === 'Time Penalty' && penaltyData.color) {
                 const isBenchStaff = activeBench.some(b => b.id === selectedEntity?.id) || selectedEntity === 'Team / Bench';
@@ -297,7 +330,9 @@ export default function App() {
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null, eligibleReturnTime: eligibleReturnTime, clearedInjury: false,
                 isReleasable: isReleasable, releaseTime: releaseTime, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: false 
             }, ...gameEvents];
-        } else {
+        } 
+        // --- EDITING EXISTING EVENT ---
+        else {
             updatedEvents = gameEvents.map(ev => {
                 if (ev.id === editingEventId) {
                     let duration = 0;
@@ -462,7 +497,7 @@ export default function App() {
                 modalStep={modalStep} setModalStep={setModalStep} activeAction={activeAction} flowTeamColor={flowTeamColor} modalQuarter={modalQuarter} timeInput={timeInput}
                 penaltyData={penaltyData} editingEventId={editingEventId} playerSearchInput={playerSearchInput} setPlayerSearchInput={setPlayerSearchInput} filteredFlowRoster={filteredFlowRoster}
                 handlePlayerSelect={handlePlayerSelect} activeBench={activeBench} requiresSubstituteServer={requiresSubstituteServer} setRequiresSubstituteServer={setRequiresSubstituteServer}
-                benchPenaltyEntity={benchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter}
+                benchPenaltyEntity={benchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
             
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>

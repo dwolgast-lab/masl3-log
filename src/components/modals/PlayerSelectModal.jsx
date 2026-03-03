@@ -1,12 +1,12 @@
 import React from 'react';
 import { formatTime } from '../../utils';
-import { QUARTERS } from '../../config'; // <-- THE FIX IS RIGHT HERE
+import { QUARTERS } from '../../config';
 
 export default function PlayerSelectModal({
     modalStep, setModalStep, activeAction, flowTeamColor, modalQuarter, timeInput,
     penaltyData, editingEventId, playerSearchInput, setPlayerSearchInput, filteredFlowRoster,
     handlePlayerSelect, activeBench, requiresSubstituteServer, setRequiresSubstituteServer,
-    benchPenaltyEntity, goalScorer, isPeriodRunning, setModalQuarter
+    benchPenaltyEntity, goalScorer, isPeriodRunning, setModalQuarter, gameEvents
 }) {
     if (modalStep !== 'PLAYER' && modalStep !== 'SERVING_PLAYER' && modalStep !== 'ASSIST') return null;
 
@@ -27,6 +27,41 @@ export default function PlayerSelectModal({
     const rosterToDisplay = modalStep === 'SERVING_PLAYER' 
         ? filteredFlowRoster.filter(p => p.id !== benchPenaltyEntity?.id) 
         : filteredFlowRoster;
+
+    const onPlayerSelectClick = (entity) => {
+        if (modalStep === 'PLAYER') {
+            if (activeAction.type === 'Goal / Assist') {
+                if (entity === 'Own Goal') handlePlayerSelect(entity); 
+                else handlePlayerSelect(entity);
+            } else if (activeAction.type === 'Time Penalty') {
+                
+                const isBenchStaff = activeBench.some(b => b.id === entity?.id) || entity === 'Team / Bench';
+                const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
+                
+                // Detecting the Blue + Yellow Combo
+                let isBlueYellowCombo = false;
+                if (penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && entity?.id) {
+                    const timeStr = activeAction.time || timeInput || "00:00";
+                    const paddedTime = formatTime(timeStr.padEnd(4, '0'));
+                    isBlueYellowCombo = gameEvents.some(ev => 
+                        ev.type === 'Time Penalty' && ev.entity?.id === entity.id && 
+                        ev.quarter === modalQuarter && ev.time === paddedTime && 
+                        ev.penalty?.color === 'Blue' && !ev.isJustServing
+                    );
+                }
+
+                let needsServer = false;
+                if (penaltyData.code === 'B1') needsServer = true;
+                else if (isBenchStaff) needsServer = false; 
+                else if (requiresSubstituteServer || penaltyData.code === 'Y6' || isBlueYellowCombo || isRedPowerPlay || (entity && entity.isGK)) needsServer = true;
+                
+                if (needsServer) { setBenchPenaltyEntity(entity); setPlayerSearchInput(''); setModalStep('SERVING_PLAYER'); } 
+                else { handlePlayerSelect(entity); }
+            } else { handlePlayerSelect(entity); }
+        } else {
+            handlePlayerSelect(entity);
+        }
+    };
 
     return (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
@@ -64,7 +99,7 @@ export default function PlayerSelectModal({
                     )}
 
                     {modalStep === 'ASSIST' && (
-                        <button onClick={() => handlePlayerSelect('Unassisted')} className="mb-6 w-full p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center font-bold text-blue-700 hover:bg-blue-100 transition">UNASSISTED</button>
+                        <button onClick={() => onPlayerSelectClick('Unassisted')} className="mb-6 w-full p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center font-bold text-blue-700 hover:bg-blue-100 transition">UNASSISTED</button>
                     )}
 
                     <div className="mb-6">
@@ -74,20 +109,19 @@ export default function PlayerSelectModal({
 
                     <div className="grid grid-cols-2 gap-3">
                         {rosterToDisplay.map(player => (
-                            <button key={player.id} onClick={() => handlePlayerSelect(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
+                            <button key={player.id} onClick={() => onPlayerSelectClick(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
                                 <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
                                 <span className="ml-4 font-bold text-lg text-gray-800 text-left truncate">{player.name}</span>
                             </button>
                         ))}
                     </div>
                     
-                    {/* BENCH PERSONNEL INJECTION - ONLY SHOW FOR YELLOW CARDS */}
                     {modalStep === 'PLAYER' && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && (
                         <div className="mt-6">
                             <h3 className="font-bold text-gray-500 mb-3 uppercase text-sm border-b pb-1">Bench Personnel</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 {activeBench.map(person => (
-                                    <button key={person.id} onClick={() => handlePlayerSelect(person)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition text-left">
+                                    <button key={person.id} onClick={() => onPlayerSelectClick(person)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition text-left">
                                         <span className="font-bold text-lg text-gray-800 truncate">{person.name}</span>
                                         <span className="ml-2 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">({person.role})</span>
                                     </button>
@@ -107,8 +141,8 @@ export default function PlayerSelectModal({
                                 </label>
                             )}
                             <button onClick={() => {
-                                if (activeAction.type === 'Log Foul') handlePlayerSelect('Unattributed');
-                                else handlePlayerSelect(activeAction.type === 'Goal / Assist' ? 'Own Goal' : 'Team / Bench');
+                                if (activeAction.type === 'Log Foul') onPlayerSelectClick('Unattributed');
+                                else onPlayerSelectClick(activeAction.type === 'Goal / Assist' ? 'Own Goal' : 'Team / Bench');
                             }} className={`mt-4 w-full p-4 border-2 border-dashed rounded-xl text-center font-bold transition ${activeAction.type === 'Log Foul' ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100' : 'border-gray-400 bg-white text-gray-600 hover:bg-gray-100'}`}>
                                 {activeAction.type === 'Goal / Assist' ? "Own Goal" : (activeAction.type === 'Log Foul' ? "Leave Unattributed (Assign Later)" : "Attribute to Team / Bench")}
                             </button>
