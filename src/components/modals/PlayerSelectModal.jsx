@@ -13,12 +13,27 @@ export default function PlayerSelectModal({
     let headerTitle = "";
     let subTitle = "";
 
+    // Determine if the current selected entity triggers the Blue+Yellow combo
+    const isCombo = benchPenaltyEntity && gameEvents?.some(ev => 
+        ev.type === 'Time Penalty' && 
+        ev.entity?.id === benchPenaltyEntity.id && 
+        ev.penalty?.color === 'Blue' && 
+        !ev.isJustServing && 
+        !ev.clearedFromBoard
+    );
+
     if (modalStep === 'PLAYER') {
         headerTitle = editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER");
         subTitle = `${activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - ${modalQuarter} ${activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''} ${penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}`;
     } else if (modalStep === 'SERVING_PLAYER') {
-        headerTitle = "WHO IS SERVING PENALTY?";
-        subTitle = "Please select the field player reporting to the penalty box";
+        headerTitle = "SELECT SUBSTITUTE SERVER";
+        if (penaltyData.code === 'Y6' || (penaltyData.color === 'Yellow' && isCombo)) {
+            subTitle = "Offender is serving Major non-releasable time. Select a teammate to serve the Power Play.";
+        } else if (penaltyData.color === 'Red') {
+            subTitle = "Offender is Ejected. Select a teammate to serve the Power Play.";
+        } else {
+            subTitle = "Please select the field player reporting to the penalty box.";
+        }
     } else if (modalStep === 'ASSIST') {
         headerTitle = "SELECT ASSIST";
         subTitle = `Goal by: ${typeof goalScorer === 'string' ? goalScorer : `#${goalScorer?.number} ${goalScorer?.name}`}`;
@@ -38,25 +53,27 @@ export default function PlayerSelectModal({
                 const isBenchStaff = activeBench.some(b => b.id === entity?.id) || entity === 'Team / Bench';
                 const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
                 
-                // Detecting the Blue + Yellow Combo
-                let isBlueYellowCombo = false;
+                // Detecting if the player has an active Blue Card (Combo Logic)
+                let isBlueYellowComboActive = false;
                 if (penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && entity?.id) {
-                    const timeStr = activeAction.time || timeInput || "00:00";
-                    const paddedTime = formatTime(timeStr.padEnd(4, '0'));
-                    isBlueYellowCombo = gameEvents.some(ev => 
+                    isBlueYellowComboActive = gameEvents.some(ev => 
                         ev.type === 'Time Penalty' && ev.entity?.id === entity.id && 
-                        ev.quarter === modalQuarter && ev.time === paddedTime && 
-                        ev.penalty?.color === 'Blue' && !ev.isJustServing
+                        ev.penalty?.color === 'Blue' && !ev.isJustServing && !ev.clearedFromBoard
                     );
                 }
 
                 let needsServer = false;
                 if (penaltyData.code === 'B1') needsServer = true;
                 else if (isBenchStaff) needsServer = false; 
-                else if (requiresSubstituteServer || penaltyData.code === 'Y6' || isBlueYellowCombo || isRedPowerPlay || (entity && entity.isGK)) needsServer = true;
+                else if (requiresSubstituteServer || penaltyData.code === 'Y6' || isBlueYellowComboActive || isRedPowerPlay || (entity && entity.isGK)) needsServer = true;
                 
-                if (needsServer) { setBenchPenaltyEntity(entity); setPlayerSearchInput(''); setModalStep('SERVING_PLAYER'); } 
-                else { handlePlayerSelect(entity); }
+                if (needsServer) { 
+                    setBenchPenaltyEntity(entity); 
+                    setPlayerSearchInput(''); 
+                    setModalStep('SERVING_PLAYER'); 
+                } else { 
+                    handlePlayerSelect(entity); 
+                }
             } else { handlePlayerSelect(entity); }
         } else {
             handlePlayerSelect(entity);

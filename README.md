@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.35] - 2026-03-03 - Dynamic Combo Escalation Engine
+**Features & Logic Upgrades**
+* **Active Penalty Interception:** The app now strictly monitors active penalties. If a player receives a Yellow card at *any time* while currently serving a Blue card (whether instantly or 1 minute later), the app triggers the Combo Engine.
+* **Rolling Penalty Math:** The Combo Engine automatically modifies the original Blue card, adding 5 minutes to its existing expiration time and locking it to Non-Releasable status.
+* **Contextual Modals:** The Player Select modal dynamically changes its titles and subheaders when a Combo or Major penalty is triggered, explicitly instructing the official to assign a teammate to serve the remaining Power Play time.
+
+---
+
 ## [v0.34] - 2026-03-02 - Official Penalty Codes & Combo Engine
 **Features & Data Updates**
 * **Official Code Database:** Replaced the generic placeholder penalty list with the official MASL 2024-2025 Penalty Codes document.

@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.34 (Official Penalties & Blue+Yellow Combo Engine)
+ * Version: 0.35 (Dynamic Blue+Yellow Accumulation Math)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.34";
+const APP_VERSION = "0.35";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -255,38 +255,47 @@ export default function App() {
 
         let updatedEvents = [...gameEvents];
 
-        // --- COMBO DETECTION: BLUE + YELLOW AT SAME TIME ---
+        // --- COMBO DETECTION: BLUE + YELLOW ANYTIME DURING ACTIVE PENALTY ---
         let existingBlueCombo = null;
         if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && selectedEntity?.id) {
             existingBlueCombo = updatedEvents.find(ev => 
                 ev.type === 'Time Penalty' && ev.entity?.id === selectedEntity.id && 
-                ev.quarter === modalQuarter && ev.time === finalTimeStr && 
-                ev.penalty?.color === 'Blue' && !ev.isJustServing
+                ev.penalty?.color === 'Blue' && !ev.isJustServing && !ev.clearedFromBoard
             );
         }
 
         if (existingBlueCombo) {
-            // Upgrade existing blue to 7-min non-releasable
+            // 1. Upgrade existing blue to Non-Releasable and ADD 5 minutes to its current release time
+            const newOffenderRelease = calcReleaseTime(existingBlueCombo.releaseTime.quarter, existingBlueCombo.releaseTime.time, 5);
+            
             updatedEvents = updatedEvents.map(ev => 
                 ev.id === existingBlueCombo.id ? { 
-                    ...ev, isReleasable: false, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 7), 
-                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ' (+ Yellow)' } 
+                    ...ev, 
+                    isReleasable: false, 
+                    releaseTime: newOffenderRelease, 
+                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})` } 
                 } : ev
             );
-            // Add Substitute Server
+
+            // 2. Assign the Substitute Server to serve the *remainder* of the original Blue Card
             const serverEvent = {
                 id: Date.now() + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: servingPlayerEntity, servingPlayer: null, assist: null, 
-                penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving ${existingBlueCombo.penalty.code} for ${selectedEntity.name}` }, 
-                goalFlags: null, eligibleReturnTime: null, isReleasable: true, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 2), majorReleaseTime: null, actualReleaseTime: null,
+                penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
+                goalFlags: null, eligibleReturnTime: null, 
+                isReleasable: true, 
+                releaseTime: existingBlueCombo.releaseTime, // They take over the original expiration
+                majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false, isJustServing: true
             };
-            // Add Yellow log entry (hidden from active dashboard to avoid 7+5 stacking)
+
+            // 3. Log the Yellow Event purely for player accumulation/reporting (hidden from dashboard to prevent duplicate timers)
             const yellowEvent = {
                 id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
-                entity: selectedEntity, servingPlayer: null, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
+                entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
                 isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true 
             };
+            
             updatedEvents = [serverEvent, yellowEvent, ...updatedEvents];
         } 
         // --- Y6 MAJOR SPLIT ---
