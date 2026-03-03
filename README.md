@@ -3,6 +3,19 @@
 
 ---
 
+## [v0.39] - 2026-03-03 - Jersey Color Names vs Brand Hex
+**Data & Setup UI**
+* **Color Separation:** Separated the team `color` properties into two distinct variables: the "Brand Hex" (used exclusively for coloring the app's internal UI) and the "Jersey Color Name" (a simple English string used for the official report).
+* **Dynamic Setup Fields:** Updated the Pregame Setup screen to dynamically load and display both the Brand Hex and Jersey Color Name. This allows the 4th official to easily overwrite the report color (e.g. typing "White" for an alternate kit) without breaking the branded color styling of the application's interface.
+
+---
+
+## [v0.38] - 2026-03-03 - Match Information: Game Number Field
+**Data & Setup UI**
+* **Game Number Implementation:** Added a new text input field to the Match Information section on the Pregame Setup screen specifically designed to capture the alphanumeric league-assigned Game Number (e.g. `25MASL3-001`). This value is now securely tracked in the global `gameData` state object in preparation for official reporting functions.
+
+---
+
 ## [v0.37] - 2026-03-03 - Hotfix: Combo Engine State Passer
 **Bug Fixes & UI Enhancements**
 * **Combo Selection Crash Fixed:** Resolved a silent JavaScript crash that occurred when clicking an offender who already had an active Blue Card. The app failed to update the state because the `setBenchPenaltyEntity` function was not properly passed from `App.jsx` into the `PlayerSelectModal`.

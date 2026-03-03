@@ -20,7 +20,6 @@ export default function PregameSetup({
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     const availableTeams = TEAMS.filter(t => t.league === gameData.league);
 
-    // --- NEW: Group teams by division ---
     const teamsByDivision = availableTeams.reduce((acc, team) => {
         const div = team.division || 'Other';
         if (!acc[div]) acc[div] = [];
@@ -54,6 +53,7 @@ export default function PregameSetup({
                 ...gameData,
                 [`${type}Team`]: selected.name,
                 [`${type}Color`]: selected.color,
+                [`${type}ColorName`]: selected.colorName,
                 [`${type}Logo`]: selected.logo
             });
         }
@@ -126,9 +126,10 @@ export default function PregameSetup({
                                 </select>
                             </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-4">
+                        <div className="grid grid-cols-5 gap-4">
+                            <div><label className="block text-sm font-bold text-gray-600 mb-1">Game Number</label><input type="text" name="gameNumber" placeholder="e.g. 25MASL3-001" value={gameData.gameNumber || ''} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50 uppercase" /></div>
                             <div><label className="block text-sm font-bold text-gray-600 mb-1">Date</label><input type="date" name="date" value={gameData.date} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
-                            <div><label className="block text-sm font-bold text-gray-600 mb-1">Scheduled KO</label><input type="time" name="scheduledKO" onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
+                            <div><label className="block text-sm font-bold text-gray-600 mb-1">Scheduled KO</label><input type="time" name="scheduledKO" value={gameData.scheduledKO || ''} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
                             <div><label className="block text-sm font-bold text-gray-600 mb-1">Venue</label><input type="text" name="venue" value={gameData.venue} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
                             <div><label className="block text-sm font-bold text-gray-600 mb-1">City</label><input type="text" name="city" value={gameData.city} onChange={handleInputChange} className="w-full p-2 border rounded bg-gray-50" /></div>
                         </div>
@@ -158,8 +159,9 @@ export default function PregameSetup({
                                 </select>
                                 
                                 <div className="flex space-x-2 mb-4">
-                                    <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
-                                    <input type="text" name="awayColor" placeholder="Color Hex/Name" value={gameData.awayColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="awayTeam" placeholder="Team Name" value={gameData.awayTeam} onChange={handleInputChange} className="flex-[2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="awayColor" placeholder="Brand Hex" value={gameData.awayColor} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="UI Display Color" />
+                                    <input type="text" name="awayColorName" placeholder="Jersey Color" value={gameData.awayColorName || ''} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="Report Color Name" />
                                 </div>
 
                                 <button onClick={() => setActiveRosterModal('AWAY')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: awayCSSColor }}>
@@ -183,8 +185,9 @@ export default function PregameSetup({
                                 </select>
 
                                 <div className="flex space-x-2 mb-4">
-                                    <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
-                                    <input type="text" name="homeColor" placeholder="Color Hex/Name" value={gameData.homeColor} onChange={handleInputChange} className="w-1/3 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="homeTeam" placeholder="Team Name" value={gameData.homeTeam} onChange={handleInputChange} className="flex-[2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+                                    <input type="text" name="homeColor" placeholder="Brand Hex" value={gameData.homeColor} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="UI Display Color" />
+                                    <input type="text" name="homeColorName" placeholder="Jersey Color" value={gameData.homeColorName || ''} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="Report Color Name" />
                                 </div>
 
                                 <button onClick={() => setActiveRosterModal('HOME')} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: homeCSSColor }}>

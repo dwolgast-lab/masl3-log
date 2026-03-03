@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.38 (Match Information: Game Number Field)
+ * Version: 0.39 (Jersey Color Names vs Brand Hex)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.38";
+const APP_VERSION = "0.39";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -49,7 +49,10 @@ const playBells = (count) => {
 export default function App() {
     const [currentView, setCurrentView] = useStickyState('pregame', 'masl-view'); 
     const [gameData, setGameData] = useStickyState({
-        date: new Date().toISOString().split('T')[0], scheduledKO: '', gameNumber: '', venue: '', city: '', league: 'MASL3', awayTeam: '', awayColor: '', awayLogo: '', homeTeam: '', homeColor: '', homeLogo: '', crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
+        date: new Date().toISOString().split('T')[0], scheduledKO: '', gameNumber: '', venue: '', city: '', league: 'MASL3', 
+        awayTeam: '', awayColor: '', awayColorName: '', awayLogo: '', 
+        homeTeam: '', homeColor: '', homeColorName: '', homeLogo: '', 
+        crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
     }, 'masl-data');
 
     const [awayRoster, setAwayRoster] = useStickyState([], 'masl-awayRoster');
