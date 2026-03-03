@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.36 (UX Refinements for Combo Engine)
+ * Version: 0.37 (Hotfix: Combo Engine State Passer)
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.36";
+const APP_VERSION = "0.37";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -255,7 +255,6 @@ export default function App() {
 
         let updatedEvents = [...gameEvents];
 
-        // --- COMBO DETECTION: BLUE + YELLOW ANYTIME DURING ACTIVE PENALTY ---
         let existingBlueCombo = null;
         if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && selectedEntity?.id) {
             existingBlueCombo = updatedEvents.find(ev => 
@@ -265,7 +264,6 @@ export default function App() {
         }
 
         if (existingBlueCombo) {
-            // 1. Upgrade existing blue to Non-Releasable and ADD 5 minutes to its current release time
             const newOffenderRelease = calcReleaseTime(existingBlueCombo.releaseTime.quarter, existingBlueCombo.releaseTime.time, 5);
             
             updatedEvents = updatedEvents.map(ev => 
@@ -273,24 +271,21 @@ export default function App() {
                     ...ev, 
                     isReleasable: false, 
                     releaseTime: newOffenderRelease, 
-                    // Add isCombo true flag so the dashboard displays 🟦 🟨
                     penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})`, isCombo: true } 
                 } : ev
             );
 
-            // 2. Assign the Substitute Server to serve the *remainder* of the original Blue Card
             const serverEvent = {
                 id: Date.now() + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: servingPlayerEntity, servingPlayer: null, assist: null, 
                 penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
                 goalFlags: null, eligibleReturnTime: null, 
                 isReleasable: true, 
-                releaseTime: existingBlueCombo.releaseTime, // They take over the original expiration
+                releaseTime: existingBlueCombo.releaseTime,
                 majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false, isJustServing: true
             };
 
-            // 3. Log the Yellow Event purely for player accumulation/reporting (hidden from active dashboard)
             const yellowEvent = {
                 id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
@@ -299,7 +294,6 @@ export default function App() {
             
             updatedEvents = [serverEvent, yellowEvent, ...updatedEvents];
         } 
-        // --- Y6 MAJOR SPLIT ---
         else if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.code === 'Y6') {
             const offenderEvent = {
                 id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
@@ -318,7 +312,6 @@ export default function App() {
             };
             updatedEvents = [serverEvent, offenderEvent, ...gameEvents];
         } 
-        // --- STANDARD LOGGING ---
         else if (!editingEventId) {
             let duration = 0, isReleasable = false, releaseTime = null; 
             if (activeAction.type === 'Time Penalty' && penaltyData.color) {
@@ -341,7 +334,6 @@ export default function App() {
                 isReleasable: isReleasable, releaseTime: releaseTime, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: false 
             }, ...gameEvents];
         } 
-        // --- EDITING EXISTING EVENT ---
         else {
             updatedEvents = gameEvents.map(ev => {
                 if (ev.id === editingEventId) {
@@ -507,7 +499,7 @@ export default function App() {
                 modalStep={modalStep} setModalStep={setModalStep} activeAction={activeAction} flowTeamColor={flowTeamColor} modalQuarter={modalQuarter} timeInput={timeInput}
                 penaltyData={penaltyData} editingEventId={editingEventId} playerSearchInput={playerSearchInput} setPlayerSearchInput={setPlayerSearchInput} filteredFlowRoster={filteredFlowRoster}
                 handlePlayerSelect={handlePlayerSelect} activeBench={activeBench} requiresSubstituteServer={requiresSubstituteServer} setRequiresSubstituteServer={setRequiresSubstituteServer}
-                benchPenaltyEntity={benchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
+                benchPenaltyEntity={benchPenaltyEntity} setBenchPenaltyEntity={setBenchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
             
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>

@@ -6,19 +6,33 @@ export default function PlayerSelectModal({
     modalStep, setModalStep, activeAction, flowTeamColor, modalQuarter, timeInput,
     penaltyData, editingEventId, playerSearchInput, setPlayerSearchInput, filteredFlowRoster,
     handlePlayerSelect, activeBench, requiresSubstituteServer, setRequiresSubstituteServer,
-    benchPenaltyEntity, goalScorer, isPeriodRunning, setModalQuarter, gameEvents
+    benchPenaltyEntity, setBenchPenaltyEntity, goalScorer, isPeriodRunning, setModalQuarter, gameEvents
 }) {
     if (modalStep !== 'PLAYER' && modalStep !== 'SERVING_PLAYER' && modalStep !== 'ASSIST') return null;
 
     let headerTitle = "";
     let subTitle = "";
 
+    const isCombo = benchPenaltyEntity && gameEvents?.some(ev => 
+        ev.type === 'Time Penalty' && 
+        ev.entity?.id === benchPenaltyEntity.id && 
+        ev.penalty?.color === 'Blue' && 
+        !ev.isJustServing && 
+        !ev.clearedFromBoard
+    );
+
     if (modalStep === 'PLAYER') {
         headerTitle = editingEventId ? "EDIT PLAYER" : (activeAction.type === 'Goal / Assist' ? "SELECT GOAL SCORER" : "SELECT OFFENDER");
         subTitle = `${activeAction.type === 'Log Foul' ? 'FOUL' : activeAction.type} - ${modalQuarter} ${activeAction.type !== 'Log Foul' && (activeAction.time || timeInput) ? `@ ${formatTime(activeAction.time || timeInput)}` : ''} ${penaltyData.code ? ` [Code: ${penaltyData.code}]` : ''}`;
     } else if (modalStep === 'SERVING_PLAYER') {
         headerTitle = "SELECT SUBSTITUTE SERVER";
-        subTitle = "Please select the teammate reporting to the penalty box.";
+        if (penaltyData.code === 'Y6' || (penaltyData.color === 'Yellow' && isCombo)) {
+            subTitle = "Offender is serving Major non-releasable time. Select a teammate to serve the Power Play.";
+        } else if (penaltyData.color === 'Red') {
+            subTitle = "Offender is Ejected. Select a teammate to serve the Power Play.";
+        } else {
+            subTitle = "Please select the field player reporting to the penalty box.";
+        }
     } else if (modalStep === 'ASSIST') {
         headerTitle = "SELECT ASSIST";
         subTitle = `Goal by: ${typeof goalScorer === 'string' ? goalScorer : `#${goalScorer?.number} ${goalScorer?.name}`}`;
@@ -38,7 +52,6 @@ export default function PlayerSelectModal({
                 const isBenchStaff = activeBench.some(b => b.id === entity?.id) || entity === 'Team / Bench';
                 const isRedPowerPlay = penaltyData.color === 'Red' && !['R8', 'R9'].includes(penaltyData.code);
                 
-                // Detecting if the player has an active Blue Card (Combo Logic)
                 let isBlueYellowComboActive = false;
                 if (penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && entity?.id) {
                     isBlueYellowComboActive = gameEvents.some(ev => 
@@ -69,7 +82,6 @@ export default function PlayerSelectModal({
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden">
                 
-                {/* DYNAMIC HEADER - ADDS MASSIVE CONFIRMATION FOR COMBO/SERVERS */}
                 {modalStep === 'SERVING_PLAYER' && benchPenaltyEntity ? (
                     <div className="bg-yellow-400 p-4 text-black text-center border-b-4 border-yellow-600 shrink-0 shadow-md z-10 relative">
                         <button onClick={() => setModalStep('PLAYER')} className="absolute left-4 top-1/2 -translate-y-1/2 font-bold bg-yellow-500 px-3 py-1.5 rounded hover:bg-yellow-600 shadow-sm transition text-sm text-yellow-900">⬅ Back</button>

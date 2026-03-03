@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.37] - 2026-03-03 - Hotfix: Combo Engine State Passer
+**Bug Fixes & UI Enhancements**
+* **Combo Selection Crash Fixed:** Resolved a silent JavaScript crash that occurred when clicking an offender who already had an active Blue Card. The app failed to update the state because the `setBenchPenaltyEntity` function was not properly passed from `App.jsx` into the `PlayerSelectModal`.
+* **UX Redesign:** The Player Select modal now deploys a massive, unmissable yellow confirmation banner when a Combo or Major penalty is assigned, providing immediate feedback that the original offender was accepted and explicitly instructing the official to now select the substitute server.
+
+---
+
 ## [v0.35] - 2026-03-03 - Dynamic Combo Escalation Engine
 **Features & Logic Upgrades**
 * **Active Penalty Interception:** The app now strictly monitors active penalties. If a player receives a Yellow card at *any time* while currently serving a Blue card (whether instantly or 1 minute later), the app triggers the Combo Engine.
