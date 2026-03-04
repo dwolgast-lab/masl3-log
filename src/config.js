@@ -1,7 +1,7 @@
 export const QUARTERS = ['Q1', 'Q2', 'Q3', 'Q4', 'OT'];
 
 export const ACTION_BUTTONS = [
-    'Goal / Assist', 'Log Foul', 'Time Penalty', 'Team Timeout', 'Injury'
+    'Goal / Assist', 'Log Foul', 'Time Penalty', 'Team Timeout', 'Team Warnings', 'Injury'
 ];
 
 export const TEAM_WARNINGS = [

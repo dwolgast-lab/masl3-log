@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.40] - 2026-03-04 - UI Button Restoration
+**Bug Fixes**
+* **Restored Team Warnings:** Fixed an accidental omission in the system configuration array that caused the "Team Warnings" button to disappear from the In-Game Dashboard grid. The button is now fully restored and functioning.
+
+---
+
 ## [v0.39.1] - 2026-03-03 - UI Declutter
 **UI Enhancements**
 * **Hidden Hex Code:** Removed the direct "Brand Hex" input from the Pregame Setup interface. The UI now only displays the Team Name and the English "Jersey Color" field. The app still perfectly handles the hex mapping silently in the background when selecting a team from the dropdown, ensuring a cleaner visual experience for the official.
