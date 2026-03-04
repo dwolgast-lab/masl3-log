@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.41] - 2026-03-04 - Responsive Score Bug
+**UI Enhancements**
+* **Score Wrapping Fix:** Updated the flexbox layout rules in the In-Game Dashboard header. The score indicator (e.g., "1 - 0") is now locked using `whitespace-nowrap` and `shrink-0` to ensure it never breaks across multiple lines.
+* **Smart Name Truncation:** Added `truncate` functionality to the team names so that exceptionally long franchise names will elegantly fade with an ellipsis instead of destroying the flexbox container boundaries on smaller screens like the iPad mini.
+
+---
+
 ## [v0.40] - 2026-03-04 - UI Button Restoration
 **Bug Fixes**
 * **Restored Team Warnings:** Fixed an accidental omission in the system configuration array that caused the "Team Warnings" button to disappear from the In-Game Dashboard grid. The button is now fully restored and functioning.
