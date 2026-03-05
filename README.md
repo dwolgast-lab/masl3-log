@@ -3,10 +3,12 @@
 
 ---
 
-## [v0.41] - 2026-03-04 - Responsive Score Bug
-**UI Enhancements**
-* **Score Wrapping Fix:** Updated the flexbox layout rules in the In-Game Dashboard header. The score indicator (e.g., "1 - 0") is now locked using `whitespace-nowrap` and `shrink-0` to ensure it never breaks across multiple lines.
-* **Smart Name Truncation:** Added `truncate` functionality to the team names so that exceptionally long franchise names will elegantly fade with an ellipsis instead of destroying the flexbox container boundaries on smaller screens like the iPad mini.
+## [v0.42] - 2026-03-05 - Multi-League Database Expansion & Color Mapping
+**Data Updates**
+* **Universal MASL Roster:** Imported 49 new teams across the MASL, MASL2, and MASLW leagues from the official master CSV file. The database now includes 69 distinct teams, making the app instantly usable across the entire league ecosystem.
+* **Division Routing:** All new teams are fully segmented by their exact active league and division, allowing the pregame setup dropdowns to dynamically group them into clean headers.
+* **Brand Color Injection:** Researched and integrated accurate primary Brand Hex codes and English "Jersey Color" names for the majority of the league to ensure the UI instantly brands itself correctly upon team selection.
+* **Conflict Resolution:** Designed unique file paths and IDs (e.g., `Iowa_Demon_Hawks_MASL2_logo.png`) for franchises that operate teams in multiple leagues to prevent logo and data overriding.
 
 ---
 
