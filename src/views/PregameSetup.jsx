@@ -14,6 +14,7 @@ export default function PregameSetup({
     const fileInputRef = useRef(null);
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState(null);
+    const [editingPlayerId, setEditingPlayerId] = useState(null);
 
     const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
         if (a.isGK && !b.isGK) return -1;
@@ -71,24 +72,66 @@ export default function PregameSetup({
         setCurrentView('ingame');
     };
 
+    // --- FULL EDIT / ADD LOGIC ---
     const handleAddPlayer = () => {
         if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
 
-        if (currentRoster.length >= 17) return alert("Max 17 total players.");
-        if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
-        if (currentRoster.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
+        const otherPlayers = editingPlayerId ? currentRoster.filter(p => p.id !== editingPlayerId) : currentRoster;
+
+        if (!editingPlayerId && currentRoster.length >= 17) return alert("Max 17 total players.");
+        if (!newPlayer.isGK && otherPlayers.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
+        if (otherPlayers.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
         
         if (newPlayer.isStarter) {
-            if (newPlayer.isGK && currentRoster.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
-            if (!newPlayer.isGK && currentRoster.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
+            if (newPlayer.isGK && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
+            if (!newPlayer.isGK && otherPlayers.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
         }
-        if (newPlayer.isCaptain && currentRoster.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
+        if (newPlayer.isCaptain && otherPlayers.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
 
-        const updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        let updated;
+        if (editingPlayerId) {
+            updated = currentRoster.map(p => p.id === editingPlayerId ? { ...newPlayer, id: editingPlayerId } : p).sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            setEditingPlayerId(null);
+        } else {
+            updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+        }
+        
         setRoster(updated);
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
+    };
+
+    // --- 1-TAP QUICK TOGGLE LOGIC ---
+    const togglePlayerAttr = (id, attr) => {
+        const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+        const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+        const player = currentRoster.find(p => p.id === id);
+        let newValue = !player[attr];
+        const otherPlayers = currentRoster.filter(p => p.id !== id);
+
+        if (newValue) {
+            if (attr === 'isCaptain' && otherPlayers.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
+            if (attr === 'isStarter') {
+                if (player.isGK && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
+                if (!player.isGK && otherPlayers.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
+            }
+            if (attr === 'isGK') {
+                if (player.isStarter && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) {
+                    return alert("Only 1 Starting Goalkeeper allowed. Please un-select the current starting GK first.");
+                }
+            }
+        } else {
+            if (attr === 'isGK') {
+                if (otherPlayers.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players. Cannot change GK to Field Player without removing one.");
+                if (player.isStarter && otherPlayers.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players. Please un-select starter status first.");
+            }
+        }
+        
+        const updated = currentRoster.map(p => p.id === id ? { ...p, [attr]: newValue } : p);
+        setRoster(updated);
+        
+        if (editingPlayerId === id) setNewPlayer(prev => ({ ...prev, [attr]: newValue }));
     };
 
     const handleAddBench = () => {
@@ -105,6 +148,12 @@ export default function PregameSetup({
 
     const removePlayer = (id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id));
     const removeBench = (id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id));
+
+    const closeRosterModal = () => {
+        setActiveRosterModal(null);
+        setEditingPlayerId(null);
+        setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
+    };
 
     // --- VISION API LOGIC ---
     const handleImageUpload = async (e) => {
@@ -134,7 +183,6 @@ export default function PregameSetup({
                 alert("Failed to scan roster: " + error.message);
             } finally {
                 setIsScanning(false);
-                // Reset input so they can scan another file if needed
                 if (fileInputRef.current) fileInputRef.current.value = "";
             }
         };
@@ -147,16 +195,14 @@ export default function PregameSetup({
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
         let newPlayers = [];
 
-        // Extremely basic smart-parse: looks for lines starting with a number
         const lines = scanResult.split('\n');
         lines.forEach(line => {
-            const match = line.match(/^(\d+)\s+(.*)/); // Matches "12 John Doe"
+            const match = line.match(/^(\d+)\s+(.*)/);
             if (match) {
                 const num = match[1];
                 let name = match[2].trim();
                 let isGK = false;
                 
-                // Try to detect GK in the name string
                 if (name.toUpperCase().includes('GK')) {
                     isGK = true;
                     name = name.replace(/GK/ig, '').trim();
@@ -166,7 +212,7 @@ export default function PregameSetup({
                     newPlayers.push({
                         id: Date.now() + Math.random(),
                         number: num,
-                        name: name.replace(/[^a-zA-Z\s,-]/g, '').trim(), // Strip weird punctuation
+                        name: name.replace(/[^a-zA-Z\s,-]/g, '').trim(), 
                         isGK: isGK,
                         isStarter: false,
                         isCaptain: false
@@ -182,9 +228,8 @@ export default function PregameSetup({
         } else {
             alert("Could not automatically detect any players in the format 'Number Name'. Please review the text and format it as '99 Jane Doe' on each line.");
         }
-        setScanResult(null); // Close the verification window
+        setScanResult(null); 
     };
-
 
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans relative flex flex-col items-center">
@@ -348,7 +393,6 @@ export default function PregameSetup({
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden relative">
                         
-                        {/* LOADING OVERLAY */}
                         {isScanning && (
                             <div className="absolute inset-0 bg-white/90 z-[60] flex flex-col items-center justify-center">
                                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -357,7 +401,6 @@ export default function PregameSetup({
                             </div>
                         )}
 
-                        {/* OCR VERIFICATION MODAL */}
                         {scanResult !== null && (
                             <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6">
                                 <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED TEXT</h2>
@@ -381,44 +424,61 @@ export default function PregameSetup({
                                 {(activeRosterModal === 'AWAY' ? gameData.awayTeam : gameData.homeTeam) || `${activeRosterModal} TEAM`} PERSONNEL
                             </h2>
                             <div className="flex items-center space-x-4">
-                                {/* SCAN BUTTON */}
                                 <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                                 <button onClick={() => fileInputRef.current.click()} className="flex items-center bg-white text-slate-800 px-4 py-2 rounded font-black shadow hover:bg-gray-100 transition text-sm">
                                     📷 Scan Lineup Sheet
                                 </button>
-                                <button onClick={() => setActiveRosterModal(null)} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
+                                <button onClick={closeRosterModal} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
                             </div>
                         </div>
                         <div className="flex flex-1 overflow-hidden bg-gray-50">
                             <div className="w-2/3 border-r flex flex-col h-full">
+                                {/* EDIT / ADD BAR */}
                                 <div className="p-4 bg-white border-b shrink-0">
-                                    <div className="flex gap-3 items-end">
-                                        <div className="w-20"><label className="block text-xs font-bold text-gray-600 mb-1">Jersey #</label><input type="number" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="00" /></div>
-                                        <div className="flex-1"><label className="block text-xs font-bold text-gray-600 mb-1">Player Name</label><input type="text" value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="Last Name, First Name" /></div>
+                                    <div className="flex gap-2 items-end">
+                                        <div className="w-16"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No.</label><input type="number" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="00" /></div>
+                                        <div className="flex-1"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Player Name</label><input type="text" value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="Last Name, First Name" /></div>
                                         <div className="flex flex-col space-y-1 pb-1">
-                                            <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isGK} onChange={e => setNewPlayer({...newPlayer, isGK: e.target.checked})} className="w-4 h-4 accent-orange-500" /><span className="font-bold text-xs text-gray-700">GK</span></label>
-                                            <div className="flex space-x-3">
-                                                <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isStarter} onChange={e => setNewPlayer({...newPlayer, isStarter: e.target.checked})} className="w-4 h-4 accent-green-600" /><span className="font-bold text-xs text-gray-700">Starter</span></label>
-                                                <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-4 h-4 accent-yellow-500" /><span className="font-bold text-xs text-gray-700">Capt.</span></label>
+                                            <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isGK} onChange={e => setNewPlayer({...newPlayer, isGK: e.target.checked})} className="w-4 h-4 accent-orange-500" /><span className="font-bold text-[10px] uppercase text-gray-700">GK</span></label>
+                                            <div className="flex space-x-2">
+                                                <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isStarter} onChange={e => setNewPlayer({...newPlayer, isStarter: e.target.checked})} className="w-4 h-4 accent-green-600" /><span className="font-bold text-[10px] uppercase text-gray-700">Start</span></label>
+                                                <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-4 h-4 accent-yellow-500" /><span className="font-bold text-[10px] uppercase text-gray-700">Capt</span></label>
                                             </div>
                                         </div>
-                                        <button onClick={handleAddPlayer} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded hover:bg-slate-700 shadow">+ Add</button>
+                                        <div className="flex space-x-1">
+                                            <button onClick={handleAddPlayer} className={`px-4 py-2 text-white text-sm font-bold rounded shadow transition ${editingPlayerId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                                                {editingPlayerId ? 'Update' : '+ Add'}
+                                            </button>
+                                            {editingPlayerId && (
+                                                <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
+                                                    Cancel
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                                {/* ROSTER LIST */}
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
                                         {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster).map(player => (
-                                            <div key={player.id} className="flex items-center justify-between p-2 bg-white border border-gray-200 rounded shadow-sm">
-                                                <div className="flex items-center space-x-3">
-                                                    <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700">{player.number}</span>
-                                                    <span className="font-bold text-sm text-gray-800">{player.name}</span>
-                                                    <div className="flex space-x-1 ml-2">
-                                                        {player.isGK && <span className="bg-orange-100 text-orange-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-orange-200">GK</span>}
-                                                        {player.isStarter && <span className="bg-green-100 text-green-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-green-200">STARTER</span>}
-                                                        {player.isCaptain && <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-1.5 py-0.5 rounded border border-yellow-300">© CAPTAIN</span>}
-                                                    </div>
+                                            <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
+                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                                    <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700 shrink-0">{player.number}</span>
+                                                    <span className="font-bold text-sm text-gray-800 truncate flex-1">{player.name}</span>
                                                 </div>
-                                                <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                                
+                                                {/* QUICK TOGGLE BADGES */}
+                                                <div className="flex space-x-1 shrink-0 ml-2">
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isGK')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isGK ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>GK</button>
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isStarter')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isStarter ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>STARTER</button>
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isCaptain')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isCaptain ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>© CAPT</button>
+                                                </div>
+
+                                                {/* ACTIONS */}
+                                                <div className="flex space-x-1 shrink-0 ml-4 border-l pl-2">
+                                                    <button onClick={() => { setEditingPlayerId(player.id); setNewPlayer(player); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
+                                                    <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-100 px-2 py-1 text-xs rounded font-bold transition">Del</button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>

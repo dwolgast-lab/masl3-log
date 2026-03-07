@@ -3,6 +3,21 @@
 
 ---
 
+## [v0.44] - 2026-03-07 - Inline Roster Editing & One-Tap Validations
+**UI Enhancements**
+* **One-Tap Validation Toggles:** Replaced the static player badges (`GK`, `STARTER`, `© CAPT`) in the Setup Roster Modal with interactive buttons. 4th Officials can now simply tap a badge to instantly toggle a player's designation. This toggle engine respects all MASL limits (e.g., automatically blocking the selection of a second starting Goalkeeper) without requiring the user to open a separate menu.
+* **Full Edit Mode:** Added a dedicated "Edit" button to the roster list. Clicking this elevates the selected player back into the primary top-bar form, allowing the official to easily correct spelling mistakes or jersey number typos imported from the OCR scanner, replacing the "+ Add" button with a dynamic "Update" function to overwrite the existing record cleanly.
+
+---
+
+## [v0.43] - 2026-03-07 - OCR Lineup Scanner Integration
+**Features & Backend Integration**
+* **Google Cloud Vision API:** Integrated advanced optical character recognition (OCR) to automatically read handwritten or typed lineup sheets via a new "Scan Lineup Sheet" button using the device's camera.
+* **Secure Serverless Backend:** Engineered a Vercel Serverless Function (`/api/scanRoster.js`) to act as a secure middleman, processing image payloads without exposing the Google API key to the client-side browser.
+* **Verification & Import Engine:** Added a smart text parsing engine that detects jersey numbers, names, and Goalkeeper (GK) designations. Includes a Verification Modal allowing the 4th official to quickly review and correct the raw scanned text before committing the batch to the active roster.
+
+---
+
 ## [v0.42] - 2026-03-05 - Multi-League Database Expansion & Color Mapping
 **Data Updates**
 * **Universal MASL Roster:** Imported 49 new teams across the MASL, MASL2, and MASLW leagues from the official master CSV file. The database now includes 69 distinct teams, making the app instantly usable across the entire league ecosystem.
