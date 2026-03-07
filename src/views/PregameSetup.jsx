@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
 
 export default function PregameSetup({
@@ -11,6 +11,10 @@ export default function PregameSetup({
     newBench, setNewBench,
     setCurrentView, clearAllGameData, onExportPDF, appVersion
 }) {
+    const fileInputRef = useRef(null);
+    const [isScanning, setIsScanning] = useState(false);
+    const [scanResult, setScanResult] = useState(null);
+
     const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
         if (a.isGK && !b.isGK) return -1;
         if (!a.isGK && b.isGK) return 1;
@@ -101,6 +105,86 @@ export default function PregameSetup({
 
     const removePlayer = (id) => activeRosterModal === 'AWAY' ? setAwayRoster(awayRoster.filter(p => p.id !== id)) : setHomeRoster(homeRoster.filter(p => p.id !== id));
     const removeBench = (id) => activeRosterModal === 'AWAY' ? setAwayBench(awayBench.filter(b => b.id !== id)) : setHomeBench(homeBench.filter(b => b.id !== id));
+
+    // --- VISION API LOGIC ---
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setIsScanning(true);
+        setScanResult(null);
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = async () => {
+            const base64data = reader.result.split(',')[1]; 
+
+            try {
+                const response = await fetch('/api/scanRoster', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ imageBase64: base64data })
+                });
+
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+
+                setScanResult(data.text);
+            } catch (error) {
+                alert("Failed to scan roster: " + error.message);
+            } finally {
+                setIsScanning(false);
+                // Reset input so they can scan another file if needed
+                if (fileInputRef.current) fileInputRef.current.value = "";
+            }
+        };
+    };
+
+    const handleImportScannedText = () => {
+        if (!scanResult) return;
+
+        const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
+        const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+        let newPlayers = [];
+
+        // Extremely basic smart-parse: looks for lines starting with a number
+        const lines = scanResult.split('\n');
+        lines.forEach(line => {
+            const match = line.match(/^(\d+)\s+(.*)/); // Matches "12 John Doe"
+            if (match) {
+                const num = match[1];
+                let name = match[2].trim();
+                let isGK = false;
+                
+                // Try to detect GK in the name string
+                if (name.toUpperCase().includes('GK')) {
+                    isGK = true;
+                    name = name.replace(/GK/ig, '').trim();
+                }
+
+                if (!currentRoster.some(p => p.number === num) && !newPlayers.some(p => p.number === num)) {
+                    newPlayers.push({
+                        id: Date.now() + Math.random(),
+                        number: num,
+                        name: name.replace(/[^a-zA-Z\s,-]/g, '').trim(), // Strip weird punctuation
+                        isGK: isGK,
+                        isStarter: false,
+                        isCaptain: false
+                    });
+                }
+            }
+        });
+
+        if (newPlayers.length > 0) {
+            const updated = [...currentRoster, ...newPlayers].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            setRoster(updated);
+            alert(`Imported ${newPlayers.length} players!`);
+        } else {
+            alert("Could not automatically detect any players in the format 'Number Name'. Please review the text and format it as '99 Jane Doe' on each line.");
+        }
+        setScanResult(null); // Close the verification window
+    };
+
 
     return (
         <div className="min-h-screen bg-gray-100 p-8 font-sans relative flex flex-col items-center">
@@ -216,7 +300,7 @@ export default function PregameSetup({
                 </button>
             </div>
 
-            {/* MODALS RETAINED FOR BREVITY */}
+            {/* MODALS */}
             {showStartersModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -259,14 +343,51 @@ export default function PregameSetup({
                     </div>
                 </div>
             )}
+            
             {activeRosterModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden relative">
+                        
+                        {/* LOADING OVERLAY */}
+                        {isScanning && (
+                            <div className="absolute inset-0 bg-white/90 z-[60] flex flex-col items-center justify-center">
+                                <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                                <h3 className="text-xl font-bold text-gray-800">Processing Document via Google Cloud AI...</h3>
+                                <p className="text-gray-500">This may take a few seconds.</p>
+                            </div>
+                        )}
+
+                        {/* OCR VERIFICATION MODAL */}
+                        {scanResult !== null && (
+                            <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6">
+                                <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED TEXT</h2>
+                                <p className="text-sm text-gray-600 mb-4 border-b pb-4">Please review the raw text below. Ensure each player is on their own line in the format: <strong>[Number] [Name]</strong>. Delete any garbage text before importing.</p>
+                                
+                                <textarea 
+                                    className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500"
+                                    value={scanResult}
+                                    onChange={(e) => setScanResult(e.target.value)}
+                                />
+                                
+                                <div className="flex justify-end space-x-4 shrink-0">
+                                    <button onClick={() => setScanResult(null)} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
+                                    <button onClick={handleImportScannedText} className="px-6 py-3 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700">Import to Roster</button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: activeRosterModal === 'AWAY' ? awayCSSColor : homeCSSColor }}>
                             <h2 className="text-2xl font-black uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                                 {(activeRosterModal === 'AWAY' ? gameData.awayTeam : gameData.homeTeam) || `${activeRosterModal} TEAM`} PERSONNEL
                             </h2>
-                            <button onClick={() => setActiveRosterModal(null)} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
+                            <div className="flex items-center space-x-4">
+                                {/* SCAN BUTTON */}
+                                <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
+                                <button onClick={() => fileInputRef.current.click()} className="flex items-center bg-white text-slate-800 px-4 py-2 rounded font-black shadow hover:bg-gray-100 transition text-sm">
+                                    📷 Scan Lineup Sheet
+                                </button>
+                                <button onClick={() => setActiveRosterModal(null)} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
+                            </div>
                         </div>
                         <div className="flex flex-1 overflow-hidden bg-gray-50">
                             <div className="w-2/3 border-r flex flex-col h-full">
