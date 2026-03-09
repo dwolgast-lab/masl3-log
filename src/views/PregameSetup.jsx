@@ -206,7 +206,7 @@ export default function PregameSetup({
         };
     };
 
-    // --- NEW SMART PARSER LOGIC ---
+    // --- SMART VIRTUAL COLUMN PARSER ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -221,34 +221,61 @@ export default function PregameSetup({
 
         const lines = scanResult.split('\n');
         lines.forEach(line => {
-            // 1. Strip useless line indices (e.g., "1.", "2)", "1 ") from the very beginning
-            let cleanLine = line.replace(/^\d+[\.\)]\s*/, '').trim();
-            if (!cleanLine) return;
+            // Ignore blank lines and form headers
+            if (!line.trim() || line.toUpperCase().includes('JERSEY NO') || line.toUpperCase().includes('LAST NAME')) return;
 
-            // 2. Try to parse as a PLAYER (Looks for a jersey number followed by text)
-            const playerMatch = cleanLine.match(/^(\d+)\s+(.*)/);
-            if (playerMatch) {
-                const num = playerMatch[1];
-                let remaining = playerMatch[2].trim();
-                let isGK = false;
+            // Split line by 2+ spaces. Document AI leaves large gaps between visual columns.
+            const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
+            
+            let jerseyNum = null;
+            let nameParts = [];
+            let isGK = false;
 
-                // Strip position letters (GK, D, M, F) from the front of the name
-                const posMatch = remaining.match(/^(GK|D|M|F)\s+(.*)/i);
-                if (posMatch) {
-                    if (posMatch[1].toUpperCase() === 'GK') isGK = true;
-                    remaining = posMatch[2]; 
-                } else if (remaining.toUpperCase().includes('GK')) {
-                    isGK = true;
-                    remaining = remaining.replace(/GK/ig, '');
+            // Loop through each "column cell" Document AI found
+            for (let i = 0; i < cells.length; i++) {
+                let cell = cells[i];
+                let upperCell = cell.toUpperCase();
+
+                // 1. Find the Jersey Number
+                if (!jerseyNum) {
+                    // Look for exactly 1 or 2 digits
+                    if (/^\d{1,2}$/.test(cell)) {
+                        // Anti-Garbage Check: If the NEXT cell is ALSO a 1-2 digit number, 
+                        // this current cell is probably just the printed row number (e.g. "23" in your example). Skip it.
+                        if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) {
+                            continue;
+                        }
+                        jerseyNum = cell;
+                    }
+                } 
+                // 2. We already found the jersey number, everything else is position or name
+                else {
+                    if (upperCell === 'GK' || upperCell === 'G') {
+                        isGK = true;
+                    } else if (/^[DMFET]$/.test(upperCell)) {
+                        // Ignore standard single-letter position markers (and common OCR typos for F like E or T)
+                        continue;
+                    } else {
+                        // Check if GK is embedded inside the name string
+                        if (upperCell.includes('GK')) {
+                            isGK = true;
+                            cell = cell.replace(/GK/ig, '').trim();
+                        }
+                        // Add whatever is left to the player's name
+                        if (cell) nameParts.push(cell);
+                    }
                 }
+            }
 
-                // Final string cleanup
-                const finalName = remaining.replace(/[^a-zA-Z\s,-]/g, '').trim();
-
-                if (finalName && !currentRoster.some(p => p.number === num) && !newPlayers.some(p => p.number === num)) {
+            // --- PROCESS PLAYER MATCH ---
+            if (jerseyNum && nameParts.length > 0) {
+                const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
+                
+                // Only import if it's a real name and doesn't already exist on the roster
+                if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
                     newPlayers.push({
                         id: Date.now() + Math.random(),
-                        number: num,
+                        number: jerseyNum,
                         name: finalName,
                         isGK: isGK,
                         isStarter: false,
@@ -256,26 +283,28 @@ export default function PregameSetup({
                     });
                 }
             } 
-            // 3. Try to parse as BENCH STAFF (Looks for role keywords)
+            // --- PROCESS BENCH STAFF MATCH (Fallback if no jersey number found) ---
             else {
-                let upperLine = cleanLine.toUpperCase();
-                let foundRole = benchKeywords.find(role => upperLine.startsWith(role));
+                let upperLine = line.toUpperCase();
+                let foundRole = benchKeywords.find(role => upperLine.includes(role));
                 
                 if (foundRole) {
-                    let staffName = cleanLine.substring(foundRole.length).trim();
-                    staffName = staffName.replace(/[^a-zA-Z\s,-]/g, '').trim();
+                    // Strip the role title and numbers to just get the person's name
+                    let staffName = upperLine.replace(foundRole, '').replace(/[^A-Z\s,-]/g, '').trim();
                     
-                    if (staffName && !currentBench.some(b => b.name === staffName) && !newStaff.some(b => b.name === staffName)) {
+                    if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
                         newStaff.push({
                             id: Date.now() + Math.random(),
-                            name: staffName,
-                            role: foundRole.charAt(0).toUpperCase() + foundRole.slice(1).toLowerCase() // Formats as "Coach", "Trainer", etc.
+                            // Convert back to Title Case
+                            name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
+                            role: foundRole.charAt(0).toUpperCase() + foundRole.slice(1).toLowerCase()
                         });
                     }
                 }
             }
         });
 
+        // Add everything to the UI
         if (newPlayers.length > 0 || newStaff.length > 0) {
             if (newPlayers.length > 0) {
                 const updatedRoster = [...currentRoster, ...newPlayers].sort((a, b) => parseInt(a.number) - parseInt(b.number));

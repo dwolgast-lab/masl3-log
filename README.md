@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.48] - 2026-03-09 - Smart Virtual Column Parser
+**Frontend & OCR Enhancements**
+* **Virtual Column Extraction:** Completely rebuilt the frontend OCR parsing engine to interpret the large spatial gaps provided by Document AI as "virtual cells". This allows the app to accurately isolate jersey numbers from player names regardless of the physical roster orientation or column misalignment.
+* **Aggressive Data Sanitization:** The parser now intelligently identifies and discards irrelevant form artifacts, including printed list indices (e.g., "1.", "23") and standalone position markers ("F", "M", "D", "GK"), ensuring only clean player data reaches the import queue.
+* **Enhanced Bench Staff Parsing:** Refined the bench staff detection algorithm to automatically strip numeric artifacts and role titles from the raw text, importing cleanly formatted Title Case names directly into the personnel list.
+
+---
+
 ## [v0.47] - 2026-03-09 - Advanced Table Extraction & Smart Parser
 **Backend Optimization**
 * **Row-by-Row AI Extraction:** Rewrote the `/api/scanRoster.js` handler to explicitly pull from Document AI's structured `tables` array instead of falling back to the raw, linear text stream. This ensures column alignment is strictly maintained before sending the data to the client.
