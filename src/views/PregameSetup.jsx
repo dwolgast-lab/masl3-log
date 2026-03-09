@@ -511,4 +511,70 @@ export default function PregameSetup({
                                                 {editingPlayerId ? 'Update' : '+ Add'}
                                             </button>
                                             {editingPlayerId && (
-                                                <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-20
+                                                <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
+                                                    Cancel
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* ROSTER LIST */}
+                                <div className="p-4 overflow-y-auto flex-1">
+                                    <div className="space-y-2">
+                                        {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster).map(player => (
+                                            <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
+                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                                    <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700 shrink-0">{player.number}</span>
+                                                    <span className="font-bold text-sm text-gray-800 truncate flex-1">{player.name}</span>
+                                                </div>
+                                                
+                                                {/* QUICK TOGGLE BADGES */}
+                                                <div className="flex space-x-1 shrink-0 ml-2">
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isGK')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isGK ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>GK</button>
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isStarter')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isStarter ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>STARTER</button>
+                                                    <button onClick={() => togglePlayerAttr(player.id, 'isCaptain')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isCaptain ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>© CAPT</button>
+                                                </div>
+
+                                                {/* ACTIONS */}
+                                                <div className="flex space-x-1 shrink-0 ml-4 border-l pl-2">
+                                                    <button onClick={() => { setEditingPlayerId(player.id); setNewPlayer(player); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
+                                                    <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-100 px-2 py-1 text-xs rounded font-bold transition">Del</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="w-1/3 flex flex-col h-full bg-slate-50">
+                                <div className="p-4 bg-white border-b shrink-0">
+                                    <div className="flex flex-col gap-2">
+                                        <input type="text" value={newBench.name} onChange={e => setNewBench({...newBench, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm" placeholder="Staff Name" />
+                                        <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
+                                            {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
+                                        </select>
+                                        <button onClick={handleAddBench} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
+                                    </div>
+                                </div>
+                                <div className="p-4 overflow-y-auto flex-1">
+                                    <div className="space-y-2">
+                                        {(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
+                                            <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
+                                                <span className="font-bold text-sm text-gray-800">{person.name}</span>
+                                                <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
+                                                <button onClick={() => removeBench(person.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            
+            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
+                Author: Dave Wolgast | v{appVersion}
+            </div>
+        </div>
+    );
+}
