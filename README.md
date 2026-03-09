@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.45] - 2026-03-09 - Document AI Form Parser Upgrade
+**Backend & OCR Enhancements**
+* **Document AI Integration:** Upgraded the lineup sheet scanning engine from standard Cloud Vision to the more advanced Google Cloud Document AI (Form Parser). This enterprise-grade model inherently understands page layouts, tables, and columns, drastically reducing the amount of "garbage text" generated from physical roster sheets.
+* **Enterprise Authentication:** Migrated the Vercel serverless backend (`/api/scanRoster.js`) to utilize the official `@google-cloud/documentai` SDK with secure Service Account JSON credentials.
+* **Layout Retention:** Because Document AI respects the physical structure of the page, jersey numbers and player names now reliably render on the exact same line in the Verification Modal, making the import parsing engine significantly more accurate.
+
+
+
 ## [v0.44] - 2026-03-07 - Inline Roster Editing & One-Tap Validations
 **UI Enhancements**
 * **One-Tap Validation Toggles:** Replaced the static player badges (`GK`, `STARTER`, `© CAPT`) in the Setup Roster Modal with interactive buttons. 4th Officials can now simply tap a badge to instantly toggle a player's designation. This toggle engine respects all MASL limits (e.g., automatically blocking the selection of a second starting Goalkeeper) without requiring the user to open a separate menu.

@@ -1,4 +1,6 @@
 // /api/scanRoster.js
+import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
@@ -6,36 +8,43 @@ export default async function handler(req, res) {
 
     try {
         const { imageBase64 } = req.body;
-        const apiKey = process.env.GOOGLE_VISION_API_KEY;
 
-        if (!apiKey) {
-            return res.status(500).json({ error: 'API key not configured on server' });
+        // Parse the secure JSON credentials from Vercel
+        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+        const projectId = process.env.DOCAI_PROJECT_ID;
+        const location = process.env.DOCAI_LOCATION; 
+        const processorId = process.env.DOCAI_PROCESSOR_ID;
+
+        if (!credentials || !projectId || !processorId) {
+            return res.status(500).json({ error: 'Document AI environment variables are missing.' });
         }
 
-        const response = await fetch(`https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                requests: [
-                    {
-                        image: { content: imageBase64 },
-                        features: [{ type: 'DOCUMENT_TEXT_DETECTION' }]
-                    }
-                ]
-            })
-        });
-
-        const data = await response.json();
+        // Initialize the Document AI Client
+        const client = new DocumentProcessorServiceClient({ credentials });
         
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
+        // Build the precise routing name for Google's servers
+        const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
 
-        const text = data.responses[0]?.fullTextAnnotation?.text || '';
-        return res.status(200).json({ text });
+        // Package the image for processing
+        const request = {
+            name,
+            rawDocument: {
+                content: imageBase64,
+                mimeType: 'image/jpeg', // Works for both JPEG and PNG payloads
+            },
+        };
+
+        // Send to Google Cloud
+        const [result] = await client.processDocument(request);
+        const { document } = result;
+
+        // Document AI returns highly intelligent text that respects columns.
+        // For phase 1 of your experiment, we will just return this highly clean text 
+        // to your existing frontend Verification Screen so you can see the difference.
+        return res.status(200).json({ text: document.text });
 
     } catch (error) {
-        console.error('Vision API Error:', error);
-        return res.status(500).json({ error: 'Failed to process image' });
+        console.error('Document AI Error:', error);
+        return res.status(500).json({ error: 'Failed to process document via AI' });
     }
 }
