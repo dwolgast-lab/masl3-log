@@ -3,6 +3,17 @@
 
 ---
 
+## [v0.51] - 2026-03-09 - Mathematical Physical Line Builder
+**Backend Overhaul**
+* **Custom Y-Coordinate Line Assembly:** Scrapped Document AI's unpredictable semantic table extraction. The backend now extracts the raw X and Y layout coordinates of every individual token on the page, mathematically clustering them into strict horizontal rows based on a 1.2% physical height variance.
+* **Flawless Layout Retention:** Because the backend literally rebuilds the lines exactly as they physically appear top-to-bottom on the paper, the "Starters" will always be processed first, "Substitutes" second, and "Bench" third, entirely bypassing the previous scrambled output errors.
+**Frontend Pre-Game Rule Engine**
+* **Strict Roster Assignment:** Re-enabled the Virtual Column Scanner to perfectly slice the physical lines, reliably auto-marking the first 6 players as `STARTERS` and assigning `GK` to the 1st row.
+* **Staff Auto-Roles:** First staff member imported automatically assigned to `Head Coach`, with all subsequent staff defaulted to `Assistant Coach`.
+* **Kickoff Guard Rails:** Built a pre-game validation engine. If the user clicks "Proceed to Kickoff" without exactly 6 Starters, 1 GK, and 1 Head Coach assigned, the app throws an itemized warning modal requiring explicit confirmation to override.
+
+---
+
 ## [v0.50] - 2026-03-09 - Linear OCR Parsing & Validation Guards
 **Backend & Parsing Overhaul**
 * **Linear Block Reading:** Disabled the strict table-extraction algorithm in Document AI in favor of raw text extraction. This prevents the AI from aggressively breaking apart tables that have non-grid headers (like "STARTERS" and "SUBSTITUTES"), preserving the natural top-to-bottom layout of the roster sheet.
