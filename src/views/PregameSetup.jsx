@@ -72,7 +72,6 @@ export default function PregameSetup({
         setCurrentView('ingame');
     };
 
-    // --- FULL EDIT / ADD LOGIC ---
     const handleAddPlayer = () => {
         if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
@@ -102,7 +101,6 @@ export default function PregameSetup({
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
     };
 
-    // --- 1-TAP QUICK TOGGLE LOGIC ---
     const togglePlayerAttr = (id, attr) => {
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
@@ -155,7 +153,6 @@ export default function PregameSetup({
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
     };
 
-    // --- VISION API LOGIC WITH COMPRESSION ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -169,24 +166,16 @@ export default function PregameSetup({
             const img = new Image();
             img.src = reader.result;
             img.onload = async () => {
-                // 1. Create a virtual canvas to scale down the image
                 const canvas = document.createElement('canvas');
                 const MAX_WIDTH = 1500;
                 const MAX_HEIGHT = 1500;
                 let width = img.width;
                 let height = img.height;
 
-                // Keep aspect ratio
                 if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                 } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
+                    if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
                 }
 
                 canvas.width = width;
@@ -194,10 +183,8 @@ export default function PregameSetup({
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // 2. Convert canvas to highly compressed JPEG (0.6 quality)
                 const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
-                // 3. Send lightweight string to Vercel
                 try {
                     const response = await fetch('/api/scanRoster', {
                         method: 'POST',
@@ -219,45 +206,88 @@ export default function PregameSetup({
         };
     };
 
+    // --- NEW SMART PARSER LOGIC ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
+        const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
+        const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
+        
         let newPlayers = [];
+        let newStaff = [];
+        const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'STAFF', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
 
         const lines = scanResult.split('\n');
         lines.forEach(line => {
-            const match = line.match(/^(\d+)\s+(.*)/);
-            if (match) {
-                const num = match[1];
-                let name = match[2].trim();
+            // 1. Strip useless line indices (e.g., "1.", "2)", "1 ") from the very beginning
+            let cleanLine = line.replace(/^\d+[\.\)]\s*/, '').trim();
+            if (!cleanLine) return;
+
+            // 2. Try to parse as a PLAYER (Looks for a jersey number followed by text)
+            const playerMatch = cleanLine.match(/^(\d+)\s+(.*)/);
+            if (playerMatch) {
+                const num = playerMatch[1];
+                let remaining = playerMatch[2].trim();
                 let isGK = false;
-                
-                if (name.toUpperCase().includes('GK')) {
+
+                // Strip position letters (GK, D, M, F) from the front of the name
+                const posMatch = remaining.match(/^(GK|D|M|F)\s+(.*)/i);
+                if (posMatch) {
+                    if (posMatch[1].toUpperCase() === 'GK') isGK = true;
+                    remaining = posMatch[2]; 
+                } else if (remaining.toUpperCase().includes('GK')) {
                     isGK = true;
-                    name = name.replace(/GK/ig, '').trim();
+                    remaining = remaining.replace(/GK/ig, '');
                 }
 
-                if (!currentRoster.some(p => p.number === num) && !newPlayers.some(p => p.number === num)) {
+                // Final string cleanup
+                const finalName = remaining.replace(/[^a-zA-Z\s,-]/g, '').trim();
+
+                if (finalName && !currentRoster.some(p => p.number === num) && !newPlayers.some(p => p.number === num)) {
                     newPlayers.push({
                         id: Date.now() + Math.random(),
                         number: num,
-                        name: name.replace(/[^a-zA-Z\s,-]/g, '').trim(), 
+                        name: finalName,
                         isGK: isGK,
                         isStarter: false,
                         isCaptain: false
                     });
                 }
+            } 
+            // 3. Try to parse as BENCH STAFF (Looks for role keywords)
+            else {
+                let upperLine = cleanLine.toUpperCase();
+                let foundRole = benchKeywords.find(role => upperLine.startsWith(role));
+                
+                if (foundRole) {
+                    let staffName = cleanLine.substring(foundRole.length).trim();
+                    staffName = staffName.replace(/[^a-zA-Z\s,-]/g, '').trim();
+                    
+                    if (staffName && !currentBench.some(b => b.name === staffName) && !newStaff.some(b => b.name === staffName)) {
+                        newStaff.push({
+                            id: Date.now() + Math.random(),
+                            name: staffName,
+                            role: foundRole.charAt(0).toUpperCase() + foundRole.slice(1).toLowerCase() // Formats as "Coach", "Trainer", etc.
+                        });
+                    }
+                }
             }
         });
 
-        if (newPlayers.length > 0) {
-            const updated = [...currentRoster, ...newPlayers].sort((a, b) => parseInt(a.number) - parseInt(b.number));
-            setRoster(updated);
-            alert(`Imported ${newPlayers.length} players!`);
+        if (newPlayers.length > 0 || newStaff.length > 0) {
+            if (newPlayers.length > 0) {
+                const updatedRoster = [...currentRoster, ...newPlayers].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+                setRoster(updatedRoster);
+            }
+            if (newStaff.length > 0) {
+                const updatedBench = [...currentBench, ...newStaff];
+                setBench(updatedBench);
+            }
+            alert(`Imported ${newPlayers.length} players and ${newStaff.length} bench staff!`);
         } else {
-            alert("Could not automatically detect any players in the format 'Number Name'. Please review the text and format it as '99 Jane Doe' on each line.");
+            alert("Could not detect any valid players or staff. Please ensure rows look like '99 John Doe' or 'Coach Jane Smith'.");
         }
         setScanResult(null); 
     };
@@ -443,9 +473,9 @@ export default function PregameSetup({
                                     onChange={(e) => setScanResult(e.target.value)}
                                 />
                                 
-                                <div className="flex justify-end space-x-4 shrink-0">
+                                <div className="flex justify-end space-x-4 shrink-0 mt-4">
                                     <button onClick={() => setScanResult(null)} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
-                                    <button onClick={handleImportScannedText} className="px-6 py-3 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700">Import to Roster</button>
+                                    <button onClick={handleImportScannedText} className="px-6 py-3 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700">Import Data</button>
                                 </div>
                             </div>
                         )}
@@ -481,70 +511,4 @@ export default function PregameSetup({
                                                 {editingPlayerId ? 'Update' : '+ Add'}
                                             </button>
                                             {editingPlayerId && (
-                                                <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
-                                                    Cancel
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                {/* ROSTER LIST */}
-                                <div className="p-4 overflow-y-auto flex-1">
-                                    <div className="space-y-2">
-                                        {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster).map(player => (
-                                            <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
-                                                <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                                    <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700 shrink-0">{player.number}</span>
-                                                    <span className="font-bold text-sm text-gray-800 truncate flex-1">{player.name}</span>
-                                                </div>
-                                                
-                                                {/* QUICK TOGGLE BADGES */}
-                                                <div className="flex space-x-1 shrink-0 ml-2">
-                                                    <button onClick={() => togglePlayerAttr(player.id, 'isGK')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isGK ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>GK</button>
-                                                    <button onClick={() => togglePlayerAttr(player.id, 'isStarter')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isStarter ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>STARTER</button>
-                                                    <button onClick={() => togglePlayerAttr(player.id, 'isCaptain')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isCaptain ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>© CAPT</button>
-                                                </div>
-
-                                                {/* ACTIONS */}
-                                                <div className="flex space-x-1 shrink-0 ml-4 border-l pl-2">
-                                                    <button onClick={() => { setEditingPlayerId(player.id); setNewPlayer(player); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
-                                                    <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-100 px-2 py-1 text-xs rounded font-bold transition">Del</button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="w-1/3 flex flex-col h-full bg-slate-50">
-                                <div className="p-4 bg-white border-b shrink-0">
-                                    <div className="flex flex-col gap-2">
-                                        <input type="text" value={newBench.name} onChange={e => setNewBench({...newBench, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm" placeholder="Staff Name" />
-                                        <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
-                                            {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
-                                        </select>
-                                        <button onClick={handleAddBench} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
-                                    </div>
-                                </div>
-                                <div className="p-4 overflow-y-auto flex-1">
-                                    <div className="space-y-2">
-                                        {(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
-                                            <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
-                                                <span className="font-bold text-sm text-gray-800">{person.name}</span>
-                                                <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
-                                                <button onClick={() => removeBench(person.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
-                Author: Dave Wolgast | v{appVersion}
-            </div>
-        </div>
-    );
-}
+                                                <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-20

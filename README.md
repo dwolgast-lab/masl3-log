@@ -3,6 +3,15 @@
 
 ---
 
+## [v0.47] - 2026-03-09 - Advanced Table Extraction & Smart Parser
+**Backend Optimization**
+* **Row-by-Row AI Extraction:** Rewrote the `/api/scanRoster.js` handler to explicitly pull from Document AI's structured `tables` array instead of falling back to the raw, linear text stream. This ensures column alignment is strictly maintained before sending the data to the client.
+**Frontend Enhancements**
+* **Smart Roster Parsing Engine:** Upgraded the `handleImportScannedText` logic to intelligently clean the new structured rows. The engine now automatically strips generic list indices (e.g. "1.", "2)") and filters out position letters ("GK", "D", "M") to ensure a clean import of the Jersey Number and Player Name.
+* **Auto Bench-Staff Routing:** Added a secondary keyword-detection loop. If the scanner detects a row starting with a bench role (e.g., "COACH", "TRAINER", "MANAGER"), it will automatically parse the name and instantly add them to the team's designated Bench Staff list alongside the player import.
+
+---
+
 ## [v0.46] - 2026-03-09 - Client-Side Image Compression
 **Performance & API Optimization**
 * **Auto-Compressor Engine:** Implemented an HTML5 `<canvas>` rendering pipeline in the frontend that intercepts iPad/iPhone camera photos before they are uploaded. The engine scales the image down to a 1500px bounding box and compresses it to a 60% quality JPEG. 
