@@ -1,6 +1,5 @@
 import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
 
-// Helper function to extract specific cell text from the larger document
 const getText = (textAnchor, text) => {
     if (!textAnchor || !textAnchor.textSegments || textAnchor.textSegments.length === 0) return '';
     const startIndex = textAnchor.textSegments[0].startIndex || 0;
@@ -32,29 +31,36 @@ export default async function handler(req, res) {
 
         let formattedLines = [];
 
-        // 1. Dig directly into the Table objects instead of the raw flat text
         if (document.pages) {
             document.pages.forEach((page) => {
                 if (page.tables && page.tables.length > 0) {
+                    
+                    // 1. CRITICAL FIX: Sort tables top-to-bottom based on physical Y-coordinate
+                    page.tables.sort((a, b) => {
+                        const getY = (table) => {
+                            if (table.layout && table.layout.boundingPoly && table.layout.boundingPoly.normalizedVertices) {
+                                return Math.min(...table.layout.boundingPoly.normalizedVertices.map(v => v.y || 0));
+                            }
+                            return 0;
+                        };
+                        return getY(a) - getY(b);
+                    });
+
+                    // 2. Extract the ordered rows
                     page.tables.forEach((table) => {
                         table.bodyRows.forEach(row => {
                             let rowData = row.cells.map(cell => getText(cell.layout.textAnchor, document.text));
-                            
-                            // Remove empty cells to tighten up the row data
                             rowData = rowData.map(c => c.trim()).filter(c => c.length > 0);
-                            
                             if (rowData.length > 0) {
-                                // Separate the cells with a wide space so the frontend regex can easily parse it
                                 formattedLines.push(rowData.join('   ')); 
                             }
                         });
-                        formattedLines.push(''); // Add a blank line between different tables
+                        formattedLines.push('\n---'); // Visual break between tables
                     });
                 }
             });
         }
 
-        // 2. Fallback just in case the form parser couldn't find bounding boxes
         if (formattedLines.length === 0) {
             formattedLines.push(document.text);
         }

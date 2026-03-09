@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.49] - 2026-03-09 - Physical Layout Sorting & Auto-Starters
+**Backend Enhancements**
+* **Y-Coordinate Sorting Algorithm:** Upgraded the Vercel backend to analyze the physical height (bounding poly Y-coordinates) of every table detected by Google Document AI. The tables are now explicitly re-ordered from Top-to-Bottom before returning the payload, preventing the AI from scrambling the reading order of "Starters", "Substitutes", and "Bench Staff" sections.
+**Frontend Enhancements**
+* **Auto-Starter Assignment:** Because the backend now perfectly respects the physical layout of the official MASL form, the frontend parser automatically assigns the `STARTER` designation to the first 6 players imported, and automatically assigns `GK` status to the very first player, drastically reducing manual entry post-scan.
+
+---
+
 ## [v0.48] - 2026-03-09 - Smart Virtual Column Parser
 **Frontend & OCR Enhancements**
 * **Virtual Column Extraction:** Completely rebuilt the frontend OCR parsing engine to interpret the large spatial gaps provided by Document AI as "virtual cells". This allows the app to accurately isolate jersey numbers from player names regardless of the physical roster orientation or column misalignment.

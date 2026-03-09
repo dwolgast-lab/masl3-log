@@ -206,7 +206,7 @@ export default function PregameSetup({
         };
     };
 
-    // --- SMART VIRTUAL COLUMN PARSER ---
+    // --- AUTO-STARTER VIRTUAL COLUMN PARSER ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -218,84 +218,76 @@ export default function PregameSetup({
         let newPlayers = [];
         let newStaff = [];
         const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'STAFF', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
+        let importedPlayerCount = 0; // Tracks the order to assign starters
 
         const lines = scanResult.split('\n');
         lines.forEach(line => {
-            // Ignore blank lines and form headers
-            if (!line.trim() || line.toUpperCase().includes('JERSEY NO') || line.toUpperCase().includes('LAST NAME')) return;
+            // Ignore blanks, section breaks, and headers
+            if (!line.trim() || line.includes('---') || line.toUpperCase().includes('JERSEY NO') || line.toUpperCase().includes('LAST NAME')) return;
 
-            // Split line by 2+ spaces. Document AI leaves large gaps between visual columns.
             const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
             
             let jerseyNum = null;
             let nameParts = [];
             let isGK = false;
 
-            // Loop through each "column cell" Document AI found
             for (let i = 0; i < cells.length; i++) {
                 let cell = cells[i];
                 let upperCell = cell.toUpperCase();
 
-                // 1. Find the Jersey Number
                 if (!jerseyNum) {
-                    // Look for exactly 1 or 2 digits
                     if (/^\d{1,2}$/.test(cell)) {
-                        // Anti-Garbage Check: If the NEXT cell is ALSO a 1-2 digit number, 
-                        // this current cell is probably just the printed row number (e.g. "23" in your example). Skip it.
+                        // Skip if it's just a row list index (e.g. "23") next to the actual jersey number
                         if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) {
                             continue;
                         }
                         jerseyNum = cell;
                     }
                 } 
-                // 2. We already found the jersey number, everything else is position or name
                 else {
                     if (upperCell === 'GK' || upperCell === 'G') {
                         isGK = true;
                     } else if (/^[DMFET]$/.test(upperCell)) {
-                        // Ignore standard single-letter position markers (and common OCR typos for F like E or T)
                         continue;
                     } else {
-                        // Check if GK is embedded inside the name string
                         if (upperCell.includes('GK')) {
                             isGK = true;
                             cell = cell.replace(/GK/ig, '').trim();
                         }
-                        // Add whatever is left to the player's name
                         if (cell) nameParts.push(cell);
                     }
                 }
             }
 
-            // --- PROCESS PLAYER MATCH ---
             if (jerseyNum && nameParts.length > 0) {
                 const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
                 
-                // Only import if it's a real name and doesn't already exist on the roster
                 if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
+                    importedPlayerCount++;
+                    
+                    // Automatically mark the first 6 physical rows as Starters, and the 1st row as GK!
+                    const isAutoStarter = importedPlayerCount <= 6;
+                    const isAutoGK = isGK || importedPlayerCount === 1;
+
                     newPlayers.push({
                         id: Date.now() + Math.random(),
                         number: jerseyNum,
                         name: finalName,
-                        isGK: isGK,
-                        isStarter: false,
+                        isGK: isAutoGK,
+                        isStarter: isAutoStarter,
                         isCaptain: false
                     });
                 }
             } 
-            // --- PROCESS BENCH STAFF MATCH (Fallback if no jersey number found) ---
             else {
                 let upperLine = line.toUpperCase();
                 let foundRole = benchKeywords.find(role => upperLine.includes(role));
                 
                 if (foundRole) {
-                    // Strip the role title and numbers to just get the person's name
                     let staffName = upperLine.replace(foundRole, '').replace(/[^A-Z\s,-]/g, '').trim();
-                    
                     if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
                         newStaff.push({
                             id: Date.now() + Math.random(),
-                            // Convert back to Title Case
                             name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
                             role: foundRole.charAt(0).toUpperCase() + foundRole.slice(1).toLowerCase()
                         });
@@ -304,7 +296,6 @@ export default function PregameSetup({
             }
         });
 
-        // Add everything to the UI
         if (newPlayers.length > 0 || newStaff.length > 0) {
             if (newPlayers.length > 0) {
                 const updatedRoster = [...currentRoster, ...newPlayers].sort((a, b) => parseInt(a.number) - parseInt(b.number));
@@ -314,9 +305,9 @@ export default function PregameSetup({
                 const updatedBench = [...currentBench, ...newStaff];
                 setBench(updatedBench);
             }
-            alert(`Imported ${newPlayers.length} players and ${newStaff.length} bench staff!`);
+            alert(`Imported ${newPlayers.length} players (${Math.min(newPlayers.length, 6)} auto-marked as Starters) and ${newStaff.length} bench staff!`);
         } else {
-            alert("Could not detect any valid players or staff. Please ensure rows look like '99 John Doe' or 'Coach Jane Smith'.");
+            alert("Could not detect any valid players or staff.");
         }
         setScanResult(null); 
     };
@@ -494,10 +485,13 @@ export default function PregameSetup({
                         {scanResult !== null && (
                             <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6">
                                 <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED TEXT</h2>
-                                <p className="text-sm text-gray-600 mb-4 border-b pb-4">Please review the raw text below. Ensure each player is on their own line in the format: <strong>[Number] [Name]</strong>. Delete any garbage text before importing.</p>
+                                <p className="text-sm text-gray-600 mb-4 border-b pb-4">
+                                    Below is the raw text extracted by Google AI. <strong>It may look messy, but our Smart Parser will automatically clean it up.</strong> <br/>
+                                    If it looks generally correct, just click "Import Data".
+                                </p>
                                 
                                 <textarea 
-                                    className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500"
+                                    className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500 bg-gray-50"
                                     value={scanResult}
                                     onChange={(e) => setScanResult(e.target.value)}
                                 />
