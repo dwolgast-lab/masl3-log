@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.52] - 2026-03-09 - Numerical Sort & Bench Staff Editing
+**Gameplay & UX Enhancements**
+* **Universal Numerical Roster Sorting:** Implemented a complex sorting algorithm (`robustNumericalSort`) applied to all player roster lists. This sorts jerseys mathematically (00 -> 0 -> 1-99), handling distinct double-zero ('00') vs standard zero ('0') vs leading zeros ('05'). This allows Assistant Refs in the Game view to instantly locate players by number and quickly identify any players that the OCR missed scanning (like #1 Derksen in the tests).
+* **Editable Bench Staff:** Added the ability to Edit existing bench personnel records in the pre-game modal. The modal now features an "Edit" button on staff cards. Clicking it populates the entry fields above, allowing for name misspelling corrections and role updates (e.g. changing an entry to "Head Coach" or "Trainer"). The validation logic correctly guards against duplicate Head Coaches during editing.
+
+---
+
 ## [v0.51] - 2026-03-09 - Mathematical Physical Line Builder
 **Backend Overhaul**
 * **Custom Y-Coordinate Line Assembly:** Scrapped Document AI's unpredictable semantic table extraction. The backend now extracts the raw X and Y layout coordinates of every individual token on the page, mathematically clustering them into strict horizontal rows based on a 1.2% physical height variance.

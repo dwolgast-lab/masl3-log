@@ -1,6 +1,27 @@
 import React, { useState, useRef } from 'react';
 import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
 
+// UTILITY: ROBUST NUMERICAL JERSEY SORT
+// Handles standard numbers, leading zeros (05), and distinct '00' vs '0' nuance.
+const robustNumericalSort = (a, b) => {
+    const jerseyA = a.number;
+    const jerseyB = b.number;
+
+    if (jerseyA === '00') return -1; // 00 always first
+    if (jerseyB === '00') return 1;
+
+    // parseInt handles standard numerical comparison (e.g. "05" becomes 5)
+    const numA = parseInt(jerseyA, 10);
+    const numB = parseInt(jerseyB, 10);
+
+    if (numA !== numB) {
+        return numA - numB;
+    }
+    
+    // Fallback comparison for safety
+    return jerseyA.localeCompare(jerseyB);
+};
+
 export default function PregameSetup({
     gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
     awayRoster, setAwayRoster, homeRoster, setHomeRoster,
@@ -15,12 +36,12 @@ export default function PregameSetup({
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState(null);
     const [editingPlayerId, setEditingPlayerId] = useState(null);
+    const [editingBenchId, setEditingBenchId] = useState(null); // NEW: Manage staff editing
 
-    const getSortedStarters = (roster) => roster.filter(p => p.isStarter).sort((a, b) => {
-        if (a.isGK && !b.isGK) return -1;
-        if (!a.isGK && b.isGK) return 1;
-        return parseInt(a.number) - parseInt(b.number);
-    });
+    // Ensure starters modal uses strict numerical sort
+    const getSortedStarters = (roster) => roster
+        .filter(p => p.isStarter)
+        .sort(robustNumericalSort);
 
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     const availableTeams = TEAMS.filter(t => t.league === gameData.league);
@@ -64,16 +85,16 @@ export default function PregameSetup({
         }
     };
 
-    // --- GAME STATE VALIDATION ---
+    // --- MASL GAME STATE VALIDATION GUARDS ---
     const checkTeamValidity = (teamName, roster, bench) => {
         let warnings = [];
         const starters = roster.filter(p => p.isStarter);
         const startingGKs = starters.filter(p => p.isGK);
         const headCoaches = bench.filter(b => b.role === 'Head Coach');
 
-        if (starters.length !== 6) warnings.push(`Requires exactly 6 Starters (Currently has ${starters.length}).`);
-        if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper (Currently has ${startingGKs.length}).`);
-        if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach (Currently has ${headCoaches.length}).`);
+        if (starters.length !== 6) warnings.push(`Requires exactly 6 Starters (GK + 5 Field).`);
+        if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper.`);
+        if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach.`);
         
         return warnings.length > 0 ? { team: teamName, warnings } : null;
     };
@@ -100,9 +121,13 @@ export default function PregameSetup({
             errorMsg += "\nAre you sure you want to proceed to kickoff anyway?";
             
             if (!window.confirm(errorMsg)) {
-                return; // User cancelled
+                return; 
             }
         }
+        
+        // Ensure data is passed out using strict numerical sort
+        awayRoster.sort(robustNumericalSort);
+        homeRoster.sort(robustNumericalSort);
 
         setCurrentView('ingame');
     };
@@ -112,11 +137,14 @@ export default function PregameSetup({
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
 
-        const otherPlayers = editingPlayerId ? currentRoster.filter(p => p.id !== editingPlayerId) : currentRoster;
+        // Disallow duplicates (treating 00, 0, 01, 1 distinctly)
+        if (currentRoster.some(p => p.number === newPlayer.number && p.id !== editingPlayerId)) {
+            return alert(`Jersey number ${newPlayer.number} already exists on this roster.`);
+        }
 
+        const otherPlayers = editingPlayerId ? currentRoster.filter(p => p.id !== editingPlayerId) : currentRoster;
         if (!editingPlayerId && currentRoster.length >= 17) return alert("Max 17 total players.");
         if (!newPlayer.isGK && otherPlayers.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
-        if (otherPlayers.some(p => p.number === newPlayer.number)) return alert("Jersey number already exists.");
         
         if (newPlayer.isStarter) {
             if (newPlayer.isGK && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
@@ -126,13 +154,14 @@ export default function PregameSetup({
 
         let updated;
         if (editingPlayerId) {
-            updated = currentRoster.map(p => p.id === editingPlayerId ? { ...newPlayer, id: editingPlayerId } : p).sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            updated = currentRoster.map(p => p.id === editingPlayerId ? { ...newPlayer, id: editingPlayerId } : p);
             setEditingPlayerId(null);
         } else {
-            updated = [...currentRoster, { ...newPlayer, id: Date.now() }].sort((a, b) => parseInt(a.number) - parseInt(b.number));
+            updated = [...currentRoster, { ...newPlayer, id: Date.now() }];
         }
         
-        setRoster(updated);
+        // Ensure state is saved using strict numerical sort
+        setRoster(updated.sort(robustNumericalSort));
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
     };
 
@@ -171,10 +200,24 @@ export default function PregameSetup({
         const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
         const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
         
-        if (currentBench.length >= 5) return alert("Max 5 bench personnel.");
-        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach')) return alert("A team can only have ONE designated Head Coach.");
+        if (!editingBenchId && currentBench.length >= 5) return alert("Max 5 bench personnel.");
         
-        setBench([...currentBench, { ...newBench, id: Date.now() }]);
+        // Guard against duplicate Head Coaches
+        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach' && b.id !== editingBenchId)) {
+            return alert("A team can only have ONE designated Head Coach.");
+        }
+        
+        let updated;
+        if (editingBenchId) {
+            // Edit mode: Update existing entry
+            updated = currentBench.map(b => b.id === editingBenchId ? { ...newBench, id: editingBenchId } : b);
+            setEditingBenchId(null);
+        } else {
+            // Add mode: Append new entry
+            updated = [...currentBench, { ...newBench, id: Date.now() }];
+        }
+
+        setBench(updated);
         setNewBench({ name: '', role: 'Assistant Coach' });
     };
 
@@ -184,7 +227,9 @@ export default function PregameSetup({
     const closeRosterModal = () => {
         setActiveRosterModal(null);
         setEditingPlayerId(null);
+        setEditingBenchId(null); // Clear editing state
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
+        setNewBench({ name: '', role: 'Assistant Coach' });
     };
 
     const handleImageUpload = async (e) => {
@@ -239,7 +284,7 @@ export default function PregameSetup({
         };
     };
 
-    // --- SMART COLUMN + AUTO-ROLE PARSER ---
+    // --- SMART PARSER + Auto GK/Starter ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -256,24 +301,24 @@ export default function PregameSetup({
         const lines = scanResult.split('\n');
         
         lines.forEach(line => {
-            // Ignore blank lines and general form headers
-            if (!line.trim() || line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE/i)) return;
+            // Ignore blank lines and form headers
+            if (!line.trim() || line.toUpperCase().includes('JERSEY NO') || line.toUpperCase().includes('LAST NAME')) return;
 
-            // Split into "Virtual Cells" based on the spatial spacing generated by the backend
+            // Extract virtual cells based on large spatial gaps
             const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
             
             let jerseyNum = null;
             let nameParts = [];
             let isGK = false;
 
-            // --- SCAN FOR PLAYERS ---
+            // --- PROCESS PLAYER FORMAT ---
             for (let i = 0; i < cells.length; i++) {
                 let cell = cells[i];
                 let upperCell = cell.toUpperCase();
 
                 if (!jerseyNum) {
                     if (/^\d{1,2}$/.test(cell)) {
-                        // Skip printed list indices (e.g. "23" in front of jersey "14")
+                        // Garbage check for leading list indices (printed "1.", "2)")
                         if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) continue;
                         jerseyNum = cell;
                     }
@@ -299,7 +344,7 @@ export default function PregameSetup({
                 if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
                     importedPlayerCount++;
                     
-                    // Rules Application: First 6 lines are starters. 1st line is GK.
+                    // Logic: First 6 lines are starters. 1st line is GK.
                     const isAutoStarter = importedPlayerCount <= 6;
                     const isAutoGK = isGK || importedPlayerCount === 1;
 
@@ -313,7 +358,7 @@ export default function PregameSetup({
                     });
                 }
             } 
-            // --- SCAN FOR BENCH STAFF ---
+            // --- PROCESS BENCH STAFF FORMAT ---
             else {
                 let upperLine = line.toUpperCase();
                 let foundRole = benchKeywords.find(role => upperLine.includes(role));
@@ -323,8 +368,9 @@ export default function PregameSetup({
                     if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
                         newStaff.push({
                             id: Date.now() + Math.random(),
+                            // Title Case
                             name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
-                            // Rule Application: First staff found is Head Coach, all subsequent are Assistants.
+                            // Rule Application: First staff found becomes Head Coach, rest Assistant Coaches.
                             role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
                         });
                     }
@@ -334,7 +380,8 @@ export default function PregameSetup({
 
         if (newPlayers.length > 0 || newStaff.length > 0) {
             if (newPlayers.length > 0) {
-                const updatedRoster = [...currentRoster, ...newPlayers];
+                // Ensure state is saved sorted
+                const updatedRoster = [...currentRoster, ...newPlayers].sort(robustNumericalSort);
                 setRoster(updatedRoster);
             }
             if (newStaff.length > 0) {
@@ -462,7 +509,7 @@ export default function PregameSetup({
                 </button>
             </div>
 
-            {/* MODALS */}
+            {/* STARTERS SLIDE-UP MODAL */}
             {showStartersModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col h-full max-h-[80vh] overflow-hidden">
@@ -506,10 +553,12 @@ export default function PregameSetup({
                 </div>
             )}
             
+            {/* FULL ROSTER EDITOR MODAL */}
             {activeRosterModal && (
                 <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden relative">
                         
+                        {/* Scanning Overlay */}
                         {isScanning && (
                             <div className="absolute inset-0 bg-white/90 z-[60] flex flex-col items-center justify-center">
                                 <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -518,16 +567,17 @@ export default function PregameSetup({
                             </div>
                         )}
 
+                        {/* OCR Verification View */}
                         {scanResult !== null && (
-                            <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6">
+                            <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6 overflow-hidden">
                                 <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED TEXT</h2>
                                 <p className="text-sm text-gray-600 mb-4 border-b pb-4">
-                                    Below is the raw text extracted by Google AI. <strong>It may look messy, but our Smart Parser will automatically clean it up.</strong> <br/>
-                                    If it looks generally correct, just click "Import Data".
+                                    Below is the raw text extracted. <strong>It may look messy, but our parser handles it.</strong> <br/>
+                                    If it looks complete, just click "Import Data". Correct misspellings *after* import.
                                 </p>
                                 
                                 <textarea 
-                                    className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500 bg-gray-50"
+                                    className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500 bg-gray-50 overflow-y-auto"
                                     value={scanResult}
                                     onChange={(e) => setScanResult(e.target.value)}
                                 />
@@ -539,6 +589,7 @@ export default function PregameSetup({
                             </div>
                         )}
 
+                        {/* Modal Header */}
                         <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: activeRosterModal === 'AWAY' ? awayCSSColor : homeCSSColor }}>
                             <h2 className="text-2xl font-black uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                                 {(activeRosterModal === 'AWAY' ? gameData.awayTeam : gameData.homeTeam) || `${activeRosterModal} TEAM`} PERSONNEL
@@ -551,12 +602,14 @@ export default function PregameSetup({
                                 <button onClick={closeRosterModal} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
                             </div>
                         </div>
+                        
                         <div className="flex flex-1 overflow-hidden bg-gray-50">
-                            <div className="w-2/3 border-r flex flex-col h-full">
-                                {/* EDIT / ADD BAR */}
+                            {/* --- PLAYER SECTION (2/3) --- */}
+                            <div className="w-2/3 border-r flex flex-col h-full overflow-hidden">
+                                {/* EDIT / ADD PLAYER BAR */}
                                 <div className="p-4 bg-white border-b shrink-0">
                                     <div className="flex gap-2 items-end">
-                                        <div className="w-16"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No.</label><input type="number" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="00" /></div>
+                                        <div className="w-16"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No.</label><input type="text" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value.toUpperCase().trim()})} className="w-full p-2 border rounded bg-gray-50 font-bold" placeholder="00" /></div>
                                         <div className="flex-1"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Player Name</label><input type="text" value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="Last Name, First Name" /></div>
                                         <div className="flex flex-col space-y-1 pb-1">
                                             <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isGK} onChange={e => setNewPlayer({...newPlayer, isGK: e.target.checked})} className="w-4 h-4 accent-orange-500" /><span className="font-bold text-[10px] uppercase text-gray-700">GK</span></label>
@@ -577,10 +630,13 @@ export default function PregameSetup({
                                         </div>
                                     </div>
                                 </div>
-                                {/* ROSTER LIST */}
+                                
+                                {/* ROSTER LIST (RENDERED NUMERICALLY) */}
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
-                                        {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster).map(player => (
+                                        {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)
+                                            .sort(robustNumericalSort) // APPLIED: Strict Numerical Sort for viewing
+                                            .map(player => (
                                             <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
                                                 <div className="flex items-center space-x-3 flex-1 min-w-0">
                                                     <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700 shrink-0">{player.number}</span>
@@ -604,23 +660,39 @@ export default function PregameSetup({
                                     </div>
                                 </div>
                             </div>
-                            <div className="w-1/3 flex flex-col h-full bg-slate-50">
+                            
+                            {/* --- STAFF SECTION (1/3) --- */}
+                            <div className="w-1/3 flex flex-col h-full bg-slate-50 overflow-hidden">
+                                {/* EDIT / ADD STAFF BAR */}
                                 <div className="p-4 bg-white border-b shrink-0">
                                     <div className="flex flex-col gap-2">
                                         <input type="text" value={newBench.name} onChange={e => setNewBench({...newBench, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm" placeholder="Staff Name" />
                                         <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
                                             {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                         </select>
-                                        <button onClick={handleAddBench} className="w-full py-2 bg-slate-800 text-white text-sm font-bold rounded">+ Add Staff</button>
+                                        <div className="flex gap-1">
+                                            <button onClick={handleAddBench} className={`flex-1 py-2 text-white text-sm font-bold rounded transition ${editingBenchId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                                                {editingBenchId ? 'Update Staff' : '+ Add Staff'}
+                                            </button>
+                                            {editingBenchId && (
+                                                <button onClick={() => { setEditingBenchId(null); setNewBench({ name: '', role: 'Assistant Coach' }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
+                                                    Cancel
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                                {/* STAFF LIST */}
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
                                         {(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
-                                            <div key={person.id} className="flex flex-col p-2 bg-white border border-gray-200 rounded shadow-sm relative">
-                                                <span className="font-bold text-sm text-gray-800">{person.name}</span>
-                                                <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border">{person.role}</span>
-                                                <button onClick={() => removeBench(person.id)} className="absolute top-2 right-2 text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                            <div key={person.id} className={`flex flex-col p-2 bg-white border rounded shadow-sm relative ${editingBenchId === person.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
+                                                <span className="font-bold text-sm text-gray-800 pr-16">{person.name}</span>
+                                                <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border truncate max-w-full">{person.role}</span>
+                                                <div className="absolute top-2 right-2 flex space-x-1Actions shrink-0">
+                                                    <button onClick={() => { setEditingBenchId(person.id); setNewBench(person); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
+                                                    <button onClick={() => removeBench(person.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
