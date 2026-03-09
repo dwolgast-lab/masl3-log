@@ -3,6 +3,16 @@
 
 ---
 
+## [v0.50] - 2026-03-09 - Linear OCR Parsing & Validation Guards
+**Backend & Parsing Overhaul**
+* **Linear Block Reading:** Disabled the strict table-extraction algorithm in Document AI in favor of raw text extraction. This prevents the AI from aggressively breaking apart tables that have non-grid headers (like "STARTERS" and "SUBSTITUTES"), preserving the natural top-to-bottom layout of the roster sheet.
+* **Hyper-Aggressive Frontend Parsing:** Completely rewrote the parsing logic to accept messy, linear string outputs. The engine aggressively strips out hallucinated OCR anomalies (e.g., "123456", standalone position letters like "D", "E", "T") and correctly isolates the Jersey Number and Player Name.
+* **Auto-Assignment Logic:** The first 6 players imported from the linear read are automatically assigned as `STARTERS`, with the 1st player defaulted to `GK`. The first recognized bench staff member defaults to `Head Coach`, with subsequent staff marked as `Assistant Coach`.
+**Gameplay Enhancements**
+* **Pre-Game Validation Guard:** Added a strict check to the "Proceed to Kickoff" workflow. If either team fails to meet the MASL requirement of exactly 6 Starters (1 GK, 5 Field Players) and 1 Head Coach, the app triggers a detailed confirmation warning, allowing the 4th official to halt and correct the roster before starting the match.
+
+---
+
 ## [v0.49] - 2026-03-09 - Physical Layout Sorting & Auto-Starters
 **Backend Enhancements**
 * **Y-Coordinate Sorting Algorithm:** Upgraded the Vercel backend to analyze the physical height (bounding poly Y-coordinates) of every table detected by Google Document AI. The tables are now explicitly re-ordered from Top-to-Bottom before returning the payload, preventing the AI from scrambling the reading order of "Starters", "Substitutes", and "Bench Staff" sections.
