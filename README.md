@@ -3,13 +3,20 @@
 
 ---
 
+## [v0.46] - 2026-03-09 - Client-Side Image Compression
+**Performance & API Optimization**
+* **Auto-Compressor Engine:** Implemented an HTML5 `<canvas>` rendering pipeline in the frontend that intercepts iPad/iPhone camera photos before they are uploaded. The engine scales the image down to a 1500px bounding box and compresses it to a 60% quality JPEG. 
+* **Bypassed Vercel Payload Limits:** This compression successfully shrinks 4MB+ camera payloads down to ~300KB, preventing the `413 PAYLOAD_TOO_LARGE` crashes on Vercel's strict serverless tiers, while simultaneously increasing upload speed over stadium Wi-Fi and providing cleaner edges for Google Document AI to parse.
+
+---
+
 ## [v0.45] - 2026-03-09 - Document AI Form Parser Upgrade
 **Backend & OCR Enhancements**
 * **Document AI Integration:** Upgraded the lineup sheet scanning engine from standard Cloud Vision to the more advanced Google Cloud Document AI (Form Parser). This enterprise-grade model inherently understands page layouts, tables, and columns, drastically reducing the amount of "garbage text" generated from physical roster sheets.
 * **Enterprise Authentication:** Migrated the Vercel serverless backend (`/api/scanRoster.js`) to utilize the official `@google-cloud/documentai` SDK with secure Service Account JSON credentials.
 * **Layout Retention:** Because Document AI respects the physical structure of the page, jersey numbers and player names now reliably render on the exact same line in the Verification Modal, making the import parsing engine significantly more accurate.
 
-
+---
 
 ## [v0.44] - 2026-03-07 - Inline Roster Editing & One-Tap Validations
 **UI Enhancements**

@@ -155,7 +155,7 @@ export default function PregameSetup({
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
     };
 
-    // --- VISION API LOGIC ---
+    // --- VISION API LOGIC WITH COMPRESSION ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -165,26 +165,57 @@ export default function PregameSetup({
 
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onloadend = async () => {
-            const base64data = reader.result.split(',')[1]; 
+        reader.onloadend = () => {
+            const img = new Image();
+            img.src = reader.result;
+            img.onload = async () => {
+                // 1. Create a virtual canvas to scale down the image
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1500;
+                const MAX_HEIGHT = 1500;
+                let width = img.width;
+                let height = img.height;
 
-            try {
-                const response = await fetch('/api/scanRoster', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ imageBase64: base64data })
-                });
+                // Keep aspect ratio
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
 
-                const data = await response.json();
-                if (data.error) throw new Error(data.error);
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
 
-                setScanResult(data.text);
-            } catch (error) {
-                alert("Failed to scan roster: " + error.message);
-            } finally {
-                setIsScanning(false);
-                if (fileInputRef.current) fileInputRef.current.value = "";
-            }
+                // 2. Convert canvas to highly compressed JPEG (0.6 quality)
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
+
+                // 3. Send lightweight string to Vercel
+                try {
+                    const response = await fetch('/api/scanRoster', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ imageBase64: compressedBase64 })
+                    });
+
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    setScanResult(data.text);
+                } catch (error) {
+                    alert("Failed to scan roster: " + error.message);
+                } finally {
+                    setIsScanning(false);
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                }
+            };
         };
     };
 
