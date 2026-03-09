@@ -9,7 +9,6 @@ export default async function handler(req, res) {
     try {
         const { imageBase64 } = req.body;
 
-        // Parse the secure JSON credentials from Vercel
         const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
         const projectId = process.env.DOCAI_PROJECT_ID;
         const location = process.env.DOCAI_LOCATION; 
@@ -19,10 +18,14 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'Document AI environment variables are missing.' });
         }
 
-        // Initialize the Document AI Client
-        const client = new DocumentProcessorServiceClient({ credentials });
+        // Initialize the Document AI Client WITH THE SPECIFIC REGIONAL ENDPOINT
+        const client = new DocumentProcessorServiceClient({ 
+            credentials,
+            projectId: projectId,
+            apiEndpoint: `${location}-documentai.googleapis.com` // CRITICAL FIX: Directs traffic to the specific US server
+        });
         
-        // Build the precise routing name for Google's servers
+        // Build the precise routing name
         const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
 
         // Package the image for processing
@@ -38,13 +41,11 @@ export default async function handler(req, res) {
         const [result] = await client.processDocument(request);
         const { document } = result;
 
-        // Document AI returns highly intelligent text that respects columns.
-        // For phase 1 of your experiment, we will just return this highly clean text 
-        // to your existing frontend Verification Screen so you can see the difference.
         return res.status(200).json({ text: document.text });
 
     } catch (error) {
         console.error('Document AI Error:', error);
-        return res.status(500).json({ error: 'Failed to process document via AI' });
+        // We now return the exact error message to the frontend so you can see it on the iPad
+        return res.status(500).json({ error: error.message || 'Failed to process document via AI' });
     }
 }
