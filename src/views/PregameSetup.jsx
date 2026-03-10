@@ -1,26 +1,28 @@
 import React, { useState, useRef } from 'react';
 import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
 
-// UTILITY: ROBUST NUMERICAL JERSEY SORT
-// Handles standard numbers, leading zeros (05), and distinct '00' vs '0' nuance.
 const robustNumericalSort = (a, b) => {
     const jerseyA = a.number;
     const jerseyB = b.number;
 
-    if (jerseyA === '00') return -1; // 00 always first
+    if (jerseyA === '00') return -1; 
     if (jerseyB === '00') return 1;
 
-    // parseInt handles standard numerical comparison (e.g. "05" becomes 5)
     const numA = parseInt(jerseyA, 10);
     const numB = parseInt(jerseyB, 10);
 
     if (numA !== numB) {
         return numA - numB;
     }
-    
-    // Fallback comparison for safety
     return jerseyA.localeCompare(jerseyB);
 };
+
+// Sorts Bench Staff so Head Coach is always at index 0
+const sortBench = (bench) => [...bench].sort((a, b) => {
+    if (a.role === 'Head Coach' && b.role !== 'Head Coach') return -1;
+    if (a.role !== 'Head Coach' && b.role === 'Head Coach') return 1;
+    return 0;
+});
 
 export default function PregameSetup({
     gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
@@ -36,9 +38,8 @@ export default function PregameSetup({
     const [isScanning, setIsScanning] = useState(false);
     const [scanResult, setScanResult] = useState(null);
     const [editingPlayerId, setEditingPlayerId] = useState(null);
-    const [editingBenchId, setEditingBenchId] = useState(null); // NEW: Manage staff editing
+    const [editingBenchId, setEditingBenchId] = useState(null);
 
-    // Ensure starters modal uses strict numerical sort
     const getSortedStarters = (roster) => roster
         .filter(p => p.isStarter)
         .sort(robustNumericalSort);
@@ -85,7 +86,6 @@ export default function PregameSetup({
         }
     };
 
-    // --- MASL GAME STATE VALIDATION GUARDS ---
     const checkTeamValidity = (teamName, roster, bench) => {
         let warnings = [];
         const starters = roster.filter(p => p.isStarter);
@@ -125,7 +125,6 @@ export default function PregameSetup({
             }
         }
         
-        // Ensure data is passed out using strict numerical sort
         awayRoster.sort(robustNumericalSort);
         homeRoster.sort(robustNumericalSort);
 
@@ -137,7 +136,6 @@ export default function PregameSetup({
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
         const setRoster = activeRosterModal === 'AWAY' ? setAwayRoster : setHomeRoster;
 
-        // Disallow duplicates (treating 00, 0, 01, 1 distinctly)
         if (currentRoster.some(p => p.number === newPlayer.number && p.id !== editingPlayerId)) {
             return alert(`Jersey number ${newPlayer.number} already exists on this roster.`);
         }
@@ -160,7 +158,6 @@ export default function PregameSetup({
             updated = [...currentRoster, { ...newPlayer, id: Date.now() }];
         }
         
-        // Ensure state is saved using strict numerical sort
         setRoster(updated.sort(robustNumericalSort));
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
     };
@@ -202,18 +199,15 @@ export default function PregameSetup({
         
         if (!editingBenchId && currentBench.length >= 5) return alert("Max 5 bench personnel.");
         
-        // Guard against duplicate Head Coaches
         if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach' && b.id !== editingBenchId)) {
             return alert("A team can only have ONE designated Head Coach.");
         }
         
         let updated;
         if (editingBenchId) {
-            // Edit mode: Update existing entry
             updated = currentBench.map(b => b.id === editingBenchId ? { ...newBench, id: editingBenchId } : b);
             setEditingBenchId(null);
         } else {
-            // Add mode: Append new entry
             updated = [...currentBench, { ...newBench, id: Date.now() }];
         }
 
@@ -227,7 +221,7 @@ export default function PregameSetup({
     const closeRosterModal = () => {
         setActiveRosterModal(null);
         setEditingPlayerId(null);
-        setEditingBenchId(null); // Clear editing state
+        setEditingBenchId(null); 
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
         setNewBench({ name: '', role: 'Assistant Coach' });
     };
@@ -284,7 +278,7 @@ export default function PregameSetup({
         };
     };
 
-    // --- SMART PARSER + Auto GK/Starter ---
+    // --- REFINED OCR PARSER ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -295,39 +289,60 @@ export default function PregameSetup({
         
         let newPlayers = [];
         let newStaff = [];
-        const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'STAFF', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
+        const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
         let importedPlayerCount = 0;
 
         const lines = scanResult.split('\n');
         
         lines.forEach(line => {
-            // Ignore blank lines and form headers
-            if (!line.trim() || line.toUpperCase().includes('JERSEY NO') || line.toUpperCase().includes('LAST NAME')) return;
+            if (!line.trim() || line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE|JOB|SUBSTITUTES|STARTERS/i)) return;
+            
+            // IGNORE BOILERPLATE: Throw away paragraphs about rules
+            if (line.match(/maximum|essential|credential|attire|uniform|shorts|discipline|manager team/i)) return;
 
-            // Extract virtual cells based on large spatial gaps
             const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
             
             let jerseyNum = null;
+            let possibleListIndex = null; // Used to recover lost jersey numbers like "1 . GK"
             let nameParts = [];
             let isGK = false;
 
-            // --- PROCESS PLAYER FORMAT ---
+            // --- SCAN FOR PLAYERS ---
             for (let i = 0; i < cells.length; i++) {
                 let cell = cells[i];
                 let upperCell = cell.toUpperCase();
 
+                // Catch list indices before they are destroyed
+                const listMatch = cell.match(/^(\d+)[\.\)]$/);
+                if (listMatch && !jerseyNum) {
+                    possibleListIndex = listMatch[1];
+                    continue;
+                }
+
                 if (!jerseyNum) {
                     if (/^\d{1,2}$/.test(cell)) {
-                        // Garbage check for leading list indices (printed "1.", "2)")
-                        if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) continue;
+                        if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) {
+                            possibleListIndex = cell; 
+                            continue;
+                        }
                         jerseyNum = cell;
+                    } 
+                    else if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
+                        if (upperCell.includes('G')) isGK = true;
+                    }
+                    else {
+                        if (upperCell.includes('GK')) {
+                            isGK = true;
+                            cell = cell.replace(/GK/ig, '').trim();
+                        }
+                        if (cell) nameParts.push(cell);
                     }
                 } 
                 else {
                     if (upperCell === 'GK' || upperCell === 'G') {
                         isGK = true;
                     } else if (/^[DMFET]$/.test(upperCell)) {
-                        continue; // Skip single letter positions
+                        continue; 
                     } else {
                         if (upperCell.includes('GK')) {
                             isGK = true;
@@ -338,13 +353,16 @@ export default function PregameSetup({
                 }
             }
 
+            // CRITICAL FIX: If no jersey number was found, but we stripped a list index, that list index IS the jersey number.
+            if (!jerseyNum && possibleListIndex) {
+                jerseyNum = possibleListIndex;
+            }
+
             if (jerseyNum && nameParts.length > 0) {
                 const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
                 
-                if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
+                if (finalName.length > 1 && finalName.toUpperCase() !== 'BENCH STAFF' && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
                     importedPlayerCount++;
-                    
-                    // Logic: First 6 lines are starters. 1st line is GK.
                     const isAutoStarter = importedPlayerCount <= 6;
                     const isAutoGK = isGK || importedPlayerCount === 1;
 
@@ -358,19 +376,20 @@ export default function PregameSetup({
                     });
                 }
             } 
-            // --- PROCESS BENCH STAFF FORMAT ---
+            // --- SCAN FOR BENCH STAFF ---
             else {
                 let upperLine = line.toUpperCase();
                 let foundRole = benchKeywords.find(role => upperLine.includes(role));
                 
                 if (foundRole) {
-                    let staffName = upperLine.replace(foundRole, '').replace(/[^A-Z\s,-]/g, '').trim();
-                    if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
+                    let staffName = upperLine.replace(foundRole, '').replace(/^\d+[\.\)]\s*/, '').replace(/[^A-Z\s,-]/g, '').trim();
+                    const wordCount = staffName.split(/\s+/).length;
+
+                    // Length and Word Count limits completely block large boilerplate paragraphs from becoming people
+                    if (staffName.length > 2 && wordCount <= 4 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
                         newStaff.push({
                             id: Date.now() + Math.random(),
-                            // Title Case
                             name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
-                            // Rule Application: First staff found becomes Head Coach, rest Assistant Coaches.
                             role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
                         });
                     }
@@ -380,7 +399,6 @@ export default function PregameSetup({
 
         if (newPlayers.length > 0 || newStaff.length > 0) {
             if (newPlayers.length > 0) {
-                // Ensure state is saved sorted
                 const updatedRoster = [...currentRoster, ...newPlayers].sort(robustNumericalSort);
                 setRoster(updatedRoster);
             }
@@ -635,7 +653,7 @@ export default function PregameSetup({
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
                                         {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)
-                                            .sort(robustNumericalSort) // APPLIED: Strict Numerical Sort for viewing
+                                            .sort(robustNumericalSort)
                                             .map(player => (
                                             <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
                                                 <div className="flex items-center space-x-3 flex-1 min-w-0">
@@ -682,10 +700,10 @@ export default function PregameSetup({
                                         </div>
                                     </div>
                                 </div>
-                                {/* STAFF LIST */}
+                                {/* STAFF LIST (SORTED: HC AT TOP) */}
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
-                                        {(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
+                                        {sortBench(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
                                             <div key={person.id} className={`flex flex-col p-2 bg-white border rounded shadow-sm relative ${editingBenchId === person.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
                                                 <span className="font-bold text-sm text-gray-800 pr-16">{person.name}</span>
                                                 <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border truncate max-w-full">{person.role}</span>

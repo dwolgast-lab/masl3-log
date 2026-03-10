@@ -3,6 +3,14 @@
 
 ---
 
+## [v0.53] - 2026-03-10 - Deep Data Recovery & Sort Pinning
+**Frontend Parsing Enhancements**
+* **Fallback Jersey Recovery:** When a team official writes a player's jersey number directly inside the pre-printed "List Index" column (e.g. `1 . GK Derksen`), the parser now recognizes that the list index *is* the jersey number. This successfully recovers previously "dropped" players (like the missing Starting Goalkeeper).
+* **Anti-Boilerplate Strictness:** Added aggressive word-count limiters and negative-keyword filters to the Bench Staff parser. The engine will no longer hallucinate people by reading the 50-word rule paragraphs printed at the bottom of the MASL form.
+* **Bench Staff Hierarchy:** Added a `sortBench` rendering function that permanently pins any staff member with the `Head Coach` role to the very top of the staff UI list (index 0), regardless of the order they were imported or added.
+
+---
+
 ## [v0.52] - 2026-03-09 - Numerical Sort & Bench Staff Editing
 **Gameplay & UX Enhancements**
 * **Universal Numerical Roster Sorting:** Implemented a complex sorting algorithm (`robustNumericalSort`) applied to all player roster lists. This sorts jerseys mathematically (00 -> 0 -> 1-99), handling distinct double-zero ('00') vs standard zero ('0') vs leading zeros ('05'). This allows Assistant Refs in the Game view to instantly locate players by number and quickly identify any players that the OCR missed scanning (like #1 Derksen in the tests).
