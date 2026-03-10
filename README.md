@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.60] - 2026-03-10 - Architectural Componentization (Phase 2)
+**Codebase Optimization**
+* **Modal Extraction:** Finalized the modularization of the `PregameSetup` UI by stripping out all remaining local state, data handlers, and HTML dedicated to the `RosterEditorModal` and the `StartersViewerModal`. These complex features now live entirely in isolated files inside `/src/components/modals/`.
+* **Reduced Monolith:** These dual extraction phases reduced the `PregameSetup.jsx` file footprint by nearly 75%, transforming it from a monolithic file that handled UI, Logic, API routing, and rendering into a clean, easy-to-read layout director.
+
+---
+
 ## [v0.59] - 2026-03-10 - Architectural Componentization (Phase 1)
 **Codebase Optimization**
 * **Pregame UI Componentization:** Broken down the monolithic `PregameSetup.jsx` file by abstracting the core layout blocks into dedicated, reusable React components (`MatchInfoBlock.jsx` and `TeamConfigCard.jsx`). This successfully eliminated nearly 100 lines of duplicated code, allowing a single blueprint to dynamically render both the Away and Home team configurations simply by passing a prop.
