@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.61] - 2026-03-10 - In-Game UI Componentization
+**Codebase Optimization**
+* **Dashboard Widgets:** Refactored the `InGameDashboard.jsx` file by extracting the `ActivePenalties` and `ActiveInjuries` monitors into standalone React components within the `/src/components/widgets/` directory. 
+* **Modal Extraction:** Moved the raw HTML for the Custom Time Confirmation alert out of `App.jsx` and into a reusable `<TimeConfirmModal />` component, significantly streamlining the parent routing file.
+
+---
+
 ## [v0.60] - 2026-03-10 - Architectural Componentization (Phase 2)
 **Codebase Optimization**
 * **Modal Extraction:** Finalized the modularization of the `PregameSetup` UI by stripping out all remaining local state, data handlers, and HTML dedicated to the `RosterEditorModal` and the `StartersViewerModal`. These complex features now live entirely in isolated files inside `/src/components/modals/`.

@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.60
+ * Version: 0.61
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -19,8 +19,9 @@ import WarningModal from './components/modals/WarningModal';
 import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
+import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.60";
+const APP_VERSION = "0.61";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -546,32 +547,18 @@ export default function App() {
                 benchPenaltyEntity={benchPenaltyEntity} setBenchPenaltyEntity={setBenchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
 
-            {/* CUSTOM TIME CONFIRMATION MODAL */}
-            {timeConfirmDialog && (
-                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[200] p-6">
-                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-orange-500">
-                        <h3 className="text-2xl font-black text-slate-800 mb-2">Confirm Time</h3>
-                        <p className="text-gray-600 mb-6 font-medium text-lg leading-snug">
-                            Did you mean to enter <span className="font-black text-green-600 text-xl block mt-1">{formatTime(timeConfirmDialog.suggested)}?</span>
-                        </p>
-                        <div className="flex flex-col space-y-3">
-                            <button onClick={() => { commitTime(timeConfirmDialog.suggested, timeConfirmDialog.nextStepStr); setTimeConfirmDialog(null); }} className="w-full py-4 bg-green-600 text-white text-lg font-black rounded-xl hover:bg-green-700 shadow-md">
-                                Yes, log as {formatTime(timeConfirmDialog.suggested)}
-                            </button>
-                            <button onClick={() => { 
-                                if (timeConfirmDialog.isOriginalValid) {
-                                    commitTime(timeConfirmDialog.original, timeConfirmDialog.nextStepStr); 
-                                } else {
-                                    alert("Invalid Time. Please enter a valid match time.");
-                                }
-                                setTimeConfirmDialog(null); 
-                            }} className="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300">
-                                No, keep {formatTime(timeConfirmDialog.original)}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+           <TimeConfirmModal 
+                dialog={timeConfirmDialog} 
+                onConfirm={(suggested, nextStepStr) => { 
+                    commitTime(suggested, nextStepStr); 
+                    setTimeConfirmDialog(null); 
+                }}
+                onReject={(original, nextStepStr, isValid) => {
+                    if (isValid) commitTime(original, nextStepStr);
+                    else alert("Invalid Time. Please enter a valid match time.");
+                    setTimeConfirmDialog(null);
+                }}
+            />
             
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>
         </div>
