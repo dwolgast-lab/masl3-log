@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.55] - 2026-03-10 - Player/Coach Validation Rules
+**Data Validation**
+* **Cross-Roster Duplication Guard:** Added a cross-referencing algorithm to the Pre-Game Validation engine. The system now normalizes and compares all names between the active Player Roster and Bench Staff. If a person is listed in both areas, the system flags a Player/Coach violation, strictly enforcing the MASL mandate that teams must designate a separate, non-playing Head Coach.
+
+---
+
 ## [v0.54] - 2026-03-10 - Deep Data Recovery & Anti-Boilerplate Strictness
 **Frontend Parsing Enhancements**
 * **Fallback Jersey Recovery:** Deployed a "Last Valid Candidate" algorithm. If a team official writes a jersey number directly inside the pre-printed list index column (e.g., `1 . GK Derksen`), the parser recognizes the list index *is* the jersey number, rather than discarding it as boilerplate. This successfully recovers previously dropped players (like the missing #1 Starting Goalkeeper).

@@ -85,6 +85,7 @@ export default function PregameSetup({
         }
     };
 
+    // --- MASL GAME STATE VALIDATION GUARDS ---
     const checkTeamValidity = (teamName, roster, bench) => {
         let warnings = [];
         const starters = roster.filter(p => p.isStarter);
@@ -95,6 +96,18 @@ export default function PregameSetup({
         if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper.`);
         if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach.`);
         
+        // NEW RULE: Player/Coach Validation
+        // Strip punctuation and spaces to find exact matches even if typed slightly differently
+        const normalizeName = (name) => name.toLowerCase().replace(/[^a-z]/g, '');
+        const benchNames = bench.map(b => normalizeName(b.name));
+        
+        const overlaps = roster.filter(p => benchNames.includes(normalizeName(p.name)));
+        
+        if (overlaps.length > 0) {
+            const overlapNames = overlaps.map(o => o.name).join(', ');
+            warnings.push(`Player/Coach Violation: ${overlapNames} cannot be listed on both the Player Roster and Bench Staff. A separate, non-playing Head Coach is required.`);
+        }
+
         return warnings.length > 0 ? { team: teamName, warnings } : null;
     };
 
