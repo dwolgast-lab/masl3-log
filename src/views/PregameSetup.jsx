@@ -17,7 +17,6 @@ const robustNumericalSort = (a, b) => {
     return jerseyA.localeCompare(jerseyB);
 };
 
-// Sorts Bench Staff so Head Coach is always at index 0
 const sortBench = (bench) => [...bench].sort((a, b) => {
     if (a.role === 'Head Coach' && b.role !== 'Head Coach') return -1;
     if (a.role !== 'Head Coach' && b.role === 'Head Coach') return 1;
@@ -278,7 +277,7 @@ export default function PregameSetup({
         };
     };
 
-    // --- REFINED OCR PARSER ---
+    // --- BULLETPROOF ROSTER PARSER ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -295,102 +294,106 @@ export default function PregameSetup({
         const lines = scanResult.split('\n');
         
         lines.forEach(line => {
-            if (!line.trim() || line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE|JOB|SUBSTITUTES|STARTERS/i)) return;
-            
-            // IGNORE BOILERPLATE: Throw away paragraphs about rules
-            if (line.match(/maximum|essential|credential|attire|uniform|shorts|discipline|manager team/i)) return;
+            // 1. AGGRESSIVE BOILERPLATE FILTERING
+            if (!line.trim()) return;
+            if (line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE|JOB|SUBSTITUTES|STARTERS|MASL\s*\d/i)) return;
+            if (line.match(/BENCH\s*STAFF/i)) return; // Prevents "BENCH STAFF" header from becoming a person
+            if (line.match(/Referee/i)) return; // Blocks the signature line at the bottom
+            if (line.match(/maximum|essential|credential|attire|uniform|shorts|discipline|manager team/i)) return; // Blocks rule paragraphs
 
             const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
             
-            let jerseyNum = null;
-            let possibleListIndex = null; // Used to recover lost jersey numbers like "1 . GK"
+            // --- PLAYER / JERSEY CANDIDATE EXTRACTOR ---
+            let candidates = [];
             let nameParts = [];
             let isGK = false;
+            let hitText = false;
+            let foundBenchRole = false;
 
-            // --- SCAN FOR PLAYERS ---
-            for (let i = 0; i < cells.length; i++) {
-                let cell = cells[i];
-                let upperCell = cell.toUpperCase();
+            // Check entire line for bench keywords first
+            let upperLine = line.toUpperCase();
+            let benchRoleMatch = benchKeywords.find(role => upperLine.includes(role));
 
-                // Catch list indices before they are destroyed
-                const listMatch = cell.match(/^(\d+)[\.\)]$/);
-                if (listMatch && !jerseyNum) {
-                    possibleListIndex = listMatch[1];
-                    continue;
-                }
-
-                if (!jerseyNum) {
-                    if (/^\d{1,2}$/.test(cell)) {
-                        if (i + 1 < cells.length && /^\d{1,2}$/.test(cells[i+1])) {
-                            possibleListIndex = cell; 
-                            continue;
-                        }
-                        jerseyNum = cell;
-                    } 
-                    else if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
-                        if (upperCell.includes('G')) isGK = true;
-                    }
-                    else {
-                        if (upperCell.includes('GK')) {
-                            isGK = true;
-                            cell = cell.replace(/GK/ig, '').trim();
-                        }
-                        if (cell) nameParts.push(cell);
-                    }
-                } 
-                else {
-                    if (upperCell === 'GK' || upperCell === 'G') {
-                        isGK = true;
-                    } else if (/^[DMFET]$/.test(upperCell)) {
-                        continue; 
-                    } else {
-                        if (upperCell.includes('GK')) {
-                            isGK = true;
-                            cell = cell.replace(/GK/ig, '').trim();
-                        }
-                        if (cell) nameParts.push(cell);
-                    }
-                }
-            }
-
-            // CRITICAL FIX: If no jersey number was found, but we stripped a list index, that list index IS the jersey number.
-            if (!jerseyNum && possibleListIndex) {
-                jerseyNum = possibleListIndex;
-            }
-
-            if (jerseyNum && nameParts.length > 0) {
-                const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
+            if (benchRoleMatch) {
+                foundBenchRole = true;
+                // Strip the role title, any leading numbers, and punctuation
+                let staffName = upperLine.replace(benchRoleMatch, '').replace(/^\s*\d+[\.\)]\s*/, '').replace(/[^A-Z\s,-]/g, '').trim();
                 
-                if (finalName.length > 1 && finalName.toUpperCase() !== 'BENCH STAFF' && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
-                    importedPlayerCount++;
-                    const isAutoStarter = importedPlayerCount <= 6;
-                    const isAutoGK = isGK || importedPlayerCount === 1;
-
-                    newPlayers.push({
+                if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
+                    newStaff.push({
                         id: Date.now() + Math.random(),
-                        number: jerseyNum,
-                        name: finalName,
-                        isGK: isAutoGK,
-                        isStarter: isAutoStarter,
-                        isCaptain: false
+                        name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
+                        role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
                     });
                 }
             } 
-            // --- SCAN FOR BENCH STAFF ---
             else {
-                let upperLine = line.toUpperCase();
-                let foundRole = benchKeywords.find(role => upperLine.includes(role));
-                
-                if (foundRole) {
-                    let staffName = upperLine.replace(foundRole, '').replace(/^\d+[\.\)]\s*/, '').replace(/[^A-Z\s,-]/g, '').trim();
-                    const wordCount = staffName.split(/\s+/).length;
+                // Not staff, must be a Player row
+                for (let i = 0; i < cells.length; i++) {
+                    let cell = cells[i];
+                    let upperCell = cell.toUpperCase();
 
-                    // Length and Word Count limits completely block large boilerplate paragraphs from becoming people
-                    if (staffName.length > 2 && wordCount <= 4 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
-                        newStaff.push({
+                    if (!hitText) {
+                        // Clean things like "1 ." to "1."
+                        let cleanCell = cell.replace(/\s+[\.\)]$/, '.');
+                        
+                        // If it's a 1-2 digit number, it's a candidate for the Jersey Number
+                        let numMatch = cleanCell.match(/^(\d{1,2})[\.\)]?$/);
+                        if (numMatch) {
+                            candidates.push(numMatch[1]);
+                            continue;
+                        }
+                        
+                        // If we see a known position, we know the text string has started
+                        if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
+                            hitText = true;
+                            if (upperCell.includes('G')) isGK = true;
+                            continue;
+                        }
+                        
+                        // If it has letters, text string has started
+                        if (/[A-Za-z]/.test(cell)) {
+                            hitText = true;
+                            if (upperCell.includes('GK')) {
+                                isGK = true;
+                                cell = cell.replace(/GK/ig, '').trim();
+                            }
+                            if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
+                        }
+                    } else {
+                        // We are already inside the text portion
+                        if (upperCell === 'GK' || upperCell === 'G') {
+                            isGK = true;
+                        } else if (/^[DMFET]$/.test(upperCell)) {
+                            continue; 
+                        } else {
+                            if (upperCell.includes('GK')) {
+                                isGK = true;
+                                cell = cell.replace(/GK/ig, '').trim();
+                            }
+                            if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
+                        }
+                    }
+                }
+
+                // The LAST candidate number before the text started is almost certainly the jersey number
+                let jerseyNum = candidates.length > 0 ? candidates[candidates.length - 1] : null;
+
+                if (jerseyNum && nameParts.length > 0) {
+                    const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
+                    
+                    if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
+                        importedPlayerCount++;
+                        const isAutoStarter = importedPlayerCount <= 6;
+                        const isAutoGK = isGK || importedPlayerCount === 1;
+
+                        newPlayers.push({
                             id: Date.now() + Math.random(),
-                            name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
-                            role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
+                            number: jerseyNum,
+                            name: finalName,
+                            isGK: isAutoGK,
+                            isStarter: isAutoStarter,
+                            isCaptain: false
                         });
                     }
                 }
@@ -653,7 +656,7 @@ export default function PregameSetup({
                                 <div className="p-4 overflow-y-auto flex-1">
                                     <div className="space-y-2">
                                         {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)
-                                            .sort(robustNumericalSort)
+                                            .sort(robustNumericalSort) 
                                             .map(player => (
                                             <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
                                                 <div className="flex items-center space-x-3 flex-1 min-w-0">

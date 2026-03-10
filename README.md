@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.54] - 2026-03-10 - Deep Data Recovery & Anti-Boilerplate Strictness
+**Frontend Parsing Enhancements**
+* **Fallback Jersey Recovery:** Deployed a "Last Valid Candidate" algorithm. If a team official writes a jersey number directly inside the pre-printed list index column (e.g., `1 . GK Derksen`), the parser recognizes the list index *is* the jersey number, rather than discarding it as boilerplate. This successfully recovers previously dropped players (like the missing #1 Starting Goalkeeper).
+* **Anti-Boilerplate Rules:** Added strict negative-keyword filters to block the parser from attempting to extract players or staff from form headers, signature blocks (`Referee : Al`), or the 50-word policy paragraphs printed at the bottom of the MASL form.
+
+---
+
 ## [v0.53] - 2026-03-10 - Deep Data Recovery & Sort Pinning
 **Frontend Parsing Enhancements**
 * **Fallback Jersey Recovery:** When a team official writes a player's jersey number directly inside the pre-printed "List Index" column (e.g. `1 . GK Derksen`), the parser now recognizes that the list index *is* the jersey number. This successfully recovers previously "dropped" players (like the missing Starting Goalkeeper).
