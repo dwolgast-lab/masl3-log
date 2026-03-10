@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.59] - 2026-03-10 - Architectural Componentization (Phase 1)
+**Codebase Optimization**
+* **Pregame UI Componentization:** Broken down the monolithic `PregameSetup.jsx` file by abstracting the core layout blocks into dedicated, reusable React components (`MatchInfoBlock.jsx` and `TeamConfigCard.jsx`). This successfully eliminated nearly 100 lines of duplicated code, allowing a single blueprint to dynamically render both the Away and Home team configurations simply by passing a prop.
+
+---
+
 ## [v0.58] - 2026-03-10 - Architectural Refactor: Decoupled OCR Engine
 **Codebase Optimization**
 * **Isolated Processing Engine:** Extracted all Google Cloud Vision/Document AI communication logic, Base64 image compression pipelines, and text parsing algorithms out of the `PregameSetup.jsx` view component and into a dedicated `ocrEngine.js` utility file. This reduces the view component size by ~150 lines, significantly improving code readability and making future OCR format tweaks entirely independent of the UI logic.
