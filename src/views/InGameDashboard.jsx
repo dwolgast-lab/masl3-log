@@ -5,10 +5,13 @@ export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents,
     setModalStep, setSummaryTeam, triggerAction, activePenaltiesAway, activePenaltiesHome,
     handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView,
-    handleInjuryCleared
+    handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent
 }) {
     const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
+    
+    // Find the most recently added event for the Toast Banner
+    const lastEvent = lastAddedEventId ? gameEvents.find(e => e.id === lastAddedEventId) : null;
 
     const renderCardSquares = (penalty, isJustServing) => {
         if (!penalty) return null;
@@ -17,6 +20,15 @@ export default function InGameDashboard({
         if (penalty.color === 'Yellow') return '🟨';
         if (penalty.color === 'Red') return '🟥';
         return '';
+    };
+
+    const formatEventDescription = (ev) => {
+        let text = `${ev.team} - ${ev.type}`;
+        if (ev.entity && ev.entity.name) text += ` (${ev.entity.number ? '#' + ev.entity.number + ' ' : ''}${ev.entity.name})`;
+        if (ev.warningReason) text += ` [${ev.warningReason}]`;
+        if (ev.penalty) text += ` [${ev.penalty.code}]`;
+        if (ev.time) text += ` @ ${ev.time} ${ev.quarter}`;
+        return text;
     };
 
     return (
@@ -55,7 +67,7 @@ export default function InGameDashboard({
                 </div>
             </header>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden relative">
                 <div className="w-1/2 p-4 flex flex-col border-r-4 border-gray-800 bg-white">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-3xl font-black uppercase flex items-center space-x-3" style={{ color: awayCSSColor }}>
@@ -89,6 +101,21 @@ export default function InGameDashboard({
                         ))}
                     </div>
                 </div>
+                
+                {/* DYNAMIC LAST ACTION TOAST BANNER */}
+                {lastEvent && (
+                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white px-6 py-4 rounded-xl shadow-2xl z-50 flex items-center space-x-6 border-2 border-slate-700 w-11/12 max-w-3xl">
+                        <div className="flex-1">
+                            <div className="text-xs font-black text-green-400 mb-1 tracking-wider uppercase">✅ Action Successfully Logged</div>
+                            <div className="font-bold text-lg">{formatEventDescription(lastEvent)}</div>
+                        </div>
+                        <div className="flex space-x-3 shrink-0">
+                            <button onClick={() => { startEditingEvent(lastEvent); setLastAddedEventId(null); }} className="px-5 py-2 bg-blue-600 text-white text-sm font-black rounded-lg hover:bg-blue-500 transition">Edit</button>
+                            <button onClick={() => { deleteEvent(lastEvent.id); setLastAddedEventId(null); }} className="px-5 py-2 bg-red-600 text-white text-sm font-black rounded-lg hover:bg-red-500 transition">Undo</button>
+                            <button onClick={() => setLastAddedEventId(null)} className="px-4 py-2 text-gray-400 hover:text-white transition font-bold">✕</button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ACTIVE PENALTIES DASHBOARD */}
@@ -162,7 +189,7 @@ export default function InGameDashboard({
             )}
 
             {/* DYNAMIC GLOBAL FOOTER */}
-            <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200">
+            <footer className="flex justify-between items-center p-4 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200 relative">
                 <button onClick={togglePeriod} className={`px-12 py-3 border-2 font-black tracking-wide rounded-lg transition shadow-sm ${isPeriodRunning ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100'}`}>
                     {isPeriodRunning ? `⏹ END ${quarter}` : `▶ START ${quarter}`}
                 </button>

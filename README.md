@@ -3,6 +3,16 @@
 
 ---
 
+## [v0.56] - 2026-03-10 - Alpha Tester QoL Updates & Auto-Flows
+**Gameplay & UI Enhancements**
+* **Smart Time Validation Modal:** Replaced the OS-level browser alert with a custom, user-friendly React confirmation modal featuring clear "Yes/No" options. The time-entry engine now intelligently catches ambiguous shorthand inputs (e.g., typing '141' resulting in '14:10' instead of '01:41') and specifically prompts the user to verify entries ending in zero.
+* **Last Action "Undo" Banner:** Introduced a dynamic toast banner at the bottom of the active game dashboard. Immediately after logging any event, the banner confirms the action and provides instant 1-tap buttons to **[Undo]** (delete) or **[Edit]** the entry without forcing the user to navigate into the full Game Log.
+
+**Rule Engine & Automation**
+* **Warning Escalation Auto-Flow:** Mapped MASL team warning infractions to their corresponding Yellow Card penalty codes (e.g., Bench Dissent → Y2, Delay of Game → Y14). When a team receives its 2nd warning for a specific infraction, the system automatically transitions to the Penalty Modal, pre-fills a 5-Minute Yellow Card with the correct code, and prompts the 4th official to select the offending player or coach.
+
+---
+
 ## [v0.55] - 2026-03-10 - Player/Coach Validation Rules
 **Data Validation**
 * **Cross-Roster Duplication Guard:** Added a cross-referencing algorithm to the Pre-Game Validation engine. The system now normalizes and compares all names between the active Player Roster and Bench Staff. If a person is listed in both areas, the system flags a Player/Coach violation, strictly enforcing the MASL mandate that teams must designate a separate, non-playing Head Coach.

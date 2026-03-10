@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.55
+ * Version: 0.56
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.55";
+const APP_VERSION = "0.56";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -84,6 +84,10 @@ export default function App() {
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     const [appTimer, setAppTimer] = useState({ active: false, time: 0, initialTime: 0, label: '', minimized: false });
 
+    // NEW: UI States for Custom Time Validation and Last Action Toast
+    const [timeConfirmDialog, setTimeConfirmDialog] = useState(null);
+    const [lastAddedEventId, setLastAddedEventId] = useState(null);
+
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
     const homeScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'HOME').length;
     const awayCSSColor = getTeamColor(gameData.awayColor, '#1e40af'); 
@@ -129,6 +133,21 @@ export default function App() {
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
     };
 
+    const commitTime = (timeStr, nextStepStr) => {
+        let mm = parseInt(timeStr.substring(0, 2));
+        let ss = parseInt(timeStr.substring(2, 4));
+        if (activeAction.type === 'Media Timeout' && (mm * 60 + ss > 8 * 60)) {
+            alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
+            return; 
+        }
+        setTimeInput(timeStr); 
+        setActiveAction(prev => ({ ...prev, time: timeStr }));
+        
+        if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, timeStr);
+        else if (nextStepStr === 'FINALIZE_MANUAL_TIME') processManualTime(timeStr);
+        else setModalStep(nextStepStr);
+    };
+
     const validateAndAdvanceTime = (nextStepStr) => {
         let raw = timeInput || '';
         let padded = raw.padEnd(4, '0');
@@ -136,35 +155,34 @@ export default function App() {
         let ss = parseInt(padded.substring(2, 4));
 
         const isValid = (m, s) => (m <= 15 && !(m === 15 && s > 0) && s <= 59);
+        let isPrimaryValid = isValid(mm, ss);
 
-        if (isValid(mm, ss)) {
-            if (activeAction.type === 'Media Timeout' && (mm * 60 + ss > 8 * 60)) {
-                alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
-                return; 
-            }
-            setTimeInput(padded); setActiveAction(prev => ({ ...prev, time: padded }));
-            if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, padded);
-            else if (nextStepStr === 'FINALIZE_MANUAL_TIME') processManualTime(padded);
-            else setModalStep(nextStepStr);
-            return;
-        }
-
+        // Shift check (e.g. 1410 -> 0141)
         let suggRaw = '0' + padded.substring(0, 3);
         let suggMm = parseInt(suggRaw.substring(0, 2));
         let suggSs = parseInt(suggRaw.substring(2, 4));
-        if (isValid(suggMm, suggSs)) {
-            const suggFormat = `${String(suggMm).padStart(2, '0')}:${String(suggSs).padStart(2, '0')}`;
-            if (window.confirm(`Invalid time entered (${formatTime(padded)}).\n\nDid you mean ${suggFormat}?`)) {
-                if (activeAction.type === 'Media Timeout' && (suggMm * 60 + suggSs > 8 * 60)) {
-                    alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
-                    return; 
-                }
-                setTimeInput(suggRaw); setActiveAction(prev => ({ ...prev, time: suggRaw }));
-                if (nextStepStr === 'FINALIZE_TEAM_EVENT') finalizeEvent('Team', null, null, suggRaw);
-                else if (nextStepStr === 'FINALIZE_MANUAL_TIME') processManualTime(suggRaw);
-                else setModalStep(nextStepStr);
-            }
-        } else { alert("Invalid Time. Please enter a valid match time between 15:00 and 00:00."); }
+        let isSuggValid = isValid(suggMm, suggSs);
+
+        let shouldAsk = false;
+        
+        if (!isPrimaryValid && isSuggValid) {
+            shouldAsk = true; // User typed invalid 5170, but 0517 is valid
+        } else if (isPrimaryValid && isSuggValid && raw.length === 3) {
+            shouldAsk = true; // User typed 141. Could be 14:10 or 01:41.
+        } else if (isPrimaryValid && isSuggValid && raw.length === 4 && raw.endsWith('0') && raw[0] !== '0') {
+            shouldAsk = true; // User explicitly typed 1410, but ask anyway per alpha request.
+        }
+
+        if (shouldAsk) {
+            setTimeConfirmDialog({ original: padded, suggested: suggRaw, nextStepStr: nextStepStr, isOriginalValid: isPrimaryValid });
+            return;
+        }
+
+        if (isPrimaryValid) {
+            commitTime(padded, nextStepStr);
+        } else { 
+            alert("Invalid Time. Please enter a valid match time between 15:00 and 00:00."); 
+        }
     };
 
     const triggerAction = (teamIdentifier, actionType) => {
@@ -228,18 +246,35 @@ export default function App() {
         const finalTimeRaw = activeAction.time || timeInput;
         const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
 
+        const WARNING_TO_YELLOW_MAP = {
+            'Bench Dissent': 'Y2',
+            'Delay of Game': 'Y14',
+            'Embellishment': 'Y7',
+            'Encroachment': 'Y15',
+            'Shootout/PK': 'Y12'
+        };
+
         if (editingEventId) {
-            const prevWarning = gameEvents.find(ev => ev.id !== editingEventId && ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason);
             setGameEvents(gameEvents.map(ev => ev.id === editingEventId ? {
                 ...ev, quarter: modalQuarter, time: finalTimeStr, warningReason: reason
             } : ev));
-            if (prevWarning) setFoulAlert({ type: 'yellow', title: 'WARNING ESCALATION', player: { number: 'TEAM', name: 'WARNING' }, message: `Second warning given for [${reason}]. Issue a 5-Minute Yellow Card to the player or coach who committed the offense.` });
             setEditingEventId(null); setModalStep('EVENT_LOG');
         } else {
-            const prevWarning = gameEvents.find(ev => ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason);
-            const newEvent = { id: Date.now(), team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team / Bench', warningReason: reason };
+            const prevWarningCount = gameEvents.filter(ev => ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason).length;
+            const newEventId = Date.now();
+            const newEvent = { id: newEventId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team / Bench', warningReason: reason };
+            
             setGameEvents([newEvent, ...gameEvents]);
-            if (prevWarning) setFoulAlert({ type: 'yellow', title: 'WARNING ESCALATION', player: { number: 'TEAM', name: 'WARNING' }, message: `Second warning given for [${reason}]. Issue a 5-Minute Yellow Card to the player or coach who committed the offense.` });
+            setLastAddedEventId(newEventId);
+            
+            if (prevWarningCount >= 1) {
+                // AUTO-FLOW TO YELLOW CARD
+                const mappedCode = WARNING_TO_YELLOW_MAP[reason] || 'Y';
+                setActiveAction({ team: activeAction.team, type: 'Time Penalty', time: finalTimeRaw });
+                setPenaltyData({ color: 'Yellow', code: mappedCode, desc: `2nd Warning: ${reason}`, blueCode: null, blueDesc: null });
+                setModalStep('PLAYER'); 
+                return; 
+            }
             setModalStep(null);
         }
     };
@@ -249,7 +284,9 @@ export default function App() {
         const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
 
         if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') {
-            setGameEvents([{ id: Date.now(), team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team' }, ...gameEvents]);
+            const newId = Date.now();
+            setGameEvents([{ id: newId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team' }, ...gameEvents]);
+            setLastAddedEventId(newId);
             setModalStep(null); initAudio(); 
             if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, initialTime: 90, label: 'MEDIA TIMEOUT', minimized: false });
             if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, initialTime: 60, label: 'TEAM TIMEOUT', minimized: false });
@@ -257,6 +294,7 @@ export default function App() {
         }
 
         let updatedEvents = [...gameEvents];
+        let primaryAddedId = Date.now();
 
         let existingBlueCombo = null;
         if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && selectedEntity?.id) {
@@ -279,7 +317,7 @@ export default function App() {
             );
 
             const serverEvent = {
-                id: Date.now() + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: servingPlayerEntity, servingPlayer: null, assist: null, 
                 penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
                 goalFlags: null, eligibleReturnTime: null, 
@@ -290,7 +328,7 @@ export default function App() {
             };
 
             const yellowEvent = {
-                id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                id: primaryAddedId, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
                 isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true 
             };
@@ -299,14 +337,14 @@ export default function App() {
         } 
         else if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.code === 'Y6') {
             const offenderEvent = {
-                id: Date.now(), team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                id: primaryAddedId, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: null, assist: null, 
                 penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
                 isReleasable: false, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 7), majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false
             };
             const serverEvent = {
-                id: Date.now() + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
+                id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: servingPlayerEntity, servingPlayer: null, assist: null, 
                 penalty: { color: 'Blue', code: penaltyData.blueCode, desc: `Serving ${penaltyData.blueCode} for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
                 goalFlags: null, eligibleReturnTime: null,
@@ -331,7 +369,7 @@ export default function App() {
             if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(modalQuarter, finalTimeStr);
 
             updatedEvents = [{ 
-                id: Date.now(), team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
+                id: primaryAddedId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: assistEntity, penalty: activeAction.type === 'Time Penalty' ? penaltyData : null,
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null, eligibleReturnTime: eligibleReturnTime, clearedInjury: false,
                 isReleasable: isReleasable, releaseTime: releaseTime, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: false 
@@ -370,6 +408,7 @@ export default function App() {
         }
         
         setGameEvents(updatedEvents);
+        if (!editingEventId) setLastAddedEventId(primaryAddedId);
         
         if (['Log Foul', 'Time Penalty'].includes(activeAction.type) && selectedEntity !== 'Unattributed') {
             const isFirstHalf = modalQuarter === 'Q1' || modalQuarter === 'Q2';
@@ -477,6 +516,8 @@ export default function App() {
                 handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired}
                 togglePeriod={togglePeriod} isPeriodRunning={isPeriodRunning} setCurrentView={setCurrentView}
                 handleInjuryCleared={(id) => setGameEvents(gameEvents.map(ev => ev.id === id ? { ...ev, clearedInjury: true } : ev))}
+                lastAddedEventId={lastAddedEventId} setLastAddedEventId={setLastAddedEventId}
+                startEditingEvent={startEditingEvent} deleteEvent={deleteEvent}
             />
 
             {modalStep === 'FOUL_SUMMARY' && (
@@ -504,6 +545,33 @@ export default function App() {
                 handlePlayerSelect={handlePlayerSelect} activeBench={activeBench} requiresSubstituteServer={requiresSubstituteServer} setRequiresSubstituteServer={setRequiresSubstituteServer}
                 benchPenaltyEntity={benchPenaltyEntity} setBenchPenaltyEntity={setBenchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
+
+            {/* CUSTOM TIME CONFIRMATION MODAL */}
+            {timeConfirmDialog && (
+                <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[200] p-6">
+                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full text-center border-t-8 border-orange-500">
+                        <h3 className="text-2xl font-black text-slate-800 mb-2">Confirm Time</h3>
+                        <p className="text-gray-600 mb-6 font-medium text-lg leading-snug">
+                            Did you mean to enter <span className="font-black text-green-600 text-xl block mt-1">{formatTime(timeConfirmDialog.suggested)}?</span>
+                        </p>
+                        <div className="flex flex-col space-y-3">
+                            <button onClick={() => { commitTime(timeConfirmDialog.suggested, timeConfirmDialog.nextStepStr); setTimeConfirmDialog(null); }} className="w-full py-4 bg-green-600 text-white text-lg font-black rounded-xl hover:bg-green-700 shadow-md">
+                                Yes, log as {formatTime(timeConfirmDialog.suggested)}
+                            </button>
+                            <button onClick={() => { 
+                                if (timeConfirmDialog.isOriginalValid) {
+                                    commitTime(timeConfirmDialog.original, timeConfirmDialog.nextStepStr); 
+                                } else {
+                                    alert("Invalid Time. Please enter a valid match time.");
+                                }
+                                setTimeConfirmDialog(null); 
+                            }} className="w-full py-3 bg-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-300">
+                                No, keep {formatTime(timeConfirmDialog.original)}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>
         </div>
