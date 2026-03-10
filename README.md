@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.58] - 2026-03-10 - Architectural Refactor: Decoupled OCR Engine
+**Codebase Optimization**
+* **Isolated Processing Engine:** Extracted all Google Cloud Vision/Document AI communication logic, Base64 image compression pipelines, and text parsing algorithms out of the `PregameSetup.jsx` view component and into a dedicated `ocrEngine.js` utility file. This reduces the view component size by ~150 lines, significantly improving code readability and making future OCR format tweaks entirely independent of the UI logic.
+
+---
+
 ## [v0.57] - 2026-03-10 - Footer UI Consolidation
 **UI Layout Optimization**
 * **Embedded Footer Banner:** Redesigned the "Last Action" UI from a hovering modal to an embedded flexbox item. The edit/undo banner now renders perfectly flat inside the dead white space between the "Start Quarter" and "Media Timeout" buttons in the bottom global footer, ensuring it never obscures active game controls during fast-paced play.

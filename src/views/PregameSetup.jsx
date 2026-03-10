@@ -1,27 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { BENCH_ROLES, LEAGUES, TEAMS } from '../config';
-
-const robustNumericalSort = (a, b) => {
-    const jerseyA = a.number;
-    const jerseyB = b.number;
-
-    if (jerseyA === '00') return -1; 
-    if (jerseyB === '00') return 1;
-
-    const numA = parseInt(jerseyA, 10);
-    const numB = parseInt(jerseyB, 10);
-
-    if (numA !== numB) {
-        return numA - numB;
-    }
-    return jerseyA.localeCompare(jerseyB);
-};
-
-const sortBench = (bench) => [...bench].sort((a, b) => {
-    if (a.role === 'Head Coach' && b.role !== 'Head Coach') return -1;
-    if (a.role !== 'Head Coach' && b.role === 'Head Coach') return 1;
-    return 0;
-});
+import { robustNumericalSort, sortBench, processRosterImage, parseRosterText } from '../ocrEngine';
 
 export default function PregameSetup({
     gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
@@ -74,7 +53,6 @@ export default function PregameSetup({
                 alert(`The ${selected.name} are already selected as the ${otherType === 'away' ? 'Away' : 'Home'} team. Please choose a different team.`);
                 return;
             }
-
             setGameData({
                 ...gameData,
                 [`${type}Team`]: selected.name,
@@ -85,7 +63,6 @@ export default function PregameSetup({
         }
     };
 
-    // --- MASL GAME STATE VALIDATION GUARDS ---
     const checkTeamValidity = (teamName, roster, bench) => {
         let warnings = [];
         const starters = roster.filter(p => p.isStarter);
@@ -96,16 +73,13 @@ export default function PregameSetup({
         if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper.`);
         if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach.`);
         
-        // NEW RULE: Player/Coach Validation
-        // Strip punctuation and spaces to find exact matches even if typed slightly differently
         const normalizeName = (name) => name.toLowerCase().replace(/[^a-z]/g, '');
         const benchNames = bench.map(b => normalizeName(b.name));
         
         const overlaps = roster.filter(p => benchNames.includes(normalizeName(p.name)));
-        
         if (overlaps.length > 0) {
             const overlapNames = overlaps.map(o => o.name).join(', ');
-            warnings.push(`Player/Coach Violation: ${overlapNames} cannot be listed on both the Player Roster and Bench Staff. A separate, non-playing Head Coach is required.`);
+            warnings.push(`Player/Coach Violation: ${overlapNames} cannot be listed on both the Player Roster and Bench Staff.`);
         }
 
         return warnings.length > 0 ? { team: teamName, warnings } : null;
@@ -132,14 +106,11 @@ export default function PregameSetup({
             }
             errorMsg += "\nAre you sure you want to proceed to kickoff anyway?";
             
-            if (!window.confirm(errorMsg)) {
-                return; 
-            }
+            if (!window.confirm(errorMsg)) return; 
         }
         
         awayRoster.sort(robustNumericalSort);
         homeRoster.sort(robustNumericalSort);
-
         setCurrentView('ingame');
     };
 
@@ -162,15 +133,12 @@ export default function PregameSetup({
         }
         if (newPlayer.isCaptain && otherPlayers.some(p => p.isCaptain)) return alert("A team can only have ONE designated Captain.");
 
-        let updated;
-        if (editingPlayerId) {
-            updated = currentRoster.map(p => p.id === editingPlayerId ? { ...newPlayer, id: editingPlayerId } : p);
-            setEditingPlayerId(null);
-        } else {
-            updated = [...currentRoster, { ...newPlayer, id: Date.now() }];
-        }
+        let updated = editingPlayerId 
+            ? currentRoster.map(p => p.id === editingPlayerId ? { ...newPlayer, id: editingPlayerId } : p)
+            : [...currentRoster, { ...newPlayer, id: Date.now() }];
         
         setRoster(updated.sort(robustNumericalSort));
+        setEditingPlayerId(null);
         setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); 
     };
 
@@ -188,9 +156,7 @@ export default function PregameSetup({
                 if (!player.isGK && otherPlayers.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players allowed.");
             }
             if (attr === 'isGK') {
-                if (player.isStarter && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) {
-                    return alert("Only 1 Starting Goalkeeper allowed. Please un-select the current starting GK first.");
-                }
+                if (player.isStarter && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed. Please un-select the current starting GK first.");
             }
         } else {
             if (attr === 'isGK') {
@@ -210,20 +176,14 @@ export default function PregameSetup({
         const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
         
         if (!editingBenchId && currentBench.length >= 5) return alert("Max 5 bench personnel.");
+        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach' && b.id !== editingBenchId)) return alert("A team can only have ONE designated Head Coach.");
         
-        if (newBench.role === 'Head Coach' && currentBench.some(b => b.role === 'Head Coach' && b.id !== editingBenchId)) {
-            return alert("A team can only have ONE designated Head Coach.");
-        }
-        
-        let updated;
-        if (editingBenchId) {
-            updated = currentBench.map(b => b.id === editingBenchId ? { ...newBench, id: editingBenchId } : b);
-            setEditingBenchId(null);
-        } else {
-            updated = [...currentBench, { ...newBench, id: Date.now() }];
-        }
+        let updated = editingBenchId
+            ? currentBench.map(b => b.id === editingBenchId ? { ...newBench, id: editingBenchId } : b)
+            : [...currentBench, { ...newBench, id: Date.now() }];
 
         setBench(updated);
+        setEditingBenchId(null);
         setNewBench({ name: '', role: 'Assistant Coach' });
     };
 
@@ -238,6 +198,7 @@ export default function PregameSetup({
         setNewBench({ name: '', role: 'Assistant Coach' });
     };
 
+    // --- REFACTORED OCR ENGINE CALLS ---
     const handleImageUpload = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -245,52 +206,17 @@ export default function PregameSetup({
         setIsScanning(true);
         setScanResult(null);
 
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = () => {
-            const img = new Image();
-            img.src = reader.result;
-            img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 1500;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                } else {
-                    if (height > MAX_WIDTH) { width *= MAX_WIDTH / height; height = MAX_WIDTH; }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
-
-                try {
-                    const response = await fetch('/api/scanRoster', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ imageBase64: compressedBase64 })
-                    });
-
-                    const data = await response.json();
-                    if (data.error) throw new Error(data.error);
-
-                    setScanResult(data.text);
-                } catch (error) {
-                    alert("Failed to scan roster: " + error.message);
-                } finally {
-                    setIsScanning(false);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                }
-            };
-        };
+        try {
+            const text = await processRosterImage(file);
+            setScanResult(text);
+        } catch (error) {
+            alert("Failed to scan roster: " + error.message);
+        } finally {
+            setIsScanning(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
     };
 
-    // --- BULLETPROOF ROSTER PARSER ---
     const handleImportScannedText = () => {
         if (!scanResult) return;
 
@@ -299,130 +225,12 @@ export default function PregameSetup({
         const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
         const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
         
-        let newPlayers = [];
-        let newStaff = [];
-        const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
-        let importedPlayerCount = 0;
+        const { updatedRoster, updatedBench, newPlayersCount, newStaffCount } = parseRosterText(scanResult, currentRoster, currentBench);
 
-        const lines = scanResult.split('\n');
-        
-        lines.forEach(line => {
-            // 1. AGGRESSIVE BOILERPLATE FILTERING
-            if (!line.trim()) return;
-            if (line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE|JOB|SUBSTITUTES|STARTERS|MASL\s*\d/i)) return;
-            if (line.match(/BENCH\s*STAFF/i)) return; // Prevents "BENCH STAFF" header from becoming a person
-            if (line.match(/Referee/i)) return; // Blocks the signature line at the bottom
-            if (line.match(/maximum|essential|credential|attire|uniform|shorts|discipline|manager team/i)) return; // Blocks rule paragraphs
-
-            const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
-            
-            // --- PLAYER / JERSEY CANDIDATE EXTRACTOR ---
-            let candidates = [];
-            let nameParts = [];
-            let isGK = false;
-            let hitText = false;
-            let foundBenchRole = false;
-
-            // Check entire line for bench keywords first
-            let upperLine = line.toUpperCase();
-            let benchRoleMatch = benchKeywords.find(role => upperLine.includes(role));
-
-            if (benchRoleMatch) {
-                foundBenchRole = true;
-                // Strip the role title, any leading numbers, and punctuation
-                let staffName = upperLine.replace(benchRoleMatch, '').replace(/^\s*\d+[\.\)]\s*/, '').replace(/[^A-Z\s,-]/g, '').trim();
-                
-                if (staffName.length > 2 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
-                    newStaff.push({
-                        id: Date.now() + Math.random(),
-                        name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
-                        role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
-                    });
-                }
-            } 
-            else {
-                // Not staff, must be a Player row
-                for (let i = 0; i < cells.length; i++) {
-                    let cell = cells[i];
-                    let upperCell = cell.toUpperCase();
-
-                    if (!hitText) {
-                        // Clean things like "1 ." to "1."
-                        let cleanCell = cell.replace(/\s+[\.\)]$/, '.');
-                        
-                        // If it's a 1-2 digit number, it's a candidate for the Jersey Number
-                        let numMatch = cleanCell.match(/^(\d{1,2})[\.\)]?$/);
-                        if (numMatch) {
-                            candidates.push(numMatch[1]);
-                            continue;
-                        }
-                        
-                        // If we see a known position, we know the text string has started
-                        if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
-                            hitText = true;
-                            if (upperCell.includes('G')) isGK = true;
-                            continue;
-                        }
-                        
-                        // If it has letters, text string has started
-                        if (/[A-Za-z]/.test(cell)) {
-                            hitText = true;
-                            if (upperCell.includes('GK')) {
-                                isGK = true;
-                                cell = cell.replace(/GK/ig, '').trim();
-                            }
-                            if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
-                        }
-                    } else {
-                        // We are already inside the text portion
-                        if (upperCell === 'GK' || upperCell === 'G') {
-                            isGK = true;
-                        } else if (/^[DMFET]$/.test(upperCell)) {
-                            continue; 
-                        } else {
-                            if (upperCell.includes('GK')) {
-                                isGK = true;
-                                cell = cell.replace(/GK/ig, '').trim();
-                            }
-                            if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
-                        }
-                    }
-                }
-
-                // The LAST candidate number before the text started is almost certainly the jersey number
-                let jerseyNum = candidates.length > 0 ? candidates[candidates.length - 1] : null;
-
-                if (jerseyNum && nameParts.length > 0) {
-                    const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
-                    
-                    if (finalName.length > 1 && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
-                        importedPlayerCount++;
-                        const isAutoStarter = importedPlayerCount <= 6;
-                        const isAutoGK = isGK || importedPlayerCount === 1;
-
-                        newPlayers.push({
-                            id: Date.now() + Math.random(),
-                            number: jerseyNum,
-                            name: finalName,
-                            isGK: isAutoGK,
-                            isStarter: isAutoStarter,
-                            isCaptain: false
-                        });
-                    }
-                }
-            }
-        });
-
-        if (newPlayers.length > 0 || newStaff.length > 0) {
-            if (newPlayers.length > 0) {
-                const updatedRoster = [...currentRoster, ...newPlayers].sort(robustNumericalSort);
-                setRoster(updatedRoster);
-            }
-            if (newStaff.length > 0) {
-                const updatedBench = [...currentBench, ...newStaff];
-                setBench(updatedBench);
-            }
-            alert(`Imported ${newPlayers.length} players (${Math.min(newPlayers.length, 6)} auto-marked as Starters) and ${newStaff.length} bench staff!`);
+        if (newPlayersCount > 0 || newStaffCount > 0) {
+            if (newPlayersCount > 0) setRoster(updatedRoster);
+            if (newStaffCount > 0) setBench(updatedBench);
+            alert(`Imported ${newPlayersCount} players (${Math.min(newPlayersCount, 6)} auto-marked as Starters) and ${newStaffCount} bench staff!`);
         } else {
             alert("Could not detect any valid data. Please ensure rows have a jersey number and a name.");
         }
