@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.62] - 2026-03-10 - Dashboard Controls & Reverse-Chronological Sorting
+**Data Management**
+* **Reverse-Chronological Game Log Enforcement:** Re-engineered the master `gameEvents` render pipeline to mathematically sort events prior to passing them to the `<EventLog />` viewer. The logic enforces Quarter Descending (OT->Q4->Q3...) and Time Ascending (00:00->15:00) so that the newest chronological events resulting from a countdown clock always render at the absolute top of the UI list for live operational efficiency. 
+* **Active Penalty Quick-Edits:** Pushed the `startEditingReleaseTime` handler down into the `<ActivePenaltiesWidget />`. Users can now click the new **"Edit Exp."** button directly from the main dashboard to instantly correct an erroneously calculated penalty release time without having to hunt through the Game Log.
+
+---
+
 ## [v0.61] - 2026-03-10 - In-Game UI Componentization
 **Codebase Optimization**
 * **Dashboard Widgets:** Refactored the `InGameDashboard.jsx` file by extracting the `ActivePenalties` and `ActiveInjuries` monitors into standalone React components within the `/src/components/widgets/` directory. 

@@ -3,7 +3,7 @@ import React from 'react';
 export default function ActivePenaltiesWidget({
     activePenaltiesAway, activePenaltiesHome,
     awayCSSColor, homeCSSColor,
-    handlePPGoalScored, handlePenaltyExpired
+    handlePPGoalScored, handlePenaltyExpired, startEditingReleaseTime
 }) {
     const renderCardSquares = (penalty, isJustServing) => {
         if (!penalty) return null;
@@ -33,6 +33,7 @@ export default function ActivePenaltiesWidget({
                     </div>
                     <div className="flex flex-col space-y-1">
                         {ev.isReleasable && <button onClick={() => handlePPGoalScored(ev.id)} className="px-2 py-1 bg-blue-50 text-blue-600 text-xs font-bold rounded border border-blue-200 hover:bg-blue-100 transition">PPG Scored</button>}
+                        <button onClick={() => startEditingReleaseTime(ev.id)} className="px-2 py-1 bg-yellow-50 text-yellow-600 text-xs font-bold rounded border border-yellow-200 hover:bg-yellow-100 transition">Edit Exp.</button>
                         <button onClick={() => handlePenaltyExpired(ev.id)} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded border border-gray-200 hover:bg-gray-200 transition">Expired</button>
                     </div>
                 </div>

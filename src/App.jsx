@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.61
+ * Version: 0.62
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.61";
+const APP_VERSION = "0.62";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -85,7 +85,6 @@ export default function App() {
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     const [appTimer, setAppTimer] = useState({ active: false, time: 0, initialTime: 0, label: '', minimized: false });
 
-    // NEW: UI States for Custom Time Validation and Last Action Toast
     const [timeConfirmDialog, setTimeConfirmDialog] = useState(null);
     const [lastAddedEventId, setLastAddedEventId] = useState(null);
 
@@ -158,7 +157,6 @@ export default function App() {
         const isValid = (m, s) => (m <= 15 && !(m === 15 && s > 0) && s <= 59);
         let isPrimaryValid = isValid(mm, ss);
 
-        // Shift check (e.g. 1410 -> 0141)
         let suggRaw = '0' + padded.substring(0, 3);
         let suggMm = parseInt(suggRaw.substring(0, 2));
         let suggSs = parseInt(suggRaw.substring(2, 4));
@@ -167,11 +165,11 @@ export default function App() {
         let shouldAsk = false;
         
         if (!isPrimaryValid && isSuggValid) {
-            shouldAsk = true; // User typed invalid 5170, but 0517 is valid
+            shouldAsk = true; 
         } else if (isPrimaryValid && isSuggValid && raw.length === 3) {
-            shouldAsk = true; // User typed 141. Could be 14:10 or 01:41.
+            shouldAsk = true; 
         } else if (isPrimaryValid && isSuggValid && raw.length === 4 && raw.endsWith('0') && raw[0] !== '0') {
-            shouldAsk = true; // User explicitly typed 1410, but ask anyway per alpha request.
+            shouldAsk = true; 
         }
 
         if (shouldAsk) {
@@ -269,7 +267,6 @@ export default function App() {
             setLastAddedEventId(newEventId);
             
             if (prevWarningCount >= 1) {
-                // AUTO-FLOW TO YELLOW CARD
                 const mappedCode = WARNING_TO_YELLOW_MAP[reason] || 'Y';
                 setActiveAction({ team: activeAction.team, type: 'Time Penalty', time: finalTimeRaw });
                 setPenaltyData({ color: 'Yellow', code: mappedCode, desc: `2nd Warning: ${reason}`, blueCode: null, blueDesc: null });
@@ -489,6 +486,26 @@ export default function App() {
         if (event.type === 'Log Foul') setModalStep('PLAYER'); else setModalStep('TIME');
     };
 
+    // --- REVERSE-CHRONOLOGICAL GAME LOG SORTER ---
+    // Enforces Newest-First display for live operations
+    const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
+    const sortedGameEvents = [...gameEvents].sort((a, b) => {
+        const qA = quarterOrder[a.quarter] || 0;
+        const qB = quarterOrder[b.quarter] || 0;
+        
+        // 1. Sort by Quarter Descending (OT -> Q4 -> Q3...)
+        if (qA !== qB) return qB - qA;
+        
+        // 2. Sort by Time Ascending (00:00 -> 15:00). 
+        // Because it's a countdown clock, 00:00 is technically "newer" than 15:00.
+        const timeA = a.time || "00:00";
+        const timeB = b.time || "00:00";
+        if (timeA !== timeB) return timeA.localeCompare(timeB);
+        
+        // 3. Fallback to entry ID to keep simultaneous events in exact entered order
+        return b.id - a.id;
+    });
+
     if (currentView === 'pregame') {
         return (
             <PregameSetup 
@@ -519,14 +536,16 @@ export default function App() {
                 handleInjuryCleared={(id) => setGameEvents(gameEvents.map(ev => ev.id === id ? { ...ev, clearedInjury: true } : ev))}
                 lastAddedEventId={lastAddedEventId} setLastAddedEventId={setLastAddedEventId}
                 startEditingEvent={startEditingEvent} deleteEvent={deleteEvent}
+                startEditingReleaseTime={startEditingReleaseTime}
             />
 
             {modalStep === 'FOUL_SUMMARY' && (
                 <FoulSummary summaryTeam={summaryTeam} gameData={gameData} awayRoster={awayRoster} homeRoster={homeRoster} gameEvents={gameEvents} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} onClose={() => setModalStep(null)} />
             )}
 
+            {/* PASSING THE NEW REVERSE-CHRONOLOGICAL SORTED EVENT LOG ARRAY HERE */}
             {modalStep === 'EVENT_LOG' && (
-                <EventLog gameEvents={gameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} />
+                <EventLog gameEvents={sortedGameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} />
             )}
 
             <TimeKeypadModal 
@@ -547,7 +566,7 @@ export default function App() {
                 benchPenaltyEntity={benchPenaltyEntity} setBenchPenaltyEntity={setBenchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
 
-           <TimeConfirmModal 
+            <TimeConfirmModal 
                 dialog={timeConfirmDialog} 
                 onConfirm={(suggested, nextStepStr) => { 
                     commitTime(suggested, nextStepStr); 

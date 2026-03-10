@@ -7,7 +7,8 @@ export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents,
     setModalStep, setSummaryTeam, triggerAction, activePenaltiesAway, activePenaltiesHome,
     handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView,
-    handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent
+    handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent,
+    startEditingReleaseTime
 }) {
     const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
@@ -94,16 +95,15 @@ export default function InGameDashboard({
                 </div>
             </div>
 
-            {/* REFACTORED: WIDGETS */}
             <ActivePenaltiesWidget 
                 activePenaltiesAway={activePenaltiesAway} activePenaltiesHome={activePenaltiesHome} 
                 awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} 
                 handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired} 
+                startEditingReleaseTime={startEditingReleaseTime}
             />
 
             <ActiveInjuriesWidget activeInjuries={activeInjuries} handleInjuryCleared={handleInjuryCleared} />
 
-            {/* DYNAMIC GLOBAL FOOTER */}
             <footer className="flex justify-between items-center p-3 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 border-t-2 border-gray-200 h-[88px] shrink-0">
                 <button onClick={togglePeriod} className={`shrink-0 px-8 h-full border-2 font-black tracking-wide rounded-lg transition shadow-sm ${isPeriodRunning ? 'bg-red-50 border-red-500 text-red-700 hover:bg-red-100' : 'bg-green-50 border-green-500 text-green-700 hover:bg-green-100'}`}>
                     {isPeriodRunning ? `⏹ END ${quarter}` : `▶ START ${quarter}`}
