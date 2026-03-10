@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.56
+ * Version: 0.57
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,7 +20,7 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 
-const APP_VERSION = "0.56";
+const APP_VERSION = "0.57";
 
 let audioCtx = null;
 const initAudio = () => {

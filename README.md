@@ -3,6 +3,12 @@
 
 ---
 
+## [v0.57] - 2026-03-10 - Footer UI Consolidation
+**UI Layout Optimization**
+* **Embedded Footer Banner:** Redesigned the "Last Action" UI from a hovering modal to an embedded flexbox item. The edit/undo banner now renders perfectly flat inside the dead white space between the "Start Quarter" and "Media Timeout" buttons in the bottom global footer, ensuring it never obscures active game controls during fast-paced play.
+
+---
+
 ## [v0.56] - 2026-03-10 - Alpha Tester QoL Updates & Auto-Flows
 **Gameplay & UI Enhancements**
 * **Smart Time Validation Modal:** Replaced the OS-level browser alert with a custom, user-friendly React confirmation modal featuring clear "Yes/No" options. The time-entry engine now intelligently catches ambiguous shorthand inputs (e.g., typing '141' resulting in '14:10' instead of '01:41') and specifically prompts the user to verify entries ending in zero.
