@@ -4,6 +4,14 @@
 
 ## Recent Updates
 
+### [v0.66] - 2026-03-11 - Dynamic League Roster Constraints
+**Rule Engine & Data Validation**
+* **Tiered League Validation:** Re-engineered the roster validation logic to dynamically adapt based on the selected league tier. 
+* **MASL/M2 Strict Mode:** If MASL or M2 is selected, the system enforces a strict 16-player maximum with a hard requirement of dressing at least 2 Goalkeepers (effectively capping field players at 14).
+* **MASL3/MASLW Amateur Mode:** If an amateur league is selected, the system expands the total allowed roster to 17, enforces a 15 field player maximum, and allows kickoff with only 1 Goalkeeper dressed.
+
+---
+
 ### [v0.65] - 2026-03-11 - Advanced Responsive Header Scaling
 **Visual & UX Patch**
 * **Strict Flex Boundaries:** Implemented strict `min-w-0` and `truncate` CSS rules across the `InGameDashboard` header. This prevents dynamically generated string content (like long team names) from overriding flexbox boundaries, ensuring the layout maintains its 100vh structure without unwanted vertical stacking or word-wrapping on smaller devices.
@@ -63,13 +71,6 @@
 **UI Layout Optimization**
 * **Embedded Footer Banner:** Redesigned the "Last Action" UI from a hovering modal to an embedded flexbox item. The edit/undo banner now renders perfectly flat inside the dead white space between the "Start Quarter" and "Media Timeout" buttons in the bottom global footer, ensuring it never obscures active game controls during fast-paced play.
 
----
-
-### [v0.56] - 2026-03-10 - Alpha Tester QoL Updates & Auto-Flows
-**Gameplay & UI Enhancements**
-* **Smart Time Validation Modal:** Replaced the OS-level browser alert with a custom, user-friendly React confirmation modal featuring clear "Yes/No" options. The time-entry engine now intelligently catches ambiguous shorthand inputs (e.g., typing '141' resulting in '14:10' instead of '01:41') and specifically prompts the user to verify entries ending in zero.
-* **Last Action "Undo" Banner:** Introduced a dynamic toast banner at the bottom of the active game dashboard. Immediately after logging any event, the banner confirms the action and provides instant 1-tap buttons to **[Undo]** (delete) or **[Edit]** the entry without forcing the user to navigate into the full Game Log.
-* **Warning Escalation Auto-Flow:** Mapped MASL team warning infractions to their corresponding Yellow Card penalty codes (e.g., Bench Dissent → Y2, Delay of Game → Y14). When a team receives its 2nd warning for a specific infraction, the system automatically transitions to the Penalty Modal, pre-fills a 5-Minute Yellow Card with the correct code, and prompts the 4th official to select the offending player or coach.
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

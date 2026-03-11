@@ -4,6 +4,14 @@ All notable changes to the MASL 3 4th Official Log App will be documented in thi
 
 ---
 
+### [v0.66] - 2026-03-11 - Dynamic League Roster Constraints
+**Rule Engine & Data Validation**
+* **Tiered League Validation:** Re-engineered the roster validation logic to dynamically adapt based on the selected league tier. 
+* **MASL/M2 Strict Mode:** If MASL or M2 is selected, the system enforces a strict 16-player maximum with a hard requirement of dressing at least 2 Goalkeepers (effectively capping field players at 14).
+* **MASL3/MASLW Amateur Mode:** If an amateur league is selected, the system expands the total allowed roster to 17, enforces a 15 field player maximum, and allows kickoff with only 1 Goalkeeper dressed.
+
+---
+
 ## [v0.65] - 2026-03-11 - Advanced Responsive Header Scaling
 **Visual & UX Patch**
 * **Strict Flex Boundaries:** Implemented strict `min-w-0` and `truncate` CSS rules across the `InGameDashboard` header. This prevents dynamically generated string content (like long team names) from overriding flexbox boundaries, ensuring the layout maintains its 100vh structure without unwanted vertical stacking or word-wrapping on smaller devices.

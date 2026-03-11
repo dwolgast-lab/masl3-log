@@ -17,6 +17,11 @@ export default function RosterEditorModal({
 
     if (!activeRosterModal) return null;
 
+    // --- DYNAMIC LEAGUE CONSTRAINTS ---
+    const isPro = !['MASL3', 'MASLW'].includes(gameData.league);
+    const maxTotalPlayers = isPro ? 16 : 17;
+    const maxFieldPlayers = isPro ? 14 : 15;
+
     const handleAddPlayer = () => {
         if (!newPlayer.number || !newPlayer.name) return alert("Please enter both a jersey number and a name.");
         const currentRoster = activeRosterModal === 'AWAY' ? awayRoster : homeRoster;
@@ -27,8 +32,10 @@ export default function RosterEditorModal({
         }
 
         const otherPlayers = editingPlayerId ? currentRoster.filter(p => p.id !== editingPlayerId) : currentRoster;
-        if (!editingPlayerId && currentRoster.length >= 17) return alert("Max 17 total players.");
-        if (!newPlayer.isGK && otherPlayers.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players.");
+        
+        // Apply Dynamic Limits
+        if (!editingPlayerId && currentRoster.length >= maxTotalPlayers) return alert(`Max ${maxTotalPlayers} total players allowed in ${gameData.league}.`);
+        if (!newPlayer.isGK && otherPlayers.filter(p => !p.isGK).length >= maxFieldPlayers) return alert(`Max ${maxFieldPlayers} Field Players allowed in ${gameData.league}.`);
         
         if (newPlayer.isStarter) {
             if (newPlayer.isGK && otherPlayers.filter(p => p.isGK && p.isStarter).length >= 1) return alert("Only 1 Starting Goalkeeper allowed.");
@@ -63,7 +70,8 @@ export default function RosterEditorModal({
             }
         } else {
             if (attr === 'isGK') {
-                if (otherPlayers.filter(p => !p.isGK).length >= 15) return alert("Max 15 Field Players. Cannot change GK to Field Player without removing one.");
+                // Apply Dynamic Limits on Toggle
+                if (otherPlayers.filter(p => !p.isGK).length >= maxFieldPlayers) return alert(`Max ${maxFieldPlayers} Field Players allowed in ${gameData.league}. Cannot change GK to Field Player without removing one first.`);
                 if (player.isStarter && otherPlayers.filter(p => !p.isGK && p.isStarter).length >= 5) return alert("Max 5 Starting Field Players. Please un-select starter status first.");
             }
         }

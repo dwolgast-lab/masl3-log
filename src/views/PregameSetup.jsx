@@ -59,10 +59,19 @@ export default function PregameSetup({
         const starters = roster.filter(p => p.isStarter);
         const startingGKs = starters.filter(p => p.isGK);
         const headCoaches = bench.filter(b => b.role === 'Head Coach');
+        const totalGKs = roster.filter(p => p.isGK);
+        
+        // Dynamic Pro vs Amateur rules
+        const isPro = !['MASL3', 'MASLW'].includes(gameData.league);
 
         if (starters.length !== 6) warnings.push(`Requires exactly 6 Starters (GK + 5 Field).`);
         if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper.`);
         if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach.`);
+        
+        // Validate minimum dressing GKs based on league tier
+        if (isPro && totalGKs.length < 2) {
+            warnings.push(`Roster Violation: ${gameData.league} rules require at least 2 Goalkeepers on the active roster.`);
+        }
         
         const normalizeName = (name) => name.toLowerCase().replace(/[^a-z]/g, '');
         const benchNames = bench.map(b => normalizeName(b.name));
