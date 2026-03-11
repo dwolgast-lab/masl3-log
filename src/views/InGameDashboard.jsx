@@ -25,13 +25,14 @@ export default function InGameDashboard({
 
     return (
         <>
-            <header className="flex justify-between items-center p-4 bg-white shadow z-10">
-                <div className="flex items-center space-x-4">
-                    {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className="w-10 h-10 object-contain hidden md:block" />}
-                    <button onClick={() => setCurrentView('pregame')} className="px-4 py-2 border-2 border-gray-300 text-gray-600 font-bold rounded hover:bg-gray-100">⚙️ Setup</button>
+            <header className="flex justify-between items-center p-4 bg-white shadow z-10 relative">
+                {/* LEFT: Prominent League Logo */}
+                <div className="flex-1 flex items-center justify-start">
+                    {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-md" />}
                 </div>
                 
-                <h1 className="text-4xl font-black tracking-wider uppercase flex items-center space-x-6">
+                {/* CENTER: Scoreboard */}
+                <h1 className="flex-1 flex justify-center items-center space-x-6 text-4xl font-black tracking-wider uppercase">
                     <div className="flex items-center space-x-3">
                         {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-12 h-12 object-contain drop-shadow-md" />}
                         <span style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</span> 
@@ -47,7 +48,8 @@ export default function InGameDashboard({
                     </div>
                 </h1>
 
-                <div className="flex items-center space-x-4">
+                {/* RIGHT: Controls */}
+                <div className="flex-1 flex items-center justify-end space-x-4">
                     <div className="flex bg-gray-200 rounded-lg p-1">
                         {QUARTERS.map(q => (
                             <div key={q} className={`px-4 py-2 rounded-md font-bold transition-colors ${quarter === q ? 'bg-black text-white shadow' : 'text-gray-400'}`}>{q}</div>
@@ -127,9 +129,15 @@ export default function InGameDashboard({
                     <div className="flex-1" />
                 )}
 
-                <button onClick={() => triggerAction('SYSTEM', 'Media Timeout')} className="shrink-0 px-6 h-full bg-orange-500 text-white font-black text-base rounded-lg shadow hover:bg-orange-600 transition">
-                    MEDIA TIMEOUT
-                </button>
+                {/* UPDATED: Setup and Media Timeout side-by-side */}
+                <div className="flex space-x-3 shrink-0 h-full">
+                    <button onClick={() => setCurrentView('pregame')} className="px-6 h-full bg-slate-100 text-slate-700 font-black text-base rounded-lg shadow-sm border-2 border-slate-200 hover:bg-slate-200 transition">
+                        ⚙️ SETUP
+                    </button>
+                    <button onClick={() => triggerAction('SYSTEM', 'Media Timeout')} className="px-6 h-full bg-orange-500 text-white font-black text-base rounded-lg shadow hover:bg-orange-600 transition">
+                        MEDIA TIMEOUT
+                    </button>
+                </div>
             </footer>
         </>
     );

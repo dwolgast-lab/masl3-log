@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LEAGUES, TEAMS } from '../config';
 import { robustNumericalSort } from '../ocrEngine';
 
@@ -6,6 +6,7 @@ import MatchInfoBlock from '../components/MatchInfoBlock';
 import TeamConfigCard from '../components/TeamConfigCard';
 import StartersViewerModal from '../components/modals/StartersViewerModal';
 import RosterEditorModal from '../components/modals/RosterEditorModal';
+import CrewEditorModal from '../components/modals/CrewEditorModal';
 
 export default function PregameSetup({
     gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
@@ -18,6 +19,7 @@ export default function PregameSetup({
     setCurrentView, clearAllGameData, onExportPDF, appVersion
 }) {
 
+    const [showCrewModal, setShowCrewModal] = useState(false);
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     
     const teamsByDivision = TEAMS.filter(t => t.league === gameData.league).reduce((acc, team) => {
@@ -120,11 +122,16 @@ export default function PregameSetup({
                     <section>
                         <div className="flex justify-between items-end border-b-2 border-slate-200 pb-2 mb-4">
                             <h2 className="text-xl font-bold text-slate-700">Match Information</h2>
-                            <div className="flex items-center space-x-2">
-                                <label className="text-sm font-bold text-gray-600">Select League:</label>
-                                <select name="league" value={gameData.league || 'MASL3'} onChange={handleInputChange} className="p-2 border rounded bg-gray-50 font-bold shadow-sm">
-                                    {LEAGUES.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                                </select>
+                            <div className="flex items-center space-x-4">
+                                <button onClick={() => setShowCrewModal(true)} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 transition">
+                                    🧑‍⚖️ Officiating Crew
+                                </button>
+                                <div className="flex items-center space-x-2 border-l pl-4">
+                                    <label className="text-sm font-bold text-gray-600">Select League:</label>
+                                    <select name="league" value={gameData.league || 'MASL3'} onChange={handleInputChange} className="p-2 border rounded bg-gray-50 font-bold shadow-sm">
+                                        {LEAGUES.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <MatchInfoBlock gameData={gameData} handleInputChange={handleInputChange} />
@@ -170,6 +177,8 @@ export default function PregameSetup({
                     📥 Export Official PDF Worksheet
                 </button>
             </div>
+
+            <CrewEditorModal show={showCrewModal} onClose={() => setShowCrewModal(false)} gameData={gameData} handleInputChange={handleInputChange} />
 
             <StartersViewerModal 
                 showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal} 
