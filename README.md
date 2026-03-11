@@ -3,6 +3,13 @@
 
 ---
 
+## [v0.64] - 2026-03-11 - Scorebox Layout & Logo Scaling Fixes
+**Visual & UX Patch**
+* **Scorebox Flex Enforcement:** Fixed a bug where the `Q - 0` scoreline would vertically stack on specific countdown-timer fonts and high-DPI displays (as identified in the previous turn). Instead of relying on a single inline `span` for the text string, the scorebox is now explicitly a flex row `div` with `space-x-4`, guaranteeing the away score, hyphen, and home score always render on a single, perfectly spaced line.
+* **Header Scaling boost:** To make better use of PC display space (md breakpoint), the active league logo in the dashboard header has been significantly boosted from `w-20` up to `w-32`, making its display twice as large and much more prominent.
+
+---
+
 ## [v0.63] - 2026-03-11 - Officiating Crew Config & Dashboard UI Upgrade
 **Features & UX Enhancements**
 * **Officiating Crew Modal:** Added a dedicated input modal to the `PregameSetup` screen allowing 4th Officials to document the Crew Chief, Referee, Assistant Referee, and 4th Official. This data binds directly to the active `gameData` state for seamless integration into the upcoming post-game PDF report export.

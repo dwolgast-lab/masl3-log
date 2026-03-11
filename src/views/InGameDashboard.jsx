@@ -26,9 +26,9 @@ export default function InGameDashboard({
     return (
         <>
             <header className="flex justify-between items-center p-4 bg-white shadow z-10 relative">
-                {/* LEFT: Prominent League Logo */}
+                {/* LEFT: Prominent League Logo (ENLARGED) */}
                 <div className="flex-1 flex items-center justify-start">
-                    {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className="w-16 h-16 md:w-20 md:h-20 object-contain drop-shadow-md" />}
+                    {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className="w-20 h-20 md:w-32 md:h-32 object-contain drop-shadow-md" />}
                 </div>
                 
                 {/* CENTER: Scoreboard */}
@@ -38,9 +38,10 @@ export default function InGameDashboard({
                         <span style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</span> 
                     </div>
 
-                    <span className="text-gray-400 font-mono text-5xl bg-gray-100 px-6 py-1 rounded-xl shadow-inner border border-gray-200">
-                        {awayScore} - {homeScore}
-                    </span> 
+                    {/* UPDATED: Scorebox explicit Flex container */}
+                    <div className="text-gray-400 font-mono text-5xl bg-gray-100 px-6 py-1 rounded-xl shadow-inner border border-gray-200 flex items-center space-x-4">
+                        {awayScore} <span className="text-gray-300">-</span> {homeScore}
+                    </div> 
 
                     <div className="flex items-center space-x-3">
                         <span style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME'}</span>
@@ -129,7 +130,6 @@ export default function InGameDashboard({
                     <div className="flex-1" />
                 )}
 
-                {/* UPDATED: Setup and Media Timeout side-by-side */}
                 <div className="flex space-x-3 shrink-0 h-full">
                     <button onClick={() => setCurrentView('pregame')} className="px-6 h-full bg-slate-100 text-slate-700 font-black text-base rounded-lg shadow-sm border-2 border-slate-200 hover:bg-slate-200 transition">
                         ⚙️ SETUP
