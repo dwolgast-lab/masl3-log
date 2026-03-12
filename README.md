@@ -4,6 +4,15 @@
 
 ## Recent Updates
 
+### [v0.67] - 2026-03-12 - Alternate MASL Game Log PDF Engine
+**Reporting & Data Export**
+* [cite_start]**New PDF Engine:** Built a completely standalone PDF generation engine (`alternatePdfEngine.js`) to produce a secondary "MASL Game Log" report that mirrors the official `.docx` reporting format[cite: 1]. 
+* [cite_start]**Dynamic Table Routing:** The engine mathematically sorts and extracts Goals [cite: 7][cite_start], Penalties (Players & Coaches) [cite: 10, 12][cite_start], Fouls [cite: 14][cite_start], Injuries [cite: 16][cite_start], and Warnings [cite: 18] [cite_start]into highly compact, readable tables mapped specifically to the Home [cite: 2] [cite_start]and Away [cite: 19] teams.
+* [cite_start]**Chronological Report Sorting:** Enforced a specific chronological sort (Quarter Ascending, Time Descending) exclusively for the exported Game Log section[cite: 37], while maintaining the separate "Newest-First" reverse-chronological sort for the live dashboard.
+* [cite_start]**Pale Shading Effects:** Engineered custom payload hooks into `jsPDF-autotable` to automatically apply pale shading to Game Log rows depending on the penalty event (`#8EC5FF` for Blue, `#FFF085` for Yellow, `#FF8A8C` for Red)[cite: 37].
+
+---
+
 ### [v0.66] - 2026-03-11 - Dynamic League Roster Constraints
 **Rule Engine & Data Validation**
 * **Tiered League Validation:** Re-engineered the roster validation logic to dynamically adapt based on the selected league tier. 
@@ -64,12 +73,6 @@
 ### [v0.58] - 2026-03-10 - Architectural Refactor: Decoupled OCR Engine
 **Codebase Optimization**
 * **Isolated Processing Engine:** Extracted all Google Cloud Vision/Document AI communication logic, Base64 image compression pipelines, and text parsing algorithms out of the `PregameSetup.jsx` view component and into a dedicated `ocrEngine.js` utility file. This reduces the view component size by ~150 lines, significantly improving code readability and making future OCR format tweaks entirely independent of the UI logic.
-
----
-
-### [v0.57] - 2026-03-10 - Footer UI Consolidation
-**UI Layout Optimization**
-* **Embedded Footer Banner:** Redesigned the "Last Action" UI from a hovering modal to an embedded flexbox item. The edit/undo banner now renders perfectly flat inside the dead white space between the "Start Quarter" and "Media Timeout" buttons in the bottom global footer, ensuring it never obscures active game controls during fast-paced play.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

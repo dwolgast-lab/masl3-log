@@ -16,7 +16,7 @@ export default function PregameSetup({
     showStartersModal, setShowStartersModal,
     newPlayer, setNewPlayer,
     newBench, setNewBench,
-    setCurrentView, clearAllGameData, onExportPDF, appVersion
+    setCurrentView, clearAllGameData, onExportPDF, onExportAlternatePDF, appVersion
 }) {
 
     const [showCrewModal, setShowCrewModal] = useState(false);
@@ -61,14 +61,12 @@ export default function PregameSetup({
         const headCoaches = bench.filter(b => b.role === 'Head Coach');
         const totalGKs = roster.filter(p => p.isGK);
         
-        // Dynamic Pro vs Amateur rules
         const isPro = !['MASL3', 'MASLW'].includes(gameData.league);
 
         if (starters.length !== 6) warnings.push(`Requires exactly 6 Starters (GK + 5 Field).`);
         if (startingGKs.length !== 1) warnings.push(`Requires exactly 1 Starting Goalkeeper.`);
         if (headCoaches.length !== 1) warnings.push(`Requires exactly 1 Head Coach.`);
         
-        // Validate minimum dressing GKs based on league tier
         if (isPro && totalGKs.length < 2) {
             warnings.push(`Roster Violation: ${gameData.league} rules require at least 2 Goalkeepers on the active roster.`);
         }
@@ -182,9 +180,14 @@ export default function PregameSetup({
                 <button onClick={clearAllGameData} className="text-red-500 font-bold border-b border-transparent hover:border-red-500 transition">
                     ⚠️ End Match & Wipe All Data
                 </button>
-                <button onClick={onExportPDF} className="px-6 py-3 bg-blue-600 text-white font-black rounded-lg shadow-lg hover:bg-blue-700 transition">
-                    📥 Export Official PDF Worksheet
-                </button>
+                <div className="flex space-x-4">
+                    <button onClick={onExportPDF} className="px-6 py-3 bg-blue-600 text-white font-black rounded-lg shadow-lg hover:bg-blue-700 transition">
+                        📥 Export PDF Worksheet
+                    </button>
+                    <button onClick={onExportAlternatePDF} className="px-6 py-3 bg-purple-600 text-white font-black rounded-lg shadow-lg hover:bg-purple-700 transition">
+                        📄 Export MASL Game Log
+                    </button>
+                </div>
             </div>
 
             <CrewEditorModal show={showCrewModal} onClose={() => setShowCrewModal(false)} gameData={gameData} handleInputChange={handleInputChange} />

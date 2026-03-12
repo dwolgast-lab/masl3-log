@@ -1,12 +1,13 @@
 /* =========================================================================
  * MASL 3 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.66
+ * Version: 0.67
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
 import { useStickyState, formatTime, toElapsedSeconds, calcReleaseTime, calcInjuryReturn, getTeamColor } from './utils';
 import { generatePDF } from './pdfEngine';
+import { generateAlternatePDF } from './alternatePdfEngine'; // NEW
 
 import PregameSetup from './views/PregameSetup';
 import InGameDashboard from './views/InGameDashboard';
@@ -21,7 +22,7 @@ import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.66";
+const APP_VERSION = "0.67";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -486,23 +487,14 @@ export default function App() {
         if (event.type === 'Log Foul') setModalStep('PLAYER'); else setModalStep('TIME');
     };
 
-    // --- REVERSE-CHRONOLOGICAL GAME LOG SORTER ---
-    // Enforces Newest-First display for live operations
     const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
     const sortedGameEvents = [...gameEvents].sort((a, b) => {
         const qA = quarterOrder[a.quarter] || 0;
         const qB = quarterOrder[b.quarter] || 0;
-        
-        // 1. Sort by Quarter Descending (OT -> Q4 -> Q3...)
         if (qA !== qB) return qB - qA;
-        
-        // 2. Sort by Time Ascending (00:00 -> 15:00). 
-        // Because it's a countdown clock, 00:00 is technically "newer" than 15:00.
         const timeA = a.time || "00:00";
         const timeB = b.time || "00:00";
         if (timeA !== timeB) return timeA.localeCompare(timeB);
-        
-        // 3. Fallback to entry ID to keep simultaneous events in exact entered order
         return b.id - a.id;
     });
 
@@ -516,7 +508,9 @@ export default function App() {
                 awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench}
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
                 newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} 
-                setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} onExportPDF={() => generatePDF(gameData, homeRoster, awayRoster, gameEvents)}
+                setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} 
+                onExportPDF={() => generatePDF(gameData, homeRoster, awayRoster, gameEvents)}
+                onExportAlternatePDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
             />
         );
     }
@@ -543,7 +537,6 @@ export default function App() {
                 <FoulSummary summaryTeam={summaryTeam} gameData={gameData} awayRoster={awayRoster} homeRoster={homeRoster} gameEvents={gameEvents} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} onClose={() => setModalStep(null)} />
             )}
 
-            {/* PASSING THE NEW REVERSE-CHRONOLOGICAL SORTED EVENT LOG ARRAY HERE */}
             {modalStep === 'EVENT_LOG' && (
                 <EventLog gameEvents={sortedGameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} />
             )}
