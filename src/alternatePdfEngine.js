@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf'; 
-import autoTable from 'jspdf-autotable'; // Vite-safe import
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { LEAGUES } from './config';
 
 const PALE_BLUE = [142, 197, 255];
@@ -9,6 +9,16 @@ const PALE_RED = [255, 138, 140];
 export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents) => {
     try {
         const doc = new jsPDF('p', 'pt', 'letter');
+        const pageHeight = doc.internal.pageSize.getHeight();
+        let currentY = 70; // Starting Y coordinate below header
+
+        // Helper to prevent Orphans/Widows
+        const checkSpace = (neededSpace) => {
+            if (currentY + neededSpace > pageHeight - 50) {
+                doc.addPage();
+                currentY = 70;
+            }
+        };
         
         // 1. Data Mapping & Configuration
         const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
@@ -23,7 +33,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         const leagueName = activeLeague ? activeLeague.name : (gameData.league || 'MASL');
         const titleText = `${leagueName.toUpperCase()} GAME WORKSHEET`;
 
-        // 2. Pre-Load League Logo (Bulletproofed with CORS)
+        // 2. Pre-Load League Logo
         let loadedLogo = null;
         let logoWidth = 0;
         let logoHeight = 35;
@@ -31,7 +41,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         if (activeLeague && activeLeague.logo) {
             try {
                 const img = new Image();
-                img.crossOrigin = "Anonymous"; // Prevents Canvas Tainting Crash
+                img.crossOrigin = "Anonymous";
                 img.src = activeLeague.logo;
                 await new Promise((resolve, reject) => {
                     img.onload = resolve;
@@ -44,7 +54,25 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             }
         }
 
-        let currentY = 70; // Leave room for the global header
+        // --- GLOBAL SORTING ENGINE ---
+        const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
+        
+        const getEventSortTime = (ev) => {
+            if (ev.time) return ev.time;
+            if (ev.type === 'Period Marker') return ev.action === 'Start' ? '15:00' : '00:00';
+            return '00:00';
+        };
+
+        const chronoSort = (a, b) => {
+            const qA = quarterOrder[a.quarter] || 99;
+            const qB = quarterOrder[b.quarter] || 99;
+            if (qA !== qB) return qA - qB;
+            
+            const timeA = getEventSortTime(a);
+            const timeB = getEventSortTime(b);
+            if (timeA !== timeB) return timeB.localeCompare(timeA); // Descending 15:00 -> 00:00
+            return a.id - b.id; // chronological ID fallback
+        };
 
         // --- PAGE 1: MATCH INFO & HOME TEAM ---
         autoTable(doc, {
@@ -63,10 +91,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             startY: currentY,
             head: [['Half 1 Kickoff', 'Half 1 End', 'Half 2 Kickoff', 'End of Game']],
             body: [[getRealTime('Q1', 'Start'), getRealTime('Q2', 'End'), getRealTime('Q3', 'Start'), gameEvents.slice().reverse().find(e => e.type === 'Period Marker' && e.action === 'End')?.realTime || '---']],
-            theme: 'grid',
-            headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' },
-            bodyStyles: { halign: 'center', fontStyle: 'bold' },
-            styles: { fontSize: 9, cellPadding: 4 }
+            theme: 'grid', headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' }, bodyStyles: { halign: 'center', fontStyle: 'bold' }, styles: { fontSize: 9, cellPadding: 4 }
         });
         currentY = doc.lastAutoTable.finalY + 5;
 
@@ -96,6 +121,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
         // --- TEAM DATA GENERATOR ---
         const renderTeamData = (teamId, teamName, teamColor, roster, bench) => {
+            checkSpace(60);
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(20, 20, 20);
@@ -103,24 +129,29 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             currentY += 10;
 
             // Goals
+            checkSpace(50);
             const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').map(e => [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '']);
             if (goals.length === 0) goals.push(['', '', 'None', '']);
             autoTable(doc, { startY: currentY, head: [['Goals - Quarter', 'Time', 'Goal', 'Assist']], body: goals, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Timeouts & Warnings (Side by Side illusion)
+            // Timeouts & Warnings
+            checkSpace(50);
             const timeouts = gameEvents.filter(e => e.team === teamId && e.type === 'Team Timeout').map(e => [e.quarter, e.time]);
             if (timeouts.length === 0) timeouts.push(['---', '---']);
             autoTable(doc, { startY: currentY, head: [['Timeouts (2 Per Game) - Quarter', 'Time']], body: timeouts, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
+            checkSpace(50);
             const warnings = gameEvents.filter(e => e.team === teamId && e.type === 'Team Warnings').map(e => [e.warningReason, e.quarter, e.time]);
             if (warnings.length === 0) warnings.push(['None', '', '']);
             autoTable(doc, { startY: currentY, head: [['Team Warnings - Reason', 'Quarter', 'Time']], body: warnings, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Penalties (Players)
-            const playerPens = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).map(e => {
+            checkSpace(60);
+            const teamPenalties = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).sort(chronoSort);
+            const playerPens = teamPenalties.map(e => {
                 let color = null;
                 if (e.penalty?.color === 'Blue') color = PALE_BLUE;
                 if (e.penalty?.color === 'Yellow') color = PALE_YELLOW;
@@ -136,15 +167,18 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Penalties (Coaches)
+            checkSpace(50);
             const coachPens = bench.map(c => {
                 const count = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && e.entity?.id === c.id).length;
-                return [c.name, c.role, count];
-            });
+                return count > 0 ? [c.name, c.role, count] : null;
+            }).filter(Boolean);
+            
             if (coachPens.length === 0) coachPens.push(['None', '', '']);
             autoTable(doc, { startY: currentY, head: [['Coach Penalties - Name', 'Position', 'Number of Penalties']], body: coachPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Fouls
+            checkSpace(60);
             const foulData = roster.map(p => {
                 const f = gameEvents.filter(e => e.type === 'Log Foul' && e.team === teamId && e.entity?.id === p.id);
                 const pens = gameEvents.filter(e => e.type === 'Time Penalty' && e.team === teamId && e.entity?.id === p.id && !e.isJustServing).length || '';
@@ -155,13 +189,13 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Injuries
+            checkSpace(50);
             const injuries = gameEvents.filter(e => e.team === teamId && e.type === 'Injury').map(e => [e.entity?.number || '', e.entity?.name || '', e.quarter, e.time, e.eligibleReturnTime ? `${e.eligibleReturnTime.quarter} ${e.eligibleReturnTime.time}` : '']);
             if (injuries.length === 0) injuries.push(['', 'None', '', '', '']);
             autoTable(doc, { startY: currentY, head: [['Injuries - No.', 'Name', 'Quarter', 'Time Off', 'Time Returned']], body: injuries, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 15;
         };
 
-        // Render Home Team (Page 1)
         renderTeamData('HOME', homeName, gameData.homeColor, homeRoster, homeBench);
 
         // --- PAGE 2: AWAY TEAM ---
@@ -177,17 +211,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         doc.text('GAME LOG (CHRONOLOGICAL)', 40, currentY);
         currentY += 10;
 
-        // Report-specific sorting: Quarter Ascending, Time Descending
-        const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
-        const sortedLog = [...gameEvents].sort((a, b) => {
-            const qA = quarterOrder[a.quarter] || 99;
-            const qB = quarterOrder[b.quarter] || 99;
-            if (qA !== qB) return qA - qB;
-            
-            const timeA = a.time || "00:00";
-            const timeB = b.time || "00:00";
-            return timeB.localeCompare(timeA); 
-        });
+        const sortedLog = [...gameEvents].sort(chronoSort);
 
         const logBody = sortedLog.map(ev => {
             let eventName = ev.type;
@@ -203,11 +227,17 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 if (ev.penalty.color === 'Red') color = PALE_RED;
                 desc = ev.penalty.desc;
             } else if (ev.type === 'Goal / Assist') {
-                desc = ev.assist ? `Assist: ${ev.assist.name}` : 'Unassisted';
+                const flags = [];
+                if (ev.goalFlags?.pp) flags.push('PP');
+                if (ev.goalFlags?.pk) flags.push('PK');
+                if (ev.goalFlags?.shootout) flags.push('SO');
+                const flagStr = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
+                desc = ev.assist ? `Assist: ${ev.assist.name}${flagStr}` : `Unassisted${flagStr}`;
             } else if (ev.type === 'Team Warnings') {
                 desc = ev.warningReason;
             } else if (ev.type === 'Period Marker') {
-                desc = `${ev.action} ${ev.quarter}`;
+                // Outputs bolded time of day
+                desc = { content: `${ev.action} ${ev.quarter} @ ${ev.realTime || ''}`, styles: { fontStyle: 'bold' } };
             } else if (ev.type === 'Log Foul') {
                 desc = 'Foul Logged';
             }
@@ -225,7 +255,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
         autoTable(doc, { 
             startY: currentY, 
-            margin: { top: 70 }, // Leave room for header on auto-generated overflow pages
+            margin: { top: 70, bottom: 50 }, 
             head: [['Quarter', 'Time', 'Event', 'Team', 'No.', 'Player', 'Description']], 
             body: logBody, 
             theme: 'grid', 
@@ -255,7 +285,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             doc.setFontSize(9);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(100, 100, 100);
-            doc.text(`Page ${i} of ${pageCount}`, pageWidth - 80, doc.internal.pageSize.getHeight() - 20);
+            doc.text(`Page ${i} of ${pageCount}`, pageWidth - 80, pageHeight - 20);
         }
 
         doc.save(`MASL_GameLog_${gameData.gameNumber || 'Report'}.pdf`);
