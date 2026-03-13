@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.75] - 2026-03-13 - Timeline Absolute Boundary Math
+**UI & PDF Synchronization**
+* **Strict Period Boundaries:** Re-engineered the timeline sorting algorithms across both `App.jsx` and the PDF builder to utilize "Virtual Sort Times." Start markers are dynamically injected into the array as happening at `99:99`, and End markers as `-01:00`. This mathematical trick absolutely guarantees that Start and End markers act as solid bookends at the top and bottom of their respective quarters, regardless of when they were actually clicked relative to other events.
+* **Media Timeout Highlighting:** Extracted Media Timeouts from the standard system design. They now render on the live dashboard timeline as bright `bg-orange-500` pills with matching white/orange sub-text styling to immediately stand out from standard period breaks during live gameplay.
+
+---
+
 ## [v0.74] - 2026-03-13 - Foul Timeline Display Refinement
 **UI Enhancements**
 * **Cleaned Timeline Badges:** Refined the Game Log timeline display for standard foul events. Because standard fouls do not require a specific match clock time, the central timeline "time pill" now dynamically hides the default `--:--` placeholder and instead perfectly centers an enlarged Quarter badge for a much cleaner, more intentional aesthetic, while still properly sorting in the exact order the foul was logged.

@@ -56,12 +56,11 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             leagueLogoWidth = leagueLogoHeight * (leagueLogoImg.width / leagueLogoImg.height);
         }
 
-        // Global Chronological Sorter
+        // Global Chronological Sorter (with virtual boundaries for Quarters)
         const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
         const getEventSortTime = (ev) => {
-            if (ev.time) return ev.time;
-            if (ev.type === 'Period Marker') return ev.action === 'Start' ? '15:00' : '00:00';
-            return '00:00';
+            if (ev.type === 'Period Marker') return ev.action === 'Start' ? '99:99' : '-01:00';
+            return ev.time || "00:00";
         };
 
         const chronoSort = (a, b) => {
@@ -71,7 +70,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             
             const timeA = getEventSortTime(a);
             const timeB = getEventSortTime(b);
-            if (timeA !== timeB) return timeB.localeCompare(timeA); // Descending 15:00 -> 00:00
+            if (timeA !== timeB) return timeB.localeCompare(timeA); // Descending 99:99 -> 15:00 -> 00:00 -> -01:00
             return a.id - b.id; // chronological ID fallback
         };
 
@@ -200,8 +199,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             checkSpace(60);
             const teamPenalties = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).sort(chronoSort);
             const playerPens = teamPenalties.map(e => {
-                
-                // NEW: Use actualReleaseTime if it exists (e.g. PPG early release)
                 const outTimeObj = e.actualReleaseTime || e.releaseTime;
                 const outTimeStr = outTimeObj ? `${outTimeObj.quarter} ${outTimeObj.time}` : '---';
 
@@ -290,7 +287,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             let desc = '';
             let teamObj = '';
 
-            // Assign logo hook based on team, or fallback text if System
             if (ev.team === 'SYSTEM') teamObj = '';
             else if (ev.team === 'AWAY') teamObj = { content: (awayLogoImg ? '' : awayName), teamLogoId: 'AWAY' };
             else teamObj = { content: (homeLogoImg ? '' : homeName), teamLogoId: 'HOME' };

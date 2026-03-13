@@ -5,7 +5,7 @@ export default function EventLog({
     startEditingEvent, deleteEvent, startEditingReleaseTime 
 }) {
     
-    const getEventDescription = (ev) => {
+    const getEventDescription = (ev, isSystemContext = false) => {
         if (ev.type === 'Time Penalty') {
             const code = ev.penalty?.code ? `[${ev.penalty.code}]` : '';
             const outTimeObj = ev.actualReleaseTime || ev.releaseTime;
@@ -41,7 +41,7 @@ export default function EventLog({
             return (
                 <div>
                     <div className="font-bold">{ev.type}</div>
-                    <div className="text-sm font-bold text-gray-200 mt-1">@ {ev.time}</div>
+                    <div className={`text-sm font-bold mt-1 ${isSystemContext ? 'text-white/80' : 'text-gray-500'}`}>@ {ev.time}</div>
                 </div>
             );
         }
@@ -101,7 +101,7 @@ export default function EventLog({
                             const isHome = ev.team === 'HOME';
                             const isSystem = ev.team === 'SYSTEM';
 
-                            // MODIFIED: Hide time string for fouls, enlarge Quarter slightly
+                            // The pill that sits strictly on the center line
                             const timePill = (
                                 <div className={`w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white border-4 border-gray-300 shadow-md rounded-full px-2 z-20 ${ev.type === 'Log Foul' ? 'py-2' : 'py-1'}`}>
                                     <span className={`font-black text-gray-500 uppercase ${ev.type === 'Log Foul' ? 'text-sm' : 'text-xs'}`}>{ev.quarter}</span>
@@ -151,7 +151,7 @@ export default function EventLog({
 
                                     {/* Event Description */}
                                     <div className="flex-1 text-gray-800">
-                                        {getEventDescription(ev)}
+                                        {getEventDescription(ev, false)}
                                     </div>
 
                                     {/* Action Buttons */}
@@ -173,10 +173,9 @@ export default function EventLog({
 
                                     {/* CENTER LINE (TIME) */}
                                     {isSystem ? (
-                                        // System events hijack the center column completely
-                                        <div className="shrink-0 flex flex-col items-center justify-center bg-slate-800 text-white border-4 border-slate-900 shadow-xl rounded-xl py-2 px-6 z-20 w-48 md:w-64 text-center mx-[-4rem]">
-                                            {getEventDescription(ev)}
-                                            <button onClick={() => deleteEvent(ev.id)} className="mt-2 text-[10px] text-gray-400 hover:text-red-400 underline">Delete</button>
+                                        <div className={`shrink-0 flex flex-col items-center justify-center text-white border-4 shadow-xl rounded-xl py-2 px-6 z-20 w-48 md:w-64 text-center mx-[-4rem] ${ev.type === 'Media Timeout' ? 'bg-orange-500 border-orange-600' : 'bg-slate-800 border-slate-900'}`}>
+                                            {getEventDescription(ev, true)}
+                                            <button onClick={() => deleteEvent(ev.id)} className={`mt-2 text-[10px] underline ${ev.type === 'Media Timeout' ? 'text-orange-200 hover:text-white' : 'text-gray-400 hover:text-red-400'}`}>Delete</button>
                                         </div>
                                     ) : timePill}
 

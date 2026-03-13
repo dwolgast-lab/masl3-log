@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v0.75] - 2026-03-13 - Timeline Absolute Boundary Math
+**UI & PDF Synchronization**
+* **Strict Period Boundaries:** Re-engineered the timeline sorting algorithms across both `App.jsx` and the PDF builder to utilize "Virtual Sort Times." Start markers are dynamically injected into the array as happening at `99:99`, and End markers as `-01:00`. This mathematical trick absolutely guarantees that Start and End markers act as solid bookends at the top and bottom of their respective quarters, regardless of when they were actually clicked relative to other events.
+* **Media Timeout Highlighting:** Extracted Media Timeouts from the standard system design. They now render on the live dashboard timeline as bright `bg-orange-500` pills with matching white/orange sub-text styling to immediately stand out from standard period breaks during live gameplay.
+
+---
+
 ## [v0.74] - 2026-03-13 - Foul Timeline Display Refinement
 **UI Enhancements**
 * **Cleaned Timeline Badges:** Refined the Game Log timeline display for standard foul events. Because standard fouls do not require a specific match clock time, the central timeline "time pill" now dynamically hides the default `--:--` placeholder and instead perfectly centers an enlarged Quarter badge for a much cleaner, more intentional aesthetic, while still properly sorting in the exact order the foul was logged.
@@ -71,13 +78,6 @@
 * **MASL/M2 Strict Mode:** If MASL or M2 is selected, the system enforces a strict 16-player maximum with a hard requirement of dressing at least 2 Goalkeepers (effectively capping field players at 14).
 * **MASL3/MASLW Amateur Mode:** If an amateur league is selected, the system expands the total allowed roster to 17, enforces a 15 field player maximum, and allows kickoff with only 1 Goalkeeper dressed.
 
----
-
-### [v0.65] - 2026-03-11 - Advanced Responsive Header Scaling
-**Visual & UX Patch**
-* **Strict Flex Boundaries:** Implemented strict `min-w-0` and `truncate` CSS rules across the `InGameDashboard` header. This prevents dynamically generated string content (like long team names) from overriding flexbox boundaries, ensuring the layout maintains its 100vh structure without unwanted vertical stacking or word-wrapping on smaller devices.
-* **Responsive Breakpoints:** Added targeted tailwind dimension breakpoints (`md:`, `lg:`) to gracefully scale the League Logo, Team Logos, and font sizes down on 11" tablets, while expanding them dynamically for massive 27" PC displays.
-* **Score Alignment:** Hardcoded the internal width parameters (`w-8 md:w-12`) of the digital score digits within the central flexbox. This guarantees that the team score blocks remain perfectly physically aligned and do not jitter or resize when scores transition from single digits to double digits.
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

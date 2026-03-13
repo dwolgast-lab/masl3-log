@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.74
+ * Version: 0.75
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.74";
+const APP_VERSION = "0.75";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -219,7 +219,6 @@ export default function App() {
             if (quarter === 'Q1' || quarter === 'Q3') {
                 setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false }); 
             } else if (quarter === 'Q2') {
-                // NEW: Dynamic Halftime calculation (15 mins for MASL/M2, 10 mins for others)
                 const isProLeague = ['MASL', 'MASL2'].includes(gameData.league);
                 const htSeconds = isProLeague ? 900 : 600;
                 setAppTimer({ active: true, time: htSeconds, initialTime: htSeconds, label: 'HALFTIME', minimized: false }); 
@@ -493,14 +492,28 @@ export default function App() {
         if (event.type === 'Log Foul') setModalStep('PLAYER'); else setModalStep('TIME');
     };
 
+    // --- REVERSE-CHRONOLOGICAL GAME LOG SORTER ---
+    // Enforces Newest-First display for live operations, with forced boundaries for Quarters
     const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
+    const getEventSortTime = (ev) => {
+        // Force Start to bottom (older than 15:00) and End to top (newer than 00:00)
+        if (ev.type === 'Period Marker') return ev.action === 'Start' ? '99:99' : '-01:00';
+        return ev.time || "00:00";
+    };
+
     const sortedGameEvents = [...gameEvents].sort((a, b) => {
         const qA = quarterOrder[a.quarter] || 0;
         const qB = quarterOrder[b.quarter] || 0;
+        
+        // 1. Sort by Quarter Descending (OT -> Q4 -> Q3...)
         if (qA !== qB) return qB - qA;
-        const timeA = a.time || "00:00";
-        const timeB = b.time || "00:00";
+        
+        // 2. Sort by Time Ascending (-01:00 -> 00:00 -> 15:00 -> 99:99)
+        const timeA = getEventSortTime(a);
+        const timeB = getEventSortTime(b);
         if (timeA !== timeB) return timeA.localeCompare(timeB);
+        
+        // 3. Fallback to entry ID to keep simultaneous events in exact entered order
         return b.id - a.id;
     });
 
