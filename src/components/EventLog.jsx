@@ -29,18 +29,21 @@ export default function EventLog({
             
             const isPKorSO = ev.goalFlags?.pk || ev.goalFlags?.shootout;
             
+            // Safely extract the assist name, whether it's a string or an object
+            const assistName = typeof ev.assist === 'string' ? ev.assist : ev.assist?.name;
+            const hasAssist = assistName && assistName !== 'Unassisted';
+            
             return (
                 <div>
                     <div className="font-bold text-green-700">{ev.type}{flagStr}</div>
-                    {!isPKorSO && ev.assist && <div className="text-sm mt-1">Assist: {ev.assist.name}</div>}
-                    {!isPKorSO && !ev.assist && <div className="text-sm text-gray-500 italic mt-1">--unassisted--</div>}
+                    {!isPKorSO && hasAssist && <div className="text-sm mt-1">Assist: {assistName}</div>}
+                    {!isPKorSO && !hasAssist && <div className="text-sm text-gray-500 italic mt-1">--unassisted--</div>}
                 </div>
             );
         }
         if (ev.type === 'Log Foul') {
             const isFirstHalf = ['Q1', 'Q2'].includes(ev.quarter);
             
-            // Calculate historical fouls strictly up to the moment this specific event was logged
             const historicalFouls = gameEvents.filter(e => 
                 e.type === 'Log Foul' && 
                 e.team === ev.team && 

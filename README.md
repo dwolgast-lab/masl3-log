@@ -4,6 +4,12 @@
 
 ## Recent Updates
 
+## [v0.78] - 2026-03-13 - Data Extraction Failsafe
+**Bug Fixes**
+* **Assist "Undefined" Render Bug:** Fixed a Javascript evaluation quirk where skipping the assist entry or manually selecting "Unassisted" from the player modal stored a flat string instead of a player object. Attempting to extract the `.name` property from this string caused the UI and PDF engine to output the literal text `"undefined"`. The extraction logic has been hardened to securely check object types before rendering, ensuring `--unassisted--` reliably prints across all contexts.
+
+---
+
 ## [v0.77] - 2026-03-13 - Live Foul Accumulation & Special Goal UI
 **Features & UX Upgrades**
 * **Live Foul Accumulation:** Replaced the generic "Foul Logged" text in the live `EventLog` timeline with dynamic, mathematically calculated historical foul counts. The engine now looks back through the match array at the specific timestamp of the foul to output both `Foul Count (half)` and `Foul Count (game)` directly onto the offending player's timeline card, removing the need to check the Foul Summary screen.
@@ -65,15 +71,6 @@
 * **Accumulation Iconography:** The Team Data Foul and Coach Penalty tables now represent active penalties visually by drawing multiple side-by-side card icons in sequential order (e.g. 🟦 🟨) instead of just displaying an integer.
 * **Game Log Team Logos:** The PDF Game Log table now dynamically renders the active franchise logos directly into the table cells in place of raw team names, drastically increasing visual scannability during post-game review.
 * **Halftime Engine Logic:** Hardcoded the central logic engine to adhere to specific MASL league rules regarding halftime clocks. Selecting MASL/M2 now enforces a 15-minute countdown clock, whereas selecting MASL3/MASLW scales it down to 10 minutes.
-
----
-
-## [v0.68] - 2026-03-12 - PDF Formatting Refinements
-**Reporting & Export**
-* **Dynamic Table Routing:** Implemented an automated `checkSpace()` calculation hook in the `alternatePdfEngine.js` builder. The engine now mathematically checks the remaining Y-axis space on the current page before drawing *any* header or table, actively forcing page-breaks to eliminate orphaned table headers and widows across the entire document.
-* **Game Log Detail Enhancements:** Rebuilt the `Goal / Assist` description parser to actively check for and append specific context flags (e.g. `[PP]`, `[PK]`, `[SO]`) into the text string. 
-* **Period Marker Emphasization:** Updated the chronological sorting engine to ensure Period Markers lacking countdown times properly slot at the beginning (15:00) and end (00:00) of quarters based on internal ID arrays. Furthermore, the 12-hour Time-of-Day timestamps injected into these row descriptions are now strictly formatted with `fontStyle: 'bold'`.
-* **Coach Penalties Optimization:** Filtered the Coach Penalties extraction map to exclusively render staff members who incurred a penalty. If no coach recorded a penalty, the table outputs a singular `None` row to maintain a clean layout.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

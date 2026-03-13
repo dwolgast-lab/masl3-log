@@ -2,6 +2,12 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.78] - 2026-03-13 - Data Extraction Failsafe
+**Bug Fixes**
+* **Assist "Undefined" Render Bug:** Fixed a Javascript evaluation quirk where skipping the assist entry or manually selecting "Unassisted" from the player modal stored a flat string instead of a player object. Attempting to extract the `.name` property from this string caused the UI and PDF engine to output the literal text `"undefined"`. The extraction logic has been hardened to securely check object types before rendering, ensuring `--unassisted--` reliably prints across all contexts.
+
+---
+
 ## [v0.77] - 2026-03-13 - Live Foul Accumulation & Special Goal UI
 **Features & UX Upgrades**
 * **Live Foul Accumulation:** Replaced the generic "Foul Logged" text in the live `EventLog` timeline with dynamic, mathematically calculated historical foul counts. The engine now looks back through the match array at the specific timestamp of the foul to output both `Foul Count (half)` and `Foul Count (game)` directly onto the offending player's timeline card, removing the need to check the Foul Summary screen.

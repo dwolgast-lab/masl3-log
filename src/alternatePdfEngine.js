@@ -13,7 +13,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
     try {
         const doc = new jsPDF('p', 'pt', 'letter');
         const pageHeight = doc.internal.pageSize.getHeight();
-        let currentY = 80; // Starting Y coordinate below header
+        let currentY = 80; 
 
         const checkSpace = (neededSpace) => {
             if (currentY + neededSpace > pageHeight - 50) {
@@ -34,7 +34,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         const leagueName = activeLeague ? activeLeague.name : (gameData.league || 'MASL');
         const titleText = `${leagueName.toUpperCase()} GAME WORKSHEET`;
 
-        // Pre-Load Images
         const loadImg = async (src) => {
             if (!src) return null;
             try {
@@ -56,7 +55,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             leagueLogoWidth = leagueLogoHeight * (leagueLogoImg.width / leagueLogoImg.height);
         }
 
-        // Global Chronological Sorter
         const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
         const getEventSortTime = (ev) => {
             if (ev.type === 'Period Marker') return ev.action === 'Start' ? '99:99' : '-01:00';
@@ -74,7 +72,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             return a.id - b.id; 
         };
 
-        // --- CUSTOM DRAWING HOOK ---
         const cellDrawHook = (data) => {
             if (data.section === 'body' && data.cell.raw) {
                 if (data.cell.raw.cards && data.cell.raw.cards.length > 0) {
@@ -182,7 +179,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
-            // Goals (Assist filtering)
+            // Goals (Assist filtering fix)
             checkSpace(50);
             const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').sort(chronoSort).map(e => {
                 let typeStr = '';
@@ -190,12 +187,22 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 else if (e.goalFlags?.pk) typeStr = 'PK';
                 else if (e.goalFlags?.shootout) typeStr = 'SO';
 
+                // Safely extract assist name
+                const assistName = typeof e.assist === 'string' ? e.assist : e.assist?.name;
+                
                 let assistStr = '';
-                if (e.goalFlags?.pk || e.goalFlags?.shootout) assistStr = '';
-                else if (e.assist) assistStr = e.assist.name;
-                else assistStr = '--unassisted--';
+                if (e.goalFlags?.pk || e.goalFlags?.shootout) {
+                    assistStr = ''; 
+                } else if (assistName && assistName !== 'Unassisted') {
+                    assistStr = assistName;
+                } else {
+                    assistStr = '--unassisted--';
+                }
 
-                return [e.quarter, e.time, e.entity?.name || '', assistStr, typeStr];
+                // Safely extract entity name (Goalscorer)
+                const scorerName = typeof e.entity === 'string' ? e.entity : (e.entity?.name || '');
+
+                return [e.quarter, e.time, scorerName, assistStr, typeStr];
             });
             if (goals.length === 0) goals.push(['', '', 'None', '', '']);
             autoTable(doc, { 
@@ -210,7 +217,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Penalties (Players)
             checkSpace(60);
             const teamPenalties = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).sort(chronoSort);
             const playerPens = teamPenalties.map(e => {
@@ -227,7 +233,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, didDrawCell: cellDrawHook, head: [['Player Penalties - No.', 'Name', 'Code', 'Reason', 'Quarter', 'Time In', 'Time Out']], body: playerPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Penalties (Coaches)
             checkSpace(50);
             const coachPens = bench.map(c => {
                 const cPens = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && e.entity?.id === c.id).sort(chronoSort);
@@ -248,7 +253,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Fouls 
             checkSpace(60);
             const foulData = roster.map(p => {
                 const f = gameEvents.filter(e => e.type === 'Log Foul' && e.team === teamId && e.entity?.id === p.id);
@@ -270,7 +274,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Injuries
             checkSpace(50);
             const injuries = gameEvents.filter(e => e.team === teamId && e.type === 'Injury').sort(chronoSort).map(e => [e.entity?.number || '', e.entity?.name || '', e.quarter, e.time, e.eligibleReturnTime ? `${e.eligibleReturnTime.quarter} ${e.eligibleReturnTime.time}` : '']);
             if (injuries.length === 0) injuries.push(['', 'None', '', '', '']);
@@ -316,12 +319,13 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 if (ev.goalFlags?.shootout) flags.push('SO');
                 const flagStr = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
                 
-                // Assist text filtering
+                // Assist text filtering fix
+                const assistName = typeof ev.assist === 'string' ? ev.assist : ev.assist?.name;
                 let assistStr = '';
                 if (ev.goalFlags?.pk || ev.goalFlags?.shootout) {
                     assistStr = ''; 
-                } else if (ev.assist) {
-                    assistStr = `Assist: ${ev.assist.name}`;
+                } else if (assistName && assistName !== 'Unassisted') {
+                    assistStr = `Assist: ${assistName}`;
                 } else {
                     assistStr = '--unassisted--';
                 }
