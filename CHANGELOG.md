@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.72] - 2026-03-13 - PDF Sub-Component Sorting & Header Overlap Fix
+**Data Sorting & PDF Integrity**
+* **Total PDF Chronological Sorting:** Patched the `alternatePdfEngine.js` builder. The chronological mapping hook (Quarter Ascending, Time Descending) is now heavily applied to every individual sub-table containing timestamped events (Goals, Timeouts, Warnings, and Injuries), ensuring perfect time alignment throughout the entire multi-page document.
+* **Orphan Header Collision Fix:** `jsPDF-autotable` naturally ignores top page limits when automatically spanning an elongated table across multiple pages. To fix the resulting header overlaps, a hard boundary override of `margin: { top: 80, bottom: 50 }` was applied to all 13 rendering blocks in the PDF engine, creating 40pt of protected clearance below the repeated League Logo on every page.
+
+---
+
 
 ## [v0.71] - 2026-03-13 - PDF Builder Hotfix
 **Bug Fixes**

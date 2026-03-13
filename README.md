@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v0.72] - 2026-03-13 - PDF Sub-Component Sorting & Header Overlap Fix
+**Data Sorting & PDF Integrity**
+* **Total PDF Chronological Sorting:** Patched the `alternatePdfEngine.js` builder. The chronological mapping hook (Quarter Ascending, Time Descending) is now heavily applied to every individual sub-table containing timestamped events (Goals, Timeouts, Warnings, and Injuries), ensuring perfect time alignment throughout the entire multi-page document.
+* **Orphan Header Collision Fix:** `jsPDF-autotable` naturally ignores top page limits when automatically spanning an elongated table across multiple pages. To fix the resulting header overlaps, a hard boundary override of `margin: { top: 80, bottom: 50 }` was applied to all 13 rendering blocks in the PDF engine, creating 40pt of protected clearance below the repeated League Logo on every page.
+
+---
+
 ## [v0.71] - 2026-03-13 - PDF Builder Hotfix
 **Bug Fixes**
 * **PDF Render Crash Resolved:** Fixed a silent Javascript variable reference error (`ReferenceError: loadedLogo is not defined`) that triggered when attempting to stamp the league logo onto the header of the exported PDF.
@@ -73,14 +80,6 @@
 **Features & UX Enhancements**
 * **Officiating Crew Modal:** Added a dedicated input modal to the `PregameSetup` screen allowing 4th Officials to document the Crew Chief, Referee, Assistant Referee, and 4th Official. This data binds directly to the active `gameData` state for seamless integration into the upcoming post-game PDF report export.
 * **Dashboard Header Expansion:** Moved the `⚙️ Setup` navigation button out of the dashboard header and explicitly into the global footer. This freed up the header layout, allowing the active League Logo to be displayed at 200% scale and ensuring the primary Scoreboard string remains perfectly centered on the screen regardless of device width.
-
----
-
-### [v0.62] - 2026-03-10 - Dashboard Controls & Reverse-Chronological Sorting
-**Data Management**
-* **Reverse-Chronological Game Log Enforcement:** Re-engineered the master `gameEvents` render pipeline to mathematically sort events prior to passing them to the `<EventLog />` viewer. The logic enforces Quarter Descending (OT->Q4->Q3...) and Time Ascending (00:00->15:00) so that the newest chronological events resulting from a countdown clock always render at the absolute top of the UI list for live operational efficiency. 
-* **Active Penalty Quick-Edits:** Pushed the `startEditingReleaseTime` handler down into the `<ActivePenaltiesWidget />`. Users can now click the new **"Edit Exp."** button directly from the main dashboard to instantly correct an erroneously calculated penalty release time without having to hunt through the Game Log.
-
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

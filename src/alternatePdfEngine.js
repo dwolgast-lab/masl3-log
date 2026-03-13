@@ -13,12 +13,12 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
     try {
         const doc = new jsPDF('p', 'pt', 'letter');
         const pageHeight = doc.internal.pageSize.getHeight();
-        let currentY = 70; // Starting Y coordinate below header
+        let currentY = 80; // Starting Y coordinate below header
 
         const checkSpace = (neededSpace) => {
             if (currentY + neededSpace > pageHeight - 50) {
                 doc.addPage();
-                currentY = 70;
+                currentY = 80;
             }
         };
         
@@ -76,10 +76,9 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         };
 
         // --- CUSTOM DRAWING HOOK ---
-        // This intercepts jsPDF right after it draws a cell box, allowing us to paint shapes and images inside it.
         const cellDrawHook = (data) => {
             if (data.section === 'body' && data.cell.raw) {
-                // 1. Draw Player/Coach Penalty Cards (Fouls/Coaches table)
+                // 1. Draw Player/Coach Penalty Cards
                 if (data.cell.raw.cards && data.cell.raw.cards.length > 0) {
                     let startX = data.cell.x + 6;
                     let startY = data.cell.y + (data.cell.height - 10) / 2; // Center vertically
@@ -87,7 +86,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                         if (CARD_COLORS[c]) {
                             doc.setFillColor(...CARD_COLORS[c]);
                             doc.roundedRect(startX, startY, 7, 10, 1, 1, 'F');
-                            // Add a subtle border
                             doc.setDrawColor(150, 150, 150);
                             doc.setLineWidth(0.5);
                             doc.roundedRect(startX, startY, 7, 10, 1, 1, 'S');
@@ -112,7 +110,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 if (data.cell.raw.teamLogoId) {
                     const imgToDraw = data.cell.raw.teamLogoId === 'AWAY' ? awayLogoImg : homeLogoImg;
                     if (imgToDraw) {
-                        // Fit inside the cell
                         const size = data.cell.height - 6;
                         doc.addImage(imgToDraw, 'PNG', data.cell.x + 4, data.cell.y + 3, size, size);
                     }
@@ -122,7 +119,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
         // --- PAGE 1: MATCH INFO & HOME TEAM ---
         autoTable(doc, {
-            startY: currentY,
+            startY: currentY, margin: { top: 80, bottom: 50 },
             body: [
                 ['Date:', gameData.date || '---', 'Sched. KO:', gameData.scheduledKO || '---', 'Game #:', gameData.gameNumber || '---'],
                 ['Venue:', gameData.venue || '---', 'City:', gameData.city || '---', '', '']
@@ -133,7 +130,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         currentY = doc.lastAutoTable.finalY + 5;
 
         autoTable(doc, {
-            startY: currentY,
+            startY: currentY, margin: { top: 80, bottom: 50 },
             head: [['Half 1 Kickoff', 'Half 1 End', 'Half 2 Kickoff', 'End of Game']],
             body: [[getRealTime('Q1', 'Start'), getRealTime('Q2', 'End'), getRealTime('Q3', 'Start'), gameEvents.slice().reverse().find(e => e.type === 'Period Marker' && e.action === 'End')?.realTime || '---']],
             theme: 'grid', headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' }, bodyStyles: { halign: 'center', fontStyle: 'bold' }, styles: { fontSize: 9, cellPadding: 4 }
@@ -141,7 +138,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         currentY = doc.lastAutoTable.finalY + 5;
 
         autoTable(doc, {
-            startY: currentY,
+            startY: currentY, margin: { top: 80, bottom: 50 },
             head: [['Crew Chief', 'Referee', 'Assistant Referee', '4th Official']],
             body: [[gameData.crewChief || '---', gameData.referee || '---', gameData.assistantRef || '---', gameData.fourthOfficial || '---']],
             theme: 'grid', headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' }, bodyStyles: { halign: 'center' }, styles: { fontSize: 9, cellPadding: 4 }
@@ -149,7 +146,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         currentY = doc.lastAutoTable.finalY + 5;
 
         autoTable(doc, {
-            startY: currentY,
+            startY: currentY, margin: { top: 80, bottom: 50 },
             head: [['Home Team', 'Score', 'Away Team', 'Score']],
             body: [[homeName, homeScore, awayName, awayScore]],
             theme: 'grid', headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' }, bodyStyles: { halign: 'center', fontStyle: 'bold' }, styles: { fontSize: 11, cellPadding: 4 }
@@ -157,7 +154,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         currentY = doc.lastAutoTable.finalY + 5;
 
         autoTable(doc, {
-            startY: currentY,
+            startY: currentY, margin: { top: 80, bottom: 50 },
             head: [['Media Q1', 'Media Q2', 'Media Q3', 'Media Q4']],
             body: [[getMedia('Q1'), getMedia('Q2'), getMedia('Q3'), getMedia('Q4')]],
             theme: 'grid', headStyles: { fillColor: [220, 220, 220], textColor: 20, halign: 'center' }, bodyStyles: { halign: 'center' }, styles: { fontSize: 9, cellPadding: 4 }
@@ -175,28 +172,28 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
             // Timeouts & Warnings (Narrower width)
             checkSpace(60);
-            const timeouts = gameEvents.filter(e => e.team === teamId && e.type === 'Team Timeout').map(e => [e.quarter, e.time]);
+            const timeouts = gameEvents.filter(e => e.team === teamId && e.type === 'Team Timeout').sort(chronoSort).map(e => [e.quarter, e.time]);
             if (timeouts.length === 0) timeouts.push(['---', '---']);
             autoTable(doc, { 
-                startY: currentY, tableWidth: 250,
+                startY: currentY, tableWidth: 250, margin: { top: 80, bottom: 50 },
                 head: [['Timeouts (2 Per Game) - Quarter', 'Time']], body: timeouts, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } 
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
             checkSpace(60);
-            const warnings = gameEvents.filter(e => e.team === teamId && e.type === 'Team Warnings').map(e => [e.warningReason, e.quarter, e.time]);
+            const warnings = gameEvents.filter(e => e.team === teamId && e.type === 'Team Warnings').sort(chronoSort).map(e => [e.warningReason, e.quarter, e.time]);
             if (warnings.length === 0) warnings.push(['None', '', '']);
             autoTable(doc, { 
-                startY: currentY, tableWidth: 350,
+                startY: currentY, tableWidth: 350, margin: { top: 80, bottom: 50 },
                 head: [['Team Warnings - Reason', 'Quarter', 'Time']], body: warnings, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } 
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
             // Goals
             checkSpace(50);
-            const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').map(e => [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '']);
+            const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').sort(chronoSort).map(e => [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '']);
             if (goals.length === 0) goals.push(['', '', 'None', '']);
-            autoTable(doc, { startY: currentY, head: [['Goals - Quarter', 'Time', 'Goal', 'Assist']], body: goals, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
+            autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, head: [['Goals - Quarter', 'Time', 'Goal', 'Assist']], body: goals, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Penalties (Players)
@@ -210,7 +207,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 ];
             });
             if (playerPens.length === 0) playerPens.push(['', '', '', 'None', '', '', '']);
-            autoTable(doc, { startY: currentY, didDrawCell: cellDrawHook, head: [['Player Penalties - No.', 'Name', 'Code', 'Reason', 'Quarter', 'Time In', 'Time Out']], body: playerPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
+            autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, didDrawCell: cellDrawHook, head: [['Player Penalties - No.', 'Name', 'Code', 'Reason', 'Quarter', 'Time In', 'Time Out']], body: playerPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Penalties (Coaches - Custom Icon Rendering)
@@ -229,7 +226,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             
             if (coachPens.length === 0) coachPens.push(['None', '', '']);
             autoTable(doc, { 
-                startY: currentY, didDrawCell: cellDrawHook,
+                startY: currentY, margin: { top: 80, bottom: 50 }, didDrawCell: cellDrawHook,
                 head: [['Coach Penalties - Name', 'Position', 'Cards Received']], body: coachPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } 
             });
             currentY = doc.lastAutoTable.finalY + 5;
@@ -251,16 +248,16 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             
             if (foulData.length === 0) foulData.push(['', 'None', '', '', '', '', '', '']);
             autoTable(doc, { 
-                startY: currentY, didDrawCell: cellDrawHook,
+                startY: currentY, margin: { top: 80, bottom: 50 }, didDrawCell: cellDrawHook,
                 head: [['Fouls - No.', 'Name', 'Q1', 'Q2', 'Q3', 'Q4', 'OT', 'Cards Received']], body: foulData, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3, halign: 'center' }, columnStyles: { 1: { halign: 'left' } } 
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Injuries
             checkSpace(50);
-            const injuries = gameEvents.filter(e => e.team === teamId && e.type === 'Injury').map(e => [e.entity?.number || '', e.entity?.name || '', e.quarter, e.time, e.eligibleReturnTime ? `${e.eligibleReturnTime.quarter} ${e.eligibleReturnTime.time}` : '']);
+            const injuries = gameEvents.filter(e => e.team === teamId && e.type === 'Injury').sort(chronoSort).map(e => [e.entity?.number || '', e.entity?.name || '', e.quarter, e.time, e.eligibleReturnTime ? `${e.eligibleReturnTime.quarter} ${e.eligibleReturnTime.time}` : '']);
             if (injuries.length === 0) injuries.push(['', 'None', '', '', '']);
-            autoTable(doc, { startY: currentY, tableWidth: 350, head: [['Injuries - No.', 'Name', 'Quarter', 'Time Off', 'Time Returned']], body: injuries, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
+            autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, tableWidth: 350, head: [['Injuries - No.', 'Name', 'Quarter', 'Time Off', 'Time Returned']], body: injuries, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 15;
         };
 
@@ -268,12 +265,12 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
         // --- PAGE 2: AWAY TEAM ---
         doc.addPage();
-        currentY = 70;
+        currentY = 80;
         renderTeamData('AWAY', awayName, gameData.awayColor, awayRoster, awayBench);
 
         // --- PAGE 3+: GAME LOG (CHRONOLOGICAL) ---
         doc.addPage();
-        currentY = 70;
+        currentY = 80;
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text('GAME LOG (CHRONOLOGICAL)', 40, currentY);
@@ -324,7 +321,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
         autoTable(doc, { 
             startY: currentY, 
-            margin: { top: 70, bottom: 50 }, 
+            margin: { top: 80, bottom: 50 }, 
             didDrawCell: cellDrawHook, 
             head: [['Quarter', 'Time', 'Event', 'Team', 'No.', 'Player', 'Description']], 
             body: logBody, 
@@ -346,7 +343,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             const titleWidth = doc.getTextWidth(titleText);
             doc.text(titleText, (pageWidth - titleWidth) / 2, 40);
 
-            // FIXED: Using leagueLogoImg instead of loadedLogo
             if (leagueLogoImg) {
                 doc.addImage(leagueLogoImg, 'PNG', 40, 22, leagueLogoWidth, leagueLogoHeight);
             }
