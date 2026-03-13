@@ -33,9 +33,23 @@ export default function EventLog({
         }
         if (ev.type === 'Log Foul') return <div className="font-bold">Foul Logged</div>;
         if (ev.type === 'Team Warnings') return <div><div className="font-bold text-orange-600">Warning</div><div className="text-sm">{ev.warningReason}</div></div>;
-        if (ev.type === 'Team Timeout' || ev.type === 'Media Timeout') return <div className="font-bold">{ev.type}</div>;
+        if (ev.type === 'Team Timeout' || ev.type === 'Media Timeout') {
+            return (
+                <div>
+                    <div className="font-bold">{ev.type}</div>
+                    <div className="text-sm font-bold text-gray-200 mt-1">@ {ev.time}</div>
+                </div>
+            );
+        }
         if (ev.type === 'Injury') return <div><div className="font-bold text-red-600">Injury Time-Out</div><div className="text-xs text-gray-500 font-bold mt-1">Return: {ev.eligibleReturnTime ? `${ev.eligibleReturnTime.quarter} ${ev.eligibleReturnTime.time}` : '---'}</div></div>;
-        if (ev.type === 'Period Marker') return <div className="font-black text-gray-800 text-lg">{ev.action} {ev.quarter} <span className="block text-sm text-gray-500 font-normal">@ {ev.realTime}</span></div>;
+        if (ev.type === 'Period Marker') {
+            return (
+                <div className="font-black text-white text-lg">
+                    {ev.action} {ev.quarter} 
+                    <span className="block text-sm text-white font-bold mt-1">@ {ev.realTime}</span>
+                </div>
+            );
+        }
         
         return <div>{ev.type}</div>;
     };
@@ -93,27 +107,36 @@ export default function EventLog({
 
                             // The Event Card
                             const eventCard = (
-                                <div className={`flex flex-col bg-white border-t-4 rounded-xl shadow-md p-4 w-full max-w-sm ${isAway ? 'border-l' : 'border-r'} relative hover:shadow-lg transition-shadow`} 
+                                <div className={`flex flex-col bg-white border-t-4 rounded-xl shadow-md py-4 w-full max-w-sm relative hover:shadow-lg transition-shadow ${isAway ? 'border-l pl-4 pr-12' : 'border-r pr-4 pl-12'}`} 
                                      style={{ borderTopColor: isAway ? awayCSSColor : (isHome ? homeCSSColor : '#64748b') }}>
                                     
+                                    {/* Logo at edge closest to center */}
+                                    {!isSystem && (
+                                        <img 
+                                            src={isAway ? gameData.awayLogo : gameData.homeLogo} 
+                                            alt="team-logo" 
+                                            className={`absolute top-4 ${isAway ? 'right-3' : 'left-3'} w-8 h-8 object-contain drop-shadow-sm opacity-90`}
+                                        />
+                                    )}
+
                                     {/* Player Info / Penalty Card Icons */}
                                     {!isSystem && (
-                                        <div className="flex justify-between items-start mb-2 border-b pb-2">
-                                            <span className="font-black text-lg text-gray-800">
+                                        <div className="flex items-center justify-start mb-2 border-b pb-2">
+                                            <span className="font-black text-lg text-gray-800 mr-2">
                                                 {ev.entity?.number ? `#${ev.entity.number} ` : ''} 
                                                 {ev.entity?.name || (typeof ev.entity === 'string' ? ev.entity : 'Unknown')}
                                             </span>
                                             
-                                            {/* Render Card Icons if applicable */}
+                                            {/* Render Card Icons directly following name */}
                                             {ev.type === 'Time Penalty' && ev.penalty?.color && !ev.isJustServing && (
-                                                <div className="flex space-x-1 ml-2">
+                                                <div className="flex space-x-1">
                                                     {ev.penalty.code === 'Y6' || ev.penalty.isCombo ? (
                                                         <>
-                                                            <div className={`w-5 h-7 rounded border shadow-sm ${getCardColor('Blue')}`}></div>
-                                                            <div className={`w-5 h-7 rounded border shadow-sm ${getCardColor('Yellow')}`}></div>
+                                                            <div className={`w-4 h-6 rounded border shadow-sm ${getCardColor('Blue')}`}></div>
+                                                            <div className={`w-4 h-6 rounded border shadow-sm ${getCardColor('Yellow')}`}></div>
                                                         </>
                                                     ) : (
-                                                        <div className={`w-5 h-7 rounded border shadow-sm ${getCardColor(ev.penalty.color)}`}></div>
+                                                        <div className={`w-4 h-6 rounded border shadow-sm ${getCardColor(ev.penalty.color)}`}></div>
                                                     )}
                                                 </div>
                                             )}

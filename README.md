@@ -4,6 +4,14 @@
 
 ## Recent Updates
 
+## [v0.70] - 2026-03-13 - Timeline Polish & Layout Fixes
+**Visual & UX Patch**
+* **Dynamic Event Logos:** Updated the `EventLog` timeline so that team events physically stamp the active team's franchise logo on the inner edge of the event card (closest to the center line timeline) for immediate visual team recognition.
+* **Inline Card Icons:** Relocated the visual colored penalty cards inside the timeline view to immediately follow the offending player/coach's name in a strict flex-row, exactly mirroring the PDF report format.
+* **Enhanced System Headers:** The "Start/End Quarter" system events in the center of the timeline now render their real-world 12-hour time-of-day in bright, bold white text for maximum readability against the dark slate background. Additionally, Media Timeouts and Team Timeouts now clearly output their associated match clock times below the header.
+
+---
+
 ## [v0.69] - 2026-03-13 - Dashboard Timeline & PDF Iconography Engine
 **UI & PDF Upgrades**
 * **MLS-Style Game Log Timeline:** Completely rewrote the `EventLog.jsx` UI from a rigid table into a broadcast-style vertical timeline. Events are now dynamically sorted to their respective team's side (Home on Right, Away on Left) with a central spine rendering quarter/time pills.
@@ -11,6 +19,15 @@
 * **Accumulation Iconography:** The Team Data Foul and Coach Penalty tables now represent active penalties visually by drawing multiple side-by-side card icons in sequential order (e.g. 🟦 🟨) instead of just displaying an integer.
 * **Game Log Team Logos:** The PDF Game Log table now dynamically renders the active franchise logos directly into the table cells in place of raw team names, drastically increasing visual scannability during post-game review.
 * **Halftime Engine Logic:** Hardcoded the central logic engine to adhere to specific MASL league rules regarding halftime clocks. Selecting MASL/M2 now enforces a 15-minute countdown clock, whereas selecting MASL3/MASLW scales it down to 10 minutes.
+
+---
+
+## [v0.68] - 2026-03-12 - PDF Formatting Refinements
+**Reporting & Export**
+* **Dynamic Table Routing:** Implemented an automated `checkSpace()` calculation hook in the `alternatePdfEngine.js` builder. The engine now mathematically checks the remaining Y-axis space on the current page before drawing *any* header or table, actively forcing page-breaks to eliminate orphaned table headers and widows across the entire document.
+* **Game Log Detail Enhancements:** Rebuilt the `Goal / Assist` description parser to actively check for and append specific context flags (e.g. `[PP]`, `[PK]`, `[SO]`) into the text string. 
+* **Period Marker Emphasization:** Updated the chronological sorting engine to ensure Period Markers lacking countdown times properly slot at the beginning (15:00) and end (00:00) of quarters based on internal ID arrays. Furthermore, the 12-hour Time-of-Day timestamps injected into these row descriptions are now strictly formatted with `fontStyle: 'bold'`.
+* **Coach Penalties Optimization:** Filtered the Coach Penalties extraction map to exclusively render staff members who incurred a penalty. If no coach recorded a penalty, the table outputs a singular `None` row to maintain a clean layout.
 
 ---
 
@@ -64,20 +81,6 @@
 **Codebase Optimization**
 * **Dashboard Widgets:** Refactored the `InGameDashboard.jsx` file by extracting the `ActivePenalties` and `ActiveInjuries` monitors into standalone React components within the `/src/components/widgets/` directory. 
 * **Modal Extraction:** Moved the raw HTML for the Custom Time Confirmation alert out of `App.jsx` and into a reusable `<TimeConfirmModal />` component, significantly streamlining the parent routing file.
-
----
-
-### [v0.60] - 2026-03-10 - Architectural Componentization (Phase 2)
-**Codebase Optimization**
-* **Modal Extraction:** Finalized the modularization of the `PregameSetup` UI by stripping out all remaining local state, data handlers, and HTML dedicated to the `RosterEditorModal` and the `StartersViewerModal`. These complex features now live entirely in isolated files inside `/src/components/modals/`.
-* **Reduced Monolith:** These dual extraction phases reduced the `PregameSetup.jsx` file footprint by nearly 75%, transforming it from a monolithic file that handled UI, Logic, API routing, and rendering into a clean, easy-to-read layout director.
-
----
-
-### [v0.59] - 2026-03-10 - Architectural Componentization (Phase 1)
-**Codebase Optimization**
-* **Pregame UI Componentization:** Broken down the monolithic `PregameSetup.jsx` file by abstracting the core layout blocks into dedicated, reusable React components (`MatchInfoBlock.jsx` and `TeamConfigCard.jsx`). This successfully eliminated nearly 100 lines of duplicated code, allowing a single blueprint to dynamically render both the Away and Home team configurations simply by passing a prop.
-
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
