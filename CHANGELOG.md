@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.77] - 2026-03-13 - Live Foul Accumulation & Special Goal UI
+**Features & UX Upgrades**
+* **Live Foul Accumulation:** Replaced the generic "Foul Logged" text in the live `EventLog` timeline with dynamic, mathematically calculated historical foul counts. The engine now looks back through the match array at the specific timestamp of the foul to output both `Foul Count (half)` and `Foul Count (game)` directly onto the offending player's timeline card, removing the need to check the Foul Summary screen.
+* **Goal Type Data Mapping:** Updated both the live UI and the PDF Engine to explicitly format special-teams goals. If a goal does not have an assist, it now explicitly reads `--unassisted--` to prove to auditors it was not forgotten. Furthermore, if a goal is tagged as a Penalty Kick (`PK`) or Shootout (`SO`), the system entirely strips out the assist UI/PDF logic, adhering strictly to MASL logging rules where assists cannot be awarded on direct free kicks.
+
+---
+
 ## [v0.76] - 2026-03-13 - PDF Report: Special Goal Designators
 **Reporting & Export Updates**
 * **Goal Type Column Added:** Added a dedicated `Type` column to the far right of the Goals table in the PDF report export.

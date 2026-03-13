@@ -27,15 +27,40 @@ export default function EventLog({
             if (ev.goalFlags?.shootout) flags.push('SO');
             const flagStr = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
             
+            const isPKorSO = ev.goalFlags?.pk || ev.goalFlags?.shootout;
+            
             return (
                 <div>
                     <div className="font-bold text-green-700">{ev.type}{flagStr}</div>
-                    {ev.assist && <div className="text-sm mt-1">Assist: {ev.assist.name}</div>}
-                    {!ev.assist && <div className="text-sm text-gray-500 italic mt-1">Unassisted</div>}
+                    {!isPKorSO && ev.assist && <div className="text-sm mt-1">Assist: {ev.assist.name}</div>}
+                    {!isPKorSO && !ev.assist && <div className="text-sm text-gray-500 italic mt-1">--unassisted--</div>}
                 </div>
             );
         }
-        if (ev.type === 'Log Foul') return <div className="font-bold">Foul Logged</div>;
+        if (ev.type === 'Log Foul') {
+            const isFirstHalf = ['Q1', 'Q2'].includes(ev.quarter);
+            
+            // Calculate historical fouls strictly up to the moment this specific event was logged
+            const historicalFouls = gameEvents.filter(e => 
+                e.type === 'Log Foul' && 
+                e.team === ev.team && 
+                e.entity?.id === ev.entity?.id && 
+                e.id <= ev.id
+            );
+            
+            const gameCount = historicalFouls.length;
+            const halfCount = historicalFouls.filter(e => {
+                const eFirstHalf = ['Q1', 'Q2'].includes(e.quarter);
+                return isFirstHalf === eFirstHalf;
+            }).length;
+
+            return (
+                <div>
+                    <div className="font-bold">Foul Count (half): {halfCount}</div>
+                    <div className="text-sm text-gray-700 mt-1">Foul Count (game): {gameCount}</div>
+                </div>
+            );
+        }
         if (ev.type === 'Team Warnings') return <div><div className="font-bold text-orange-600">Warning</div><div className="text-sm">{ev.warningReason}</div></div>;
         if (ev.type === 'Team Timeout' || ev.type === 'Media Timeout') {
             return (
@@ -101,7 +126,6 @@ export default function EventLog({
                             const isHome = ev.team === 'HOME';
                             const isSystem = ev.team === 'SYSTEM';
 
-                            // The pill that sits strictly on the center line
                             const timePill = (
                                 <div className={`w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white border-4 border-gray-300 shadow-md rounded-full px-2 z-20 ${ev.type === 'Log Foul' ? 'py-2' : 'py-1'}`}>
                                     <span className={`font-black text-gray-500 uppercase ${ev.type === 'Log Foul' ? 'text-sm' : 'text-xs'}`}>{ev.quarter}</span>
@@ -111,12 +135,10 @@ export default function EventLog({
                                 </div>
                             );
 
-                            // The Event Card
                             const eventCard = (
                                 <div className={`flex flex-col bg-white border-t-4 rounded-xl shadow-md py-4 w-full max-w-sm relative hover:shadow-lg transition-shadow ${isAway ? 'border-l pl-4 pr-12' : 'border-r pr-4 pl-12'}`} 
                                      style={{ borderTopColor: isAway ? awayCSSColor : (isHome ? homeCSSColor : '#64748b') }}>
                                     
-                                    {/* Logo at edge closest to center */}
                                     {!isSystem && (
                                         <img 
                                             src={isAway ? gameData.awayLogo : gameData.homeLogo} 
@@ -125,7 +147,6 @@ export default function EventLog({
                                         />
                                     )}
 
-                                    {/* Player Info / Penalty Card Icons */}
                                     {!isSystem && (
                                         <div className="flex items-center justify-start mb-2 border-b pb-2">
                                             <span className="font-black text-lg text-gray-800 mr-2">
@@ -133,7 +154,6 @@ export default function EventLog({
                                                 {ev.entity?.name || (typeof ev.entity === 'string' ? ev.entity : 'Unknown')}
                                             </span>
                                             
-                                            {/* Render Card Icons directly following name */}
                                             {ev.type === 'Time Penalty' && ev.penalty?.color && !ev.isJustServing && (
                                                 <div className="flex space-x-1">
                                                     {ev.penalty.code === 'Y6' || ev.penalty.isCombo ? (
@@ -149,12 +169,10 @@ export default function EventLog({
                                         </div>
                                     )}
 
-                                    {/* Event Description */}
                                     <div className="flex-1 text-gray-800">
                                         {getEventDescription(ev, false)}
                                     </div>
 
-                                    {/* Action Buttons */}
                                     <div className={`flex mt-4 space-x-2 ${isHome ? 'justify-end' : 'justify-start'}`}>
                                         <button onClick={() => startEditingEvent(ev)} className="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-black rounded hover:bg-blue-100 transition">Edit</button>
                                         {ev.type === 'Time Penalty' && <button onClick={() => startEditingReleaseTime(ev.id)} className="px-3 py-1 bg-yellow-50 text-yellow-600 text-xs font-black rounded hover:bg-yellow-100 transition">Edit Exp.</button>}
@@ -165,13 +183,10 @@ export default function EventLog({
 
                             return (
                                 <div key={ev.id} className="flex items-center w-full relative">
-                                    
-                                    {/* LEFT SIDE (AWAY) */}
                                     <div className="flex-1 flex justify-end pr-4 md:pr-8">
                                         {isAway ? eventCard : null}
                                     </div>
 
-                                    {/* CENTER LINE (TIME) */}
                                     {isSystem ? (
                                         <div className={`shrink-0 flex flex-col items-center justify-center text-white border-4 shadow-xl rounded-xl py-2 px-6 z-20 w-48 md:w-64 text-center mx-[-4rem] ${ev.type === 'Media Timeout' ? 'bg-orange-500 border-orange-600' : 'bg-slate-800 border-slate-900'}`}>
                                             {getEventDescription(ev, true)}
@@ -179,11 +194,9 @@ export default function EventLog({
                                         </div>
                                     ) : timePill}
 
-                                    {/* RIGHT SIDE (HOME) */}
                                     <div className="flex-1 flex justify-start pl-4 md:pl-8">
                                         {isHome ? eventCard : null}
                                     </div>
-
                                 </div>
                             );
                         })}

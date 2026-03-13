@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v0.77] - 2026-03-13 - Live Foul Accumulation & Special Goal UI
+**Features & UX Upgrades**
+* **Live Foul Accumulation:** Replaced the generic "Foul Logged" text in the live `EventLog` timeline with dynamic, mathematically calculated historical foul counts. The engine now looks back through the match array at the specific timestamp of the foul to output both `Foul Count (half)` and `Foul Count (game)` directly onto the offending player's timeline card, removing the need to check the Foul Summary screen.
+* **Goal Type Data Mapping:** Updated both the live UI and the PDF Engine to explicitly format special-teams goals. If a goal does not have an assist, it now explicitly reads `--unassisted--` to prove to auditors it was not forgotten. Furthermore, if a goal is tagged as a Penalty Kick (`PK`) or Shootout (`SO`), the system entirely strips out the assist UI/PDF logic, adhering strictly to MASL logging rules where assists cannot be awarded on direct free kicks.
+
+---
+
 ## [v0.76] - 2026-03-13 - PDF Report: Special Goal Designators
 **Reporting & Export Updates**
 * **Goal Type Column Added:** Added a dedicated `Type` column to the far right of the Goals table in the PDF report export.
@@ -67,15 +74,6 @@
 * **Game Log Detail Enhancements:** Rebuilt the `Goal / Assist` description parser to actively check for and append specific context flags (e.g. `[PP]`, `[PK]`, `[SO]`) into the text string. 
 * **Period Marker Emphasization:** Updated the chronological sorting engine to ensure Period Markers lacking countdown times properly slot at the beginning (15:00) and end (00:00) of quarters based on internal ID arrays. Furthermore, the 12-hour Time-of-Day timestamps injected into these row descriptions are now strictly formatted with `fontStyle: 'bold'`.
 * **Coach Penalties Optimization:** Filtered the Coach Penalties extraction map to exclusively render staff members who incurred a penalty. If no coach recorded a penalty, the table outputs a singular `None` row to maintain a clean layout.
-
----
-
-### [v0.67] - 2026-03-12 - Alternate MASL Game Log PDF Engine
-**Reporting & Data Export**
-* [cite_start]**New PDF Engine:** Built a completely standalone PDF generation engine (`alternatePdfEngine.js`) to produce a secondary "MASL Game Log" report that mirrors the official `.docx` reporting format[cite: 1]. 
-* [cite_start]**Dynamic Table Routing:** The engine mathematically sorts and extracts Goals [cite: 7][cite_start], Penalties (Players & Coaches) [cite: 10, 12][cite_start], Fouls [cite: 14][cite_start], Injuries [cite: 16][cite_start], and Warnings [cite: 18] [cite_start]into highly compact, readable tables mapped specifically to the Home [cite: 2] [cite_start]and Away [cite: 19] teams.
-* [cite_start]**Chronological Report Sorting:** Enforced a specific chronological sort (Quarter Ascending, Time Descending) exclusively for the exported Game Log section[cite: 37], while maintaining the separate "Newest-First" reverse-chronological sort for the live dashboard.
-* [cite_start]**Pale Shading Effects:** Engineered custom payload hooks into `jsPDF-autotable` to automatically apply pale shading to Game Log rows depending on the penalty event (`#8EC5FF` for Blue, `#FFF085` for Yellow, `#FF8A8C` for Red)[cite: 37].
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

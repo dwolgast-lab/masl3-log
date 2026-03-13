@@ -34,7 +34,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         const leagueName = activeLeague ? activeLeague.name : (gameData.league || 'MASL');
         const titleText = `${leagueName.toUpperCase()} GAME WORKSHEET`;
 
-        // Pre-Load Images (League Logo + Both Team Logos)
+        // Pre-Load Images
         const loadImg = async (src) => {
             if (!src) return null;
             try {
@@ -51,7 +51,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         const homeLogoImg = await loadImg(gameData.homeLogo);
         
         let leagueLogoWidth = 0;
-        let leagueLogoHeight = 20; // Re-sized to 50-60% smaller
+        let leagueLogoHeight = 20; 
         if (leagueLogoImg) {
             leagueLogoWidth = leagueLogoHeight * (leagueLogoImg.width / leagueLogoImg.height);
         }
@@ -70,17 +70,16 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             
             const timeA = getEventSortTime(a);
             const timeB = getEventSortTime(b);
-            if (timeA !== timeB) return timeB.localeCompare(timeA); // Descending 99:99 -> 15:00 -> 00:00 -> -01:00
-            return a.id - b.id; // chronological ID fallback
+            if (timeA !== timeB) return timeB.localeCompare(timeA); 
+            return a.id - b.id; 
         };
 
         // --- CUSTOM DRAWING HOOK ---
         const cellDrawHook = (data) => {
             if (data.section === 'body' && data.cell.raw) {
-                // 1. Draw Player/Coach Penalty Cards
                 if (data.cell.raw.cards && data.cell.raw.cards.length > 0) {
                     let startX = data.cell.x + 6;
-                    let startY = data.cell.y + (data.cell.height - 10) / 2; // Center vertically
+                    let startY = data.cell.y + (data.cell.height - 10) / 2;
                     data.cell.raw.cards.forEach((c) => {
                         if (CARD_COLORS[c]) {
                             doc.setFillColor(...CARD_COLORS[c]);
@@ -88,12 +87,10 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                             doc.setDrawColor(150, 150, 150);
                             doc.setLineWidth(0.5);
                             doc.roundedRect(startX, startY, 7, 10, 1, 1, 'S');
-                            startX += 11; // Space before next card
+                            startX += 11;
                         }
                     });
                 }
-                
-                // 2. Draw Game Log specific Icon
                 if (data.cell.raw.inlineCard) {
                     const textWidth = doc.getTextWidth(data.cell.text[0]) || 0;
                     let startX = data.cell.x + data.cell.padding('left') + textWidth + 6;
@@ -104,8 +101,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                     doc.setLineWidth(0.5);
                     doc.roundedRect(startX, startY, 7, 10, 1, 1, 'S');
                 }
-
-                // 3. Draw Game Log Team Logo
                 if (data.cell.raw.teamLogoId) {
                     const imgToDraw = data.cell.raw.teamLogoId === 'AWAY' ? awayLogoImg : homeLogoImg;
                     if (imgToDraw) {
@@ -169,7 +164,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             doc.text(`${teamName.toUpperCase()} DATA`, 40, currentY);
             currentY += 10;
 
-            // Timeouts & Warnings (Narrower width)
             checkSpace(60);
             const timeouts = gameEvents.filter(e => e.team === teamId && e.type === 'Team Timeout').sort(chronoSort).map(e => [e.quarter, e.time]);
             if (timeouts.length === 0) timeouts.push(['---', '---']);
@@ -188,14 +182,20 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 10;
 
-            // Goals
+            // Goals (Assist filtering)
             checkSpace(50);
             const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').sort(chronoSort).map(e => {
                 let typeStr = '';
                 if (e.goalFlags?.pp) typeStr = 'PP';
                 else if (e.goalFlags?.pk) typeStr = 'PK';
                 else if (e.goalFlags?.shootout) typeStr = 'SO';
-                return [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '', typeStr];
+
+                let assistStr = '';
+                if (e.goalFlags?.pk || e.goalFlags?.shootout) assistStr = '';
+                else if (e.assist) assistStr = e.assist.name;
+                else assistStr = '--unassisted--';
+
+                return [e.quarter, e.time, e.entity?.name || '', assistStr, typeStr];
             });
             if (goals.length === 0) goals.push(['', '', 'None', '', '']);
             autoTable(doc, { 
@@ -206,7 +206,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 theme: 'grid', 
                 headStyles: { fillColor: [60, 60, 60] }, 
                 styles: { fontSize: 8, cellPadding: 3 },
-                columnStyles: { 4: { halign: 'center', fontStyle: 'bold' } } // Centers the PP/PK/SO tag
+                columnStyles: { 4: { halign: 'center', fontStyle: 'bold' } } 
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
@@ -248,7 +248,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Fouls
+            // Fouls 
             checkSpace(60);
             const foulData = roster.map(p => {
                 const f = gameEvents.filter(e => e.type === 'Log Foul' && e.team === teamId && e.entity?.id === p.id);
@@ -315,7 +315,18 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 if (ev.goalFlags?.pk) flags.push('PK');
                 if (ev.goalFlags?.shootout) flags.push('SO');
                 const flagStr = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
-                desc = ev.assist ? `Assist: ${ev.assist.name}${flagStr}` : `Unassisted${flagStr}`;
+                
+                // Assist text filtering
+                let assistStr = '';
+                if (ev.goalFlags?.pk || ev.goalFlags?.shootout) {
+                    assistStr = ''; 
+                } else if (ev.assist) {
+                    assistStr = `Assist: ${ev.assist.name}`;
+                } else {
+                    assistStr = '--unassisted--';
+                }
+                
+                desc = assistStr ? `${assistStr}${flagStr}` : `Goal${flagStr}`;
             } else if (ev.type === 'Team Warnings') {
                 desc = ev.warningReason;
             } else if (ev.type === 'Period Marker') {
