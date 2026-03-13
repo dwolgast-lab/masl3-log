@@ -2,6 +2,12 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.73] - 2026-03-13 - Early Release Data Display Fix
+**Bug Fixes**
+* **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.
+
+---
+
 ## [v0.72] - 2026-03-13 - PDF Sub-Component Sorting & Header Overlap Fix
 **Data Sorting & PDF Integrity**
 * **Total PDF Chronological Sorting:** Patched the `alternatePdfEngine.js` builder. The chronological mapping hook (Quarter Ascending, Time Descending) is now heavily applied to every individual sub-table containing timestamped events (Goals, Timeouts, Warnings, and Injuries), ensuring perfect time alignment throughout the entire multi-page document.

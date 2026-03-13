@@ -4,6 +4,12 @@
 
 ## Recent Updates
 
+## [v0.73] - 2026-03-13 - Early Release Data Display Fix
+**Bug Fixes**
+* **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.
+
+
+
 ## [v0.72] - 2026-03-13 - PDF Sub-Component Sorting & Header Overlap Fix
 **Data Sorting & PDF Integrity**
 * **Total PDF Chronological Sorting:** Patched the `alternatePdfEngine.js` builder. The chronological mapping hook (Quarter Ascending, Time Descending) is now heavily applied to every individual sub-table containing timestamped events (Goals, Timeouts, Warnings, and Injuries), ensuring perfect time alignment throughout the entire multi-page document.
@@ -73,13 +79,6 @@
 **Visual & UX Patch**
 * **Scorebox Flex Enforcement:** Fixed a bug where the `Q - 0` scoreline would vertically stack on specific countdown-timer fonts and high-DPI displays (as identified in the previous turn). Instead of relying on a single inline `span` for the text string, the scorebox is now explicitly a flex row `div` with `space-x-4`, guaranteeing the away score, hyphen, and home score always render on a single, perfectly spaced line.
 * **Header Scaling boost:** To make better use of PC display space (md breakpoint), the active league logo in the dashboard header has been significantly boosted from `w-20` up to `w-32`, making its display twice as large and much more prominent.
-
----
-
-### [v0.63] - 2026-03-11 - Officiating Crew Config & Dashboard UI Upgrade
-**Features & UX Enhancements**
-* **Officiating Crew Modal:** Added a dedicated input modal to the `PregameSetup` screen allowing 4th Officials to document the Crew Chief, Referee, Assistant Referee, and 4th Official. This data binds directly to the active `gameData` state for seamless integration into the upcoming post-game PDF report export.
-* **Dashboard Header Expansion:** Moved the `⚙️ Setup` navigation button out of the dashboard header and explicitly into the global footer. This freed up the header layout, allowing the active League Logo to be displayed at 200% scale and ensuring the primary Scoreboard string remains perfectly centered on the screen regardless of device width.
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

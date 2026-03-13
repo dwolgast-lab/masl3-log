@@ -8,11 +8,16 @@ export default function EventLog({
     const getEventDescription = (ev) => {
         if (ev.type === 'Time Penalty') {
             const code = ev.penalty?.code ? `[${ev.penalty.code}]` : '';
+            // NEW: Fallback to actualReleaseTime if available
+            const outTimeObj = ev.actualReleaseTime || ev.releaseTime;
+            
             return (
                 <div>
                     <div className="font-bold">{ev.type} {code}</div>
                     <div className="text-sm text-gray-700 mt-1">{ev.penalty?.desc}</div>
-                    <div className="text-xs text-gray-500 font-bold mt-2">Exp: {ev.releaseTime ? `${ev.releaseTime.quarter} ${ev.releaseTime.time}` : '---'}</div>
+                    <div className="text-xs text-gray-500 font-bold mt-2">
+                        Exp: {outTimeObj ? `${outTimeObj.quarter} ${outTimeObj.time}` : '---'}
+                    </div>
                 </div>
             );
         }

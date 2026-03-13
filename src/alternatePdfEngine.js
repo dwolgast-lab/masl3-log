@@ -200,10 +200,15 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             checkSpace(60);
             const teamPenalties = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).sort(chronoSort);
             const playerPens = teamPenalties.map(e => {
+                
+                // NEW: Use actualReleaseTime if it exists (e.g. PPG early release)
+                const outTimeObj = e.actualReleaseTime || e.releaseTime;
+                const outTimeStr = outTimeObj ? `${outTimeObj.quarter} ${outTimeObj.time}` : '---';
+
                 return [
                     e.entity?.number || '', e.entity?.name || '', 
                     e.penalty?.color ? { content: e.penalty?.code || '', inlineCard: e.penalty.color } : (e.penalty?.code || ''),
-                    e.penalty?.desc || '', e.quarter, e.time, e.releaseTime ? `${e.releaseTime.quarter} ${e.releaseTime.time}` : '---'
+                    e.penalty?.desc || '', e.quarter, e.time, outTimeStr
                 ];
             });
             if (playerPens.length === 0) playerPens.push(['', '', '', 'None', '', '', '']);
