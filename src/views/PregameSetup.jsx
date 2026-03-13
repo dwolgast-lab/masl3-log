@@ -16,7 +16,7 @@ export default function PregameSetup({
     showStartersModal, setShowStartersModal,
     newPlayer, setNewPlayer,
     newBench, setNewBench,
-    setCurrentView, clearAllGameData, onExportPDF, onExportAlternatePDF, appVersion
+    setCurrentView, clearAllGameData, onExportPDF, appVersion
 }) {
 
     const [showCrewModal, setShowCrewModal] = useState(false);
@@ -180,14 +180,9 @@ export default function PregameSetup({
                 <button onClick={clearAllGameData} className="text-red-500 font-bold border-b border-transparent hover:border-red-500 transition">
                     ⚠️ End Match & Wipe All Data
                 </button>
-                <div className="flex space-x-4">
-                    <button onClick={onExportPDF} className="px-6 py-3 bg-blue-600 text-white font-black rounded-lg shadow-lg hover:bg-blue-700 transition">
-                        📥 Export PDF Worksheet
-                    </button>
-                    <button onClick={onExportAlternatePDF} className="px-6 py-3 bg-purple-600 text-white font-black rounded-lg shadow-lg hover:bg-purple-700 transition">
-                        📄 Export MASL Game Log
-                    </button>
-                </div>
+                <button onClick={onExportPDF} className="px-6 py-3 bg-blue-600 text-white font-black rounded-lg shadow-lg hover:bg-blue-700 transition">
+                    📥 Export Official PDF Worksheet
+                </button>
             </div>
 
             <CrewEditorModal show={showCrewModal} onClose={() => setShowCrewModal(false)} gameData={gameData} handleInputChange={handleInputChange} />

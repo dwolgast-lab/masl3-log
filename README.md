@@ -4,6 +4,16 @@
 
 ## Recent Updates
 
+## [v0.69] - 2026-03-13 - Dashboard Timeline & PDF Iconography Engine
+**UI & PDF Upgrades**
+* **MLS-Style Game Log Timeline:** Completely rewrote the `EventLog.jsx` UI from a rigid table into a broadcast-style vertical timeline. Events are now dynamically sorted to their respective team's side (Home on Right, Away on Left) with a central spine rendering quarter/time pills.
+* **Dynamic PDF Canvas Icons:** Removed background color shading in the Game Log PDF. The engine now uses advanced `jsPDF-autotable` callback hooks to physically draw exact-scale replica colored penalty cards (Blue, Yellow, Red) next to penalty descriptions.
+* **Accumulation Iconography:** The Team Data Foul and Coach Penalty tables now represent active penalties visually by drawing multiple side-by-side card icons in sequential order (e.g. 🟦 🟨) instead of just displaying an integer.
+* **Game Log Team Logos:** The PDF Game Log table now dynamically renders the active franchise logos directly into the table cells in place of raw team names, drastically increasing visual scannability during post-game review.
+* **Halftime Engine Logic:** Hardcoded the central logic engine to adhere to specific MASL league rules regarding halftime clocks. Selecting MASL/M2 now enforces a 15-minute countdown clock, whereas selecting MASL3/MASLW scales it down to 10 minutes.
+
+---
+
 ### [v0.67] - 2026-03-12 - Alternate MASL Game Log PDF Engine
 **Reporting & Data Export**
 * [cite_start]**New PDF Engine:** Built a completely standalone PDF generation engine (`alternatePdfEngine.js`) to produce a secondary "MASL Game Log" report that mirrors the official `.docx` reporting format[cite: 1]. 
@@ -68,11 +78,6 @@
 **Codebase Optimization**
 * **Pregame UI Componentization:** Broken down the monolithic `PregameSetup.jsx` file by abstracting the core layout blocks into dedicated, reusable React components (`MatchInfoBlock.jsx` and `TeamConfigCard.jsx`). This successfully eliminated nearly 100 lines of duplicated code, allowing a single blueprint to dynamically render both the Away and Home team configurations simply by passing a prop.
 
----
-
-### [v0.58] - 2026-03-10 - Architectural Refactor: Decoupled OCR Engine
-**Codebase Optimization**
-* **Isolated Processing Engine:** Extracted all Google Cloud Vision/Document AI communication logic, Base64 image compression pipelines, and text parsing algorithms out of the `PregameSetup.jsx` view component and into a dedicated `ocrEngine.js` utility file. This reduces the view component size by ~150 lines, significantly improving code readability and making future OCR format tweaks entirely independent of the UI logic.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

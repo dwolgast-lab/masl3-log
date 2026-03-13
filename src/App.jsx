@@ -1,13 +1,12 @@
 /* =========================================================================
- * MASL 3 4th Official Log App
+ * MASL 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.67
+ * Version: 0.69
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
 import { useStickyState, formatTime, toElapsedSeconds, calcReleaseTime, calcInjuryReturn, getTeamColor } from './utils';
-import { generatePDF } from './pdfEngine';
-import { generateAlternatePDF } from './alternatePdfEngine'; // NEW
+import { generateAlternatePDF } from './alternatePdfEngine';
 
 import PregameSetup from './views/PregameSetup';
 import InGameDashboard from './views/InGameDashboard';
@@ -22,7 +21,7 @@ import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.67";
+const APP_VERSION = "0.69";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -217,9 +216,16 @@ export default function App() {
             const unattributed = gameEvents.filter(ev => ev.quarter === quarter && ev.type === 'Log Foul' && ev.entity === 'Unattributed');
             if (unattributed.length > 0) alert(`WARNING: There are ${unattributed.length} Unattributed Foul(s) in ${quarter}. Please assign them via the Game Log.`);
 
-            if (quarter === 'Q1' || quarter === 'Q3') setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false }); 
-            else if (quarter === 'Q2') setAppTimer({ active: true, time: 600, initialTime: 600, label: 'HALFTIME', minimized: false }); 
-            else if (quarter === 'Q4') alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
+            if (quarter === 'Q1' || quarter === 'Q3') {
+                setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false }); 
+            } else if (quarter === 'Q2') {
+                // NEW: Dynamic Halftime calculation (15 mins for MASL/M2, 10 mins for others)
+                const isProLeague = ['MASL', 'MASL2'].includes(gameData.league);
+                const htSeconds = isProLeague ? 900 : 600;
+                setAppTimer({ active: true, time: htSeconds, initialTime: htSeconds, label: 'HALFTIME', minimized: false }); 
+            } else if (quarter === 'Q4') {
+                alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
+            }
 
             const nextQ = quarter === 'Q1' ? 'Q2' : quarter === 'Q2' ? 'Q3' : quarter === 'Q3' ? 'Q4' : quarter === 'Q4' ? 'OT' : 'END';
             if (nextQ !== 'END') setQuarter(nextQ);
@@ -509,8 +515,7 @@ export default function App() {
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
                 newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} 
                 setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} 
-                onExportPDF={() => generatePDF(gameData, homeRoster, awayRoster, gameEvents)}
-                onExportAlternatePDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
+                onExportPDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
             />
         );
     }
