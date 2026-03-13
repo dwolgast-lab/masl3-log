@@ -4,6 +4,12 @@
 
 ## Recent Updates
 
+## [v0.71] - 2026-03-13 - PDF Builder Hotfix
+**Bug Fixes**
+* **PDF Render Crash Resolved:** Fixed a silent Javascript variable reference error (`ReferenceError: loadedLogo is not defined`) that triggered when attempting to stamp the league logo onto the header of the exported PDF.
+
+---
+
 ## [v0.70] - 2026-03-13 - Timeline Polish & Layout Fixes
 **Visual & UX Patch**
 * **Dynamic Event Logos:** Updated the `EventLog` timeline so that team events physically stamp the active team's franchise logo on the inner edge of the event card (closest to the center line timeline) for immediate visual team recognition.
@@ -74,13 +80,6 @@
 **Data Management**
 * **Reverse-Chronological Game Log Enforcement:** Re-engineered the master `gameEvents` render pipeline to mathematically sort events prior to passing them to the `<EventLog />` viewer. The logic enforces Quarter Descending (OT->Q4->Q3...) and Time Ascending (00:00->15:00) so that the newest chronological events resulting from a countdown clock always render at the absolute top of the UI list for live operational efficiency. 
 * **Active Penalty Quick-Edits:** Pushed the `startEditingReleaseTime` handler down into the `<ActivePenaltiesWidget />`. Users can now click the new **"Edit Exp."** button directly from the main dashboard to instantly correct an erroneously calculated penalty release time without having to hunt through the Game Log.
-
----
-
-### [v0.61] - 2026-03-10 - In-Game UI Componentization
-**Codebase Optimization**
-* **Dashboard Widgets:** Refactored the `InGameDashboard.jsx` file by extracting the `ActivePenalties` and `ActiveInjuries` monitors into standalone React components within the `/src/components/widgets/` directory. 
-* **Modal Extraction:** Moved the raw HTML for the Custom Time Confirmation alert out of `App.jsx` and into a reusable `<TimeConfirmModal />` component, significantly streamlining the parent routing file.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

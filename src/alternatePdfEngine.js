@@ -294,7 +294,6 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             else teamObj = { content: (homeLogoImg ? '' : homeName), teamLogoId: 'HOME' };
 
             if (ev.type === 'Time Penalty' && ev.penalty) {
-                // Pass color hook into eventName instead of text coloring
                 eventName = { content: `Penalty (${ev.penalty.code})`, inlineCard: ev.penalty.color };
                 desc = ev.penalty.desc;
             } else if (ev.type === 'Goal / Assist') {
@@ -326,13 +325,13 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
         autoTable(doc, { 
             startY: currentY, 
             margin: { top: 70, bottom: 50 }, 
-            didDrawCell: cellDrawHook, // Hook for Icons/Logos
+            didDrawCell: cellDrawHook, 
             head: [['Quarter', 'Time', 'Event', 'Team', 'No.', 'Player', 'Description']], 
             body: logBody, 
             theme: 'grid', 
             headStyles: { fillColor: [40, 40, 40] }, 
             styles: { fontSize: 9, cellPadding: 4, valign: 'middle' },
-            columnStyles: { 3: { cellWidth: 40, halign: 'center' } } // Logo column
+            columnStyles: { 3: { cellWidth: 40, halign: 'center' } } 
         });
 
         // --- GLOBAL PAGE HEADER INJECTION ---
@@ -347,8 +346,9 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             const titleWidth = doc.getTextWidth(titleText);
             doc.text(titleText, (pageWidth - titleWidth) / 2, 40);
 
-            if (loadedLogo) {
-                doc.addImage(loadedLogo, 'PNG', 40, 22, leagueLogoWidth, leagueLogoHeight);
+            // FIXED: Using leagueLogoImg instead of loadedLogo
+            if (leagueLogoImg) {
+                doc.addImage(leagueLogoImg, 'PNG', 40, 22, leagueLogoWidth, leagueLogoHeight);
             }
             
             doc.setFontSize(9);

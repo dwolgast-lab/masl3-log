@@ -2,6 +2,11 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+
+## [v0.71] - 2026-03-13 - PDF Builder Hotfix
+**Bug Fixes**
+* **PDF Render Crash Resolved:** Fixed a silent Javascript variable reference error (`ReferenceError: loadedLogo is not defined`) that triggered when attempting to stamp the league logo onto the header of the exported PDF.
+
 ---
 
 ## [v0.70] - 2026-03-13 - Timeline Polish & Layout Fixes
