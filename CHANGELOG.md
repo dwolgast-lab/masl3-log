@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.76] - 2026-03-13 - PDF Report: Special Goal Designators
+**Reporting & Export Updates**
+* **Goal Type Column Added:** Added a dedicated `Type` column to the far right of the Goals table in the PDF report export.
+* **Dynamic Designator Injection:** The PDF engine now detects and intercepts active `goalFlags`. Standard goals leave the new column blank, but any goal tagged as a Power Play (`PP`), Penalty Kick (`PK`), or Shootout (`SO`) is explicitly categorized in the new column for immediate context during post-game review.
+
+---
+
 ## [v0.75] - 2026-03-13 - Timeline Absolute Boundary Math
 **UI & PDF Synchronization**
 * **Strict Period Boundaries:** Re-engineered the timeline sorting algorithms across both `App.jsx` and the PDF builder to utilize "Virtual Sort Times." Start markers are dynamically injected into the array as happening at `99:99`, and End markers as `-01:00`. This mathematical trick absolutely guarantees that Start and End markers act as solid bookends at the top and bottom of their respective quarters, regardless of when they were actually clicked relative to other events.

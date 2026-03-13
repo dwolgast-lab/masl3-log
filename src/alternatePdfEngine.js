@@ -56,7 +56,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             leagueLogoWidth = leagueLogoHeight * (leagueLogoImg.width / leagueLogoImg.height);
         }
 
-        // Global Chronological Sorter (with virtual boundaries for Quarters)
+        // Global Chronological Sorter
         const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
         const getEventSortTime = (ev) => {
             if (ev.type === 'Period Marker') return ev.action === 'Start' ? '99:99' : '-01:00';
@@ -190,9 +190,24 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
 
             // Goals
             checkSpace(50);
-            const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').sort(chronoSort).map(e => [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '']);
-            if (goals.length === 0) goals.push(['', '', 'None', '']);
-            autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, head: [['Goals - Quarter', 'Time', 'Goal', 'Assist']], body: goals, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
+            const goals = gameEvents.filter(e => e.team === teamId && e.type === 'Goal / Assist').sort(chronoSort).map(e => {
+                let typeStr = '';
+                if (e.goalFlags?.pp) typeStr = 'PP';
+                else if (e.goalFlags?.pk) typeStr = 'PK';
+                else if (e.goalFlags?.shootout) typeStr = 'SO';
+                return [e.quarter, e.time, e.entity?.name || '', e.assist?.name || '', typeStr];
+            });
+            if (goals.length === 0) goals.push(['', '', 'None', '', '']);
+            autoTable(doc, { 
+                startY: currentY, 
+                margin: { top: 80, bottom: 50 }, 
+                head: [['Goals - Quarter', 'Time', 'Goal', 'Assist', 'Type']], 
+                body: goals, 
+                theme: 'grid', 
+                headStyles: { fillColor: [60, 60, 60] }, 
+                styles: { fontSize: 8, cellPadding: 3 },
+                columnStyles: { 4: { halign: 'center', fontStyle: 'bold' } } // Centers the PP/PK/SO tag
+            });
             currentY = doc.lastAutoTable.finalY + 5;
 
             // Penalties (Players)
@@ -212,7 +227,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             autoTable(doc, { startY: currentY, margin: { top: 80, bottom: 50 }, didDrawCell: cellDrawHook, head: [['Player Penalties - No.', 'Name', 'Code', 'Reason', 'Quarter', 'Time In', 'Time Out']], body: playerPens, theme: 'grid', headStyles: { fillColor: [60, 60, 60] }, styles: { fontSize: 8, cellPadding: 3 } });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Penalties (Coaches - Custom Icon Rendering)
+            // Penalties (Coaches)
             checkSpace(50);
             const coachPens = bench.map(c => {
                 const cPens = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && e.entity?.id === c.id).sort(chronoSort);
@@ -233,7 +248,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             });
             currentY = doc.lastAutoTable.finalY + 5;
 
-            // Fouls (Custom Icon Rendering)
+            // Fouls
             checkSpace(60);
             const foulData = roster.map(p => {
                 const f = gameEvents.filter(e => e.type === 'Log Foul' && e.team === teamId && e.entity?.id === p.id);

@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v0.76] - 2026-03-13 - PDF Report: Special Goal Designators
+**Reporting & Export Updates**
+* **Goal Type Column Added:** Added a dedicated `Type` column to the far right of the Goals table in the PDF report export.
+* **Dynamic Designator Injection:** The PDF engine now detects and intercepts active `goalFlags`. Standard goals leave the new column blank, but any goal tagged as a Power Play (`PP`), Penalty Kick (`PK`), or Shootout (`SO`) is explicitly categorized in the new column for immediate context during post-game review.
+
+---
+
 ## [v0.75] - 2026-03-13 - Timeline Absolute Boundary Math
 **UI & PDF Synchronization**
 * **Strict Period Boundaries:** Re-engineered the timeline sorting algorithms across both `App.jsx` and the PDF builder to utilize "Virtual Sort Times." Start markers are dynamically injected into the array as happening at `99:99`, and End markers as `-01:00`. This mathematical trick absolutely guarantees that Start and End markers act as solid bookends at the top and bottom of their respective quarters, regardless of when they were actually clicked relative to other events.
@@ -69,14 +76,6 @@
 * [cite_start]**Dynamic Table Routing:** The engine mathematically sorts and extracts Goals [cite: 7][cite_start], Penalties (Players & Coaches) [cite: 10, 12][cite_start], Fouls [cite: 14][cite_start], Injuries [cite: 16][cite_start], and Warnings [cite: 18] [cite_start]into highly compact, readable tables mapped specifically to the Home [cite: 2] [cite_start]and Away [cite: 19] teams.
 * [cite_start]**Chronological Report Sorting:** Enforced a specific chronological sort (Quarter Ascending, Time Descending) exclusively for the exported Game Log section[cite: 37], while maintaining the separate "Newest-First" reverse-chronological sort for the live dashboard.
 * [cite_start]**Pale Shading Effects:** Engineered custom payload hooks into `jsPDF-autotable` to automatically apply pale shading to Game Log rows depending on the penalty event (`#8EC5FF` for Blue, `#FFF085` for Yellow, `#FF8A8C` for Red)[cite: 37].
-
----
-
-### [v0.66] - 2026-03-11 - Dynamic League Roster Constraints
-**Rule Engine & Data Validation**
-* **Tiered League Validation:** Re-engineered the roster validation logic to dynamically adapt based on the selected league tier. 
-* **MASL/M2 Strict Mode:** If MASL or M2 is selected, the system enforces a strict 16-player maximum with a hard requirement of dressing at least 2 Goalkeepers (effectively capping field players at 14).
-* **MASL3/MASLW Amateur Mode:** If an amateur league is selected, the system expands the total allowed roster to 17, enforces a 15 field player maximum, and allows kickoff with only 1 Goalkeeper dressed.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
