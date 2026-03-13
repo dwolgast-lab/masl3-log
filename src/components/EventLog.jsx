@@ -8,7 +8,6 @@ export default function EventLog({
     const getEventDescription = (ev) => {
         if (ev.type === 'Time Penalty') {
             const code = ev.penalty?.code ? `[${ev.penalty.code}]` : '';
-            // NEW: Fallback to actualReleaseTime if available
             const outTimeObj = ev.actualReleaseTime || ev.releaseTime;
             
             return (
@@ -102,11 +101,13 @@ export default function EventLog({
                             const isHome = ev.team === 'HOME';
                             const isSystem = ev.team === 'SYSTEM';
 
-                            // The pill that sits strictly on the center line
+                            // MODIFIED: Hide time string for fouls, enlarge Quarter slightly
                             const timePill = (
-                                <div className="w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white border-4 border-gray-300 shadow-md rounded-full py-1 px-2 z-20">
-                                    <span className="text-xs font-black text-gray-500 uppercase">{ev.quarter}</span>
-                                    <span className="text-lg font-mono font-bold text-slate-800 leading-none">{ev.time || '--:--'}</span>
+                                <div className={`w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white border-4 border-gray-300 shadow-md rounded-full px-2 z-20 ${ev.type === 'Log Foul' ? 'py-2' : 'py-1'}`}>
+                                    <span className={`font-black text-gray-500 uppercase ${ev.type === 'Log Foul' ? 'text-sm' : 'text-xs'}`}>{ev.quarter}</span>
+                                    {ev.type !== 'Log Foul' && (
+                                        <span className="text-lg font-mono font-bold text-slate-800 leading-none">{ev.time || '--:--'}</span>
+                                    )}
                                 </div>
                             );
 

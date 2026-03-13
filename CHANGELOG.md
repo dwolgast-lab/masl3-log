@@ -2,6 +2,12 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.74] - 2026-03-13 - Foul Timeline Display Refinement
+**UI Enhancements**
+* **Cleaned Timeline Badges:** Refined the Game Log timeline display for standard foul events. Because standard fouls do not require a specific match clock time, the central timeline "time pill" now dynamically hides the default `--:--` placeholder and instead perfectly centers an enlarged Quarter badge for a much cleaner, more intentional aesthetic, while still properly sorting in the exact order the foul was logged.
+
+---
+
 ## [v0.73] - 2026-03-13 - Early Release Data Display Fix
 **Bug Fixes**
 * **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.

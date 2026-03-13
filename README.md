@@ -4,6 +4,12 @@
 
 ## Recent Updates
 
+## [v0.74] - 2026-03-13 - Foul Timeline Display Refinement
+**UI Enhancements**
+* **Cleaned Timeline Badges:** Refined the Game Log timeline display for standard foul events. Because standard fouls do not require a specific match clock time, the central timeline "time pill" now dynamically hides the default `--:--` placeholder and instead perfectly centers an enlarged Quarter badge for a much cleaner, more intentional aesthetic, while still properly sorting in the exact order the foul was logged.
+
+---
+
 ## [v0.73] - 2026-03-13 - Early Release Data Display Fix
 **Bug Fixes**
 * **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.
@@ -72,13 +78,6 @@
 * **Strict Flex Boundaries:** Implemented strict `min-w-0` and `truncate` CSS rules across the `InGameDashboard` header. This prevents dynamically generated string content (like long team names) from overriding flexbox boundaries, ensuring the layout maintains its 100vh structure without unwanted vertical stacking or word-wrapping on smaller devices.
 * **Responsive Breakpoints:** Added targeted tailwind dimension breakpoints (`md:`, `lg:`) to gracefully scale the League Logo, Team Logos, and font sizes down on 11" tablets, while expanding them dynamically for massive 27" PC displays.
 * **Score Alignment:** Hardcoded the internal width parameters (`w-8 md:w-12`) of the digital score digits within the central flexbox. This guarantees that the team score blocks remain perfectly physically aligned and do not jitter or resize when scores transition from single digits to double digits.
-
----
-
-### [v0.64] - 2026-03-11 - Scorebox Layout & Logo Scaling Fixes
-**Visual & UX Patch**
-* **Scorebox Flex Enforcement:** Fixed a bug where the `Q - 0` scoreline would vertically stack on specific countdown-timer fonts and high-DPI displays (as identified in the previous turn). Instead of relying on a single inline `span` for the text string, the scorebox is now explicitly a flex row `div` with `space-x-4`, guaranteeing the away score, hyphen, and home score always render on a single, perfectly spaced line.
-* **Header Scaling boost:** To make better use of PC display space (md breakpoint), the active league logo in the dashboard header has been significantly boosted from `w-20` up to `w-32`, making its display twice as large and much more prominent.
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 
