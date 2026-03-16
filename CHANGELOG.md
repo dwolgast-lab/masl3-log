@@ -2,6 +2,14 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.84] - 2026-03-16 - iPad Flexbox Header Override
+**UI Polish**
+* **Fluid Center Weighting:** Removed the rigid 20/60/20 container widths introduced in v0.83, which inadvertently shrunk the central scoreboard container on iPad landscape orientations. The left and right headers now use `flex-none` (consuming only minimum required space), while the central container utilizes `flex-1` to greedily absorb all remaining horizontal real estate.
+* **Scorebox Padding Diet:** Heavily reduced the padding and margins around the central numbers inside the scorebox, returning critical horizontal layout space to the team names.
+* **Header Line-Clamp:** Replaced the single-line `truncate` instruction on the header team names with a dynamic `line-clamp-2 leading-none` rule. Long franchise names will now gracefully stack onto two lines in the header rather than being cut off.
+
+---
+
 ## [v0.83] - 2026-03-16 - iPad Flexbox Layout Squeeze Fix
 **UI Optimization**
 * **Strict Proportional Header:** Re-engineered the master `InGameDashboard` flexbox to prevent aggressive scaling loops on 11" iPad screens (`md`/`lg` breakpoints). The header is now strictly segmented (Left Logo: 20%, Center Scoreboard: 60%, Right Controls: 20%), guaranteeing the team names have ample horizontal space and eliminating the visual "C..." and "B..." truncation squeeze.
