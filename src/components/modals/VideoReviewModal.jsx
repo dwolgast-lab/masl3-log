@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatTime } from '../../utils';
 
 const VR_REASONS = {
@@ -9,14 +9,21 @@ const VR_REASONS = {
     "Goal/ No Goal": ["Ball Crossing Goal Line", "Time Expiration"]
 };
 
-export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, currentQuarter }) {
-    const [step, setStep] = useState('TIME');
+export default function VideoReviewModal({ modalStep, setModalStep, activeAction, modalQuarter, timeInput, gameData, onSave }) {
+    const [step, setStep] = useState('INITIATOR');
     const [vrData, setVrData] = useState({
-        quarter: currentQuarter, time: '', initiator: null, team: null, 
-        reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false
+        initiator: null, team: null, reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false
     });
 
-    if (!isOpen) return null;
+    // BUGFIX: Force reset the wizard state every time the modal is opened
+    useEffect(() => {
+        if (modalStep === 'VIDEO_REVIEW') {
+            setStep('INITIATOR');
+            setVrData({ initiator: null, team: null, reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false });
+        }
+    }, [modalStep]);
+
+    if (modalStep !== 'VIDEO_REVIEW') return null;
 
     const handleNext = (updates, nextStep) => {
         setVrData(prev => ({ ...prev, ...updates }));
@@ -31,8 +38,8 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
         onSave({
             id: Date.now(),
             type: 'Video Review',
-            quarter: finalData.quarter,
-            time: formatTime(finalData.time),
+            quarter: modalQuarter,
+            time: formatTime(timeInput),
             team: finalData.team || 'SYSTEM',
             initiator: finalData.initiator,
             reason: finalData.reason,
@@ -40,7 +47,7 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
             result: finalData.result,
             flagCollected: finalData.flagCollected
         });
-        onClose();
+        setModalStep(null);
     };
 
     return (
@@ -48,34 +55,14 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
                 <div className="bg-purple-700 p-4 text-white flex justify-between items-center">
                     <h2 className="text-xl font-black uppercase tracking-wider">Log Video Review</h2>
-                    <button onClick={onClose} className="text-purple-200 hover:text-white font-bold">✕ Cancel</button>
+                    <button onClick={() => setModalStep(null)} className="text-purple-200 hover:text-white font-bold">✕ Cancel</button>
                 </div>
 
                 <div className="p-6 bg-gray-50 flex-1">
-                    {step === 'TIME' && (
-                        <div className="text-center">
-                            <h3 className="text-lg font-bold text-gray-800 mb-4">Enter VR Game Clock Time</h3>
-                            <input 
-                                type="text" 
-                                placeholder="MMSS"
-                                className="w-full text-center text-4xl font-mono p-4 border-2 border-gray-300 rounded-xl mb-4"
-                                value={vrData.time}
-                                onChange={e => setVrData({...vrData, time: e.target.value.replace(/[^0-9]/g, '').substring(0, 4)})}
-                            />
-                            <button 
-                                onClick={() => handleNext({}, 'INITIATOR')}
-                                disabled={vrData.time.length < 3}
-                                className="w-full py-3 bg-purple-600 text-white font-black rounded-xl disabled:opacity-50"
-                            >
-                                NEXT ➔
-                            </button>
-                        </div>
-                    )}
-
                     {step === 'INITIATOR' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-bold text-gray-800 text-center mb-4">Who initiated the review?</h3>
-                            <button onClick={() => handleNext({ initiator: 'Coach' }, 'TEAM')} className="w-full py-4 bg-white border-2 border-gray-300 rounded-xl font-black text-lg hover:bg-gray-100">Coach's Challenge</button>
+                            <button onClick={() => handleNext({ initiator: 'Coach' }, 'TEAM')} className="w-full py-4 bg-white border-2 border-gray-300 rounded-xl font-black text-lg text-gray-800 hover:bg-gray-100">Coach's Challenge</button>
                             <button onClick={() => handleNext({ initiator: 'Referee', team: 'SYSTEM' }, 'REASON')} className="w-full py-4 bg-slate-800 text-white rounded-xl font-black text-lg hover:bg-slate-700">Referee Initiated</button>
                         </div>
                     )}
@@ -92,7 +79,7 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
                         <div className="space-y-2">
                             <h3 className="text-lg font-bold text-gray-800 text-center mb-4">Select VR Reason</h3>
                             {Object.keys(VR_REASONS).map(r => (
-                                <button key={r} onClick={() => handleNext({ reason: r }, VR_REASONS[r].length > 0 ? 'SUBREASON' : 'RESULT')} className="w-full py-3 bg-white border border-gray-300 rounded-lg font-bold hover:bg-gray-100">{r}</button>
+                                <button key={r} onClick={() => handleNext({ reason: r }, VR_REASONS[r].length > 0 ? 'SUBREASON' : 'RESULT')} className="w-full py-3 bg-white border border-gray-300 rounded-lg font-bold hover:bg-gray-100 text-gray-800">{r}</button>
                             ))}
                         </div>
                     )}
@@ -101,7 +88,7 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
                         <div className="space-y-2">
                             <h3 className="text-lg font-bold text-gray-800 text-center mb-4">Select Specification</h3>
                             {VR_REASONS[vrData.reason].map(sub => (
-                                <button key={sub} onClick={() => handleNext({ subReason: sub }, sub === 'Other' ? 'OTHER_DESC' : 'RESULT')} className="w-full py-3 bg-white border border-gray-300 rounded-lg font-bold hover:bg-gray-100">{sub}</button>
+                                <button key={sub} onClick={() => handleNext({ subReason: sub }, sub === 'Other' ? 'OTHER_DESC' : 'RESULT')} className="w-full py-3 bg-white border border-gray-300 rounded-lg font-bold hover:bg-gray-100 text-gray-800">{sub}</button>
                             ))}
                         </div>
                     )}
@@ -109,7 +96,7 @@ export default function VideoReviewModal({ isOpen, onClose, onSave, gameData, cu
                     {step === 'OTHER_DESC' && (
                         <div className="text-center">
                             <h3 className="text-lg font-bold text-gray-800 mb-4">Brief Description</h3>
-                            <input type="text" className="w-full p-3 border-2 border-gray-300 rounded-xl mb-4 font-bold" value={vrData.otherDesc} onChange={e => setVrData({...vrData, otherDesc: e.target.value})} />
+                            <input type="text" className="w-full p-3 border-2 border-gray-300 rounded-xl mb-4 font-bold text-gray-800" value={vrData.otherDesc} onChange={e => setVrData({...vrData, otherDesc: e.target.value})} autoFocus />
                             <button onClick={() => handleNext({}, 'RESULT')} className="w-full py-3 bg-purple-600 text-white font-black rounded-xl">NEXT ➔</button>
                         </div>
                     )}

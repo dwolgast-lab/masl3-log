@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ACTION_BUTTONS, QUARTERS, LEAGUES } from '../config';
 import ActivePenaltiesWidget from '../components/widgets/ActivePenaltiesWidget';
 import ActiveInjuriesWidget from '../components/widgets/ActiveInjuriesWidget';
-import VideoReviewModal from '../components/modals/VideoReviewModal';
 
 export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents, setGameEvents,
@@ -11,8 +10,6 @@ export default function InGameDashboard({
     handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent,
     startEditingReleaseTime, isDarkMode
 }) {
-    const [isVRModalOpen, setIsVRModalOpen] = useState(false);
-    
     const activeInjuries = gameEvents.filter(ev => ev.type === 'Injury' && !ev.clearedInjury && ev.eligibleReturnTime);
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     const lastEvent = lastAddedEventId ? gameEvents.find(e => e.id === lastAddedEventId) : null;
@@ -33,7 +30,6 @@ export default function InGameDashboard({
     const themeBg = isDarkMode ? 'bg-slate-900' : 'bg-gray-100';
     const panelBg = isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200';
     const headerBg = isDarkMode ? 'bg-slate-800 shadow-lg border-b border-slate-700' : 'bg-white shadow';
-    const textPrimary = isDarkMode ? 'text-gray-100' : 'text-gray-800';
     const textMuted = isDarkMode ? 'text-gray-400' : 'text-gray-500';
 
     const formatEventDescription = (ev) => {
@@ -87,7 +83,6 @@ export default function InGameDashboard({
                     </div>
                 </div>
 
-                {/* NEW: Real-Time Team Status Bar */}
                 <div className={`flex justify-between items-center px-8 py-1.5 text-xs font-black tracking-widest uppercase border-t ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                     <div className="flex-1 text-right pr-6 md:pr-[12rem]">
                         <span className="mr-4">Timeouts Left: <span className={awayTOs === 0 ? 'text-red-500' : (isDarkMode ? 'text-white' : 'text-slate-800')}>{awayTOs}</span></span>
@@ -170,9 +165,9 @@ export default function InGameDashboard({
                 )}
 
                 <div className="flex space-x-2 md:space-x-3 shrink-0 h-full">
-                    {/* NEW: Video Review Button for MASL */}
+                    {/* MODIFIED: VR Button triggers Time Keypad via SYSTEM route */}
                     {isMASL && (
-                        <button onClick={() => setIsVRModalOpen(true)} className="px-4 md:px-6 h-full bg-purple-700 text-white font-black text-sm md:text-base rounded-lg shadow hover:bg-purple-600 transition border border-purple-500">
+                        <button onClick={() => triggerAction('SYSTEM', 'Video Review')} className="px-4 md:px-6 h-full bg-purple-700 text-white font-black text-sm md:text-base rounded-lg shadow hover:bg-purple-600 transition border border-purple-500">
                             VIDEO REVIEW
                         </button>
                     )}
@@ -184,16 +179,6 @@ export default function InGameDashboard({
                     </button>
                 </div>
             </footer>
-
-            <VideoReviewModal 
-                isOpen={isVRModalOpen} onClose={() => setIsVRModalOpen(false)} 
-                gameData={gameData} currentQuarter={quarter} 
-                onSave={(vr) => {
-                    const id = Date.now();
-                    setGameEvents([{ ...vr, id }, ...gameEvents]);
-                    setLastAddedEventId(id);
-                }} 
-            />
         </div>
     );
 }

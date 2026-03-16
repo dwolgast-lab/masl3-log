@@ -2,6 +2,16 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.80] - 2026-03-16 - Dark Mode Contrast & VR Flow Refinements
+**Visual & UX Upgrades**
+* **Dynamic Dark Mode Contrast:** Implemented a real-time luminance calculation engine (`ensureVisibleInDark`). When Dark Mode is active, the system now automatically evaluates team brand colors (e.g., Navy Blue or Forest Green) and mathematically brightens them by 60% if they fall below a strict visibility threshold, guaranteeing UI legibility against the dark background without losing the team's core identity.
+* **Standardized VR Time Entry:** Rerouted the Video Review initiation flow. Instead of requiring manual typing into a dedicated text box, pressing "VIDEO REVIEW" now opens the standard Time Keypad (defaulting to the current quarter). After the user inputs the clock time, the system seamlessly hijacks the routing and passes the data directly into the Video Review wizard.
+
+**Bug Fixes**
+* **VR Modal State Reset:** Fixed a bug where the Video Review modal would incorrectly remember its previous state (getting "stuck" on the Failed Challenge or Outcome screens after a previous review). A new React `useEffect` hook now forcefully resets the internal wizard state back to the first step every single time the modal is opened.
+
+---
+
 ## [v0.79] - 2026-03-16 - Broadcast Theme & VR Subsystem
 **Major Features & Refinements**
 * **Dark Mode Theme Engine:** Added a universal dark mode engine toggleable from the Pregame Setup screen. When active, it deeply injects custom slate-and-white tailwind classes across the entire `InGameDashboard` and UI modals to significantly reduce stadium glare during live operations.
