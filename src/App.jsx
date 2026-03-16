@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.80
+ * Version: 0.81
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -20,9 +20,9 @@ import PenaltyModal from './components/modals/PenaltyModal';
 import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
-import VideoReviewModal from './components/modals/VideoReviewModal'; // NEW IMPORT
+import VideoReviewModal from './components/modals/VideoReviewModal';
 
-const APP_VERSION = "0.80";
+const APP_VERSION = "0.81";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -48,7 +48,6 @@ const playBells = (count) => {
     }
 };
 
-// NEW: Dark Mode Visibility Adjuster
 const ensureVisibleInDark = (hex, isDark) => {
     if (!hex || !isDark) return hex || '#cccccc';
     let r = parseInt(hex.substring(1,3), 16);
@@ -111,7 +110,6 @@ export default function App() {
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
     const homeScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'HOME').length;
     
-    // NEW: Apply Brightness Filters
     const rawAwayColor = getTeamColor(gameData.awayColor, '#1e40af'); 
     const rawHomeColor = getTeamColor(gameData.homeColor, '#991b1b'); 
     const awayCSSColor = ensureVisibleInDark(rawAwayColor, isDarkMode);
@@ -168,7 +166,6 @@ export default function App() {
         setTimeInput(timeStr); 
         setActiveAction(prev => ({ ...prev, time: timeStr }));
         
-        // MODIFIED: Intercept VR Routing
         if (activeAction.type === 'Video Review') {
             setModalStep('VIDEO_REVIEW');
         } else if (nextStepStr === 'FINALIZE_TEAM_EVENT') {
@@ -616,10 +613,10 @@ export default function App() {
                 }}
             />
 
-            {/* NEW: Render Video Review Modal globally to intercept hijacked time routing */}
             <VideoReviewModal 
                 modalStep={modalStep} setModalStep={setModalStep}
                 activeAction={activeAction} modalQuarter={modalQuarter} timeInput={timeInput} gameData={gameData}
+                gameEvents={gameEvents}
                 onSave={(vr) => {
                     const id = Date.now();
                     setGameEvents([{ ...vr, id }, ...gameEvents]);

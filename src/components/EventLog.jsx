@@ -28,8 +28,6 @@ export default function EventLog({
             const flagStr = flags.length > 0 ? ` [${flags.join(', ')}]` : '';
             
             const isPKorSO = ev.goalFlags?.pk || ev.goalFlags?.shootout;
-            
-            // Safely extract the assist name, whether it's a string or an object
             const assistName = typeof ev.assist === 'string' ? ev.assist : ev.assist?.name;
             const hasAssist = assistName && assistName !== 'Unassisted';
             
@@ -79,6 +77,19 @@ export default function EventLog({
                 <div className="font-black text-white text-lg">
                     {ev.action} {ev.quarter} 
                     <span className="block text-sm text-white font-bold mt-1">@ {ev.realTime}</span>
+                </div>
+            );
+        }
+        if (ev.type === 'Video Review') {
+            const isOverturned = ev.result === 'Overturned/Changed';
+            return (
+                <div>
+                    <div className="font-bold text-purple-700">Reason: <span className="font-normal text-gray-800">{ev.reason}</span></div>
+                    {ev.subReason && <div className="text-sm font-bold text-gray-700 mt-1">Spec: <span className="font-normal text-gray-600">{ev.subReason}</span></div>}
+                    <div className={`text-sm font-black mt-2 uppercase tracking-wide ${isOverturned ? 'text-green-600' : 'text-red-600'}`}>
+                        {ev.result}
+                    </div>
+                    {ev.flagCollected && <div className="text-xs font-bold text-gray-400 mt-1">Flag Collected</div>}
                 </div>
             );
         }
@@ -154,7 +165,12 @@ export default function EventLog({
                                         <div className="flex items-center justify-start mb-2 border-b pb-2">
                                             <span className="font-black text-lg text-gray-800 mr-2">
                                                 {ev.entity?.number ? `#${ev.entity.number} ` : ''} 
-                                                {ev.entity?.name || (typeof ev.entity === 'string' ? ev.entity : 'Unknown')}
+                                                
+                                                {/* MODIFIED: Safely Render Headers for special events like VR without Player Entities */}
+                                                {ev.type === 'Video Review' 
+                                                    ? (ev.initiator === 'Referee' ? 'Referee Review' : 'Coach Challenge') 
+                                                    : (ev.entity?.name || (typeof ev.entity === 'string' ? ev.entity : 'Unknown'))
+                                                }
                                             </span>
                                             
                                             {ev.type === 'Time Penalty' && ev.penalty?.color && !ev.isJustServing && (
@@ -190,12 +206,12 @@ export default function EventLog({
                                         {isAway ? eventCard : null}
                                     </div>
 
-                                    {isSystem ? (
+                                    {isSystem && ev.type !== 'Video Review' ? (
                                         <div className={`shrink-0 flex flex-col items-center justify-center text-white border-4 shadow-xl rounded-xl py-2 px-6 z-20 w-48 md:w-64 text-center mx-[-4rem] ${ev.type === 'Media Timeout' ? 'bg-orange-500 border-orange-600' : 'bg-slate-800 border-slate-900'}`}>
                                             {getEventDescription(ev, true)}
                                             <button onClick={() => deleteEvent(ev.id)} className={`mt-2 text-[10px] underline ${ev.type === 'Media Timeout' ? 'text-orange-200 hover:text-white' : 'text-gray-400 hover:text-red-400'}`}>Delete</button>
                                         </div>
-                                    ) : timePill}
+                                    ) : (ev.type !== 'Video Review' ? timePill : (isSystem ? timePill : null))}
 
                                     <div className="flex-1 flex justify-start pl-4 md:pl-8">
                                         {isHome ? eventCard : null}

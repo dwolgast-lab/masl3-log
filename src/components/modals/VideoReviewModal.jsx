@@ -9,13 +9,12 @@ const VR_REASONS = {
     "Goal/ No Goal": ["Ball Crossing Goal Line", "Time Expiration"]
 };
 
-export default function VideoReviewModal({ modalStep, setModalStep, activeAction, modalQuarter, timeInput, gameData, onSave }) {
+export default function VideoReviewModal({ modalStep, setModalStep, activeAction, modalQuarter, timeInput, gameData, gameEvents, onSave }) {
     const [step, setStep] = useState('INITIATOR');
     const [vrData, setVrData] = useState({
         initiator: null, team: null, reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false
     });
 
-    // BUGFIX: Force reset the wizard state every time the modal is opened
     useEffect(() => {
         if (modalStep === 'VIDEO_REVIEW') {
             setStep('INITIATOR');
@@ -24,6 +23,18 @@ export default function VideoReviewModal({ modalStep, setModalStep, activeAction
     }, [modalStep]);
 
     if (modalStep !== 'VIDEO_REVIEW') return null;
+
+    // Evaluate Challenge Availability
+    const checkVR = (teamId) => {
+        if (!gameEvents) return 'Y';
+        const vrs = gameEvents.filter(e => e.type === 'Video Review' && e.initiator === 'Coach' && e.team === teamId);
+        if (vrs.length === 0) return 'Y';
+        const successful = vrs.filter(e => e.result === 'Overturned/Changed').length;
+        return (vrs.length === 1 && successful === 1) ? 'Y' : 'N';
+    };
+
+    const awayAvailable = checkVR('AWAY') === 'Y';
+    const homeAvailable = checkVR('HOME') === 'Y';
 
     const handleNext = (updates, nextStep) => {
         setVrData(prev => ({ ...prev, ...updates }));
@@ -70,8 +81,20 @@ export default function VideoReviewModal({ modalStep, setModalStep, activeAction
                     {step === 'TEAM' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-bold text-gray-800 text-center mb-4">Which team challenged?</h3>
-                            <button onClick={() => handleNext({ team: 'AWAY' }, 'REASON')} className="w-full py-4 bg-blue-50 border-2 border-blue-500 text-blue-800 rounded-xl font-black text-lg uppercase hover:bg-blue-100">{gameData.awayTeam || 'AWAY'}</button>
-                            <button onClick={() => handleNext({ team: 'HOME' }, 'REASON')} className="w-full py-4 bg-red-50 border-2 border-red-500 text-red-800 rounded-xl font-black text-lg uppercase hover:bg-red-100">{gameData.homeTeam || 'HOME'}</button>
+                            <button 
+                                onClick={() => handleNext({ team: 'AWAY' }, 'REASON')} 
+                                disabled={!awayAvailable}
+                                className={`w-full py-4 border-2 rounded-xl font-black text-lg uppercase transition ${awayAvailable ? 'bg-blue-50 border-blue-500 text-blue-800 hover:bg-blue-100' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`}
+                            >
+                                {gameData.awayTeam || 'AWAY'} {!awayAvailable && <span className="block text-xs mt-1 normal-case">(No Challenges Remaining)</span>}
+                            </button>
+                            <button 
+                                onClick={() => handleNext({ team: 'HOME' }, 'REASON')} 
+                                disabled={!homeAvailable}
+                                className={`w-full py-4 border-2 rounded-xl font-black text-lg uppercase transition ${homeAvailable ? 'bg-red-50 border-red-500 text-red-800 hover:bg-red-100' : 'bg-gray-100 border-gray-300 text-gray-400 cursor-not-allowed'}`}
+                            >
+                                {gameData.homeTeam || 'HOME'} {!homeAvailable && <span className="block text-xs mt-1 normal-case">(No Challenges Remaining)</span>}
+                            </button>
                         </div>
                     )}
 

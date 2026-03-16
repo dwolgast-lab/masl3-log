@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.81] - 2026-03-16 - Video Review Safeguards & Logging
+**Logic & UX Upgrades**
+* **VR Availability Locks:** Passed the master `gameEvents` state into the VR Modal to act as a logic guard. The modal now actively evaluates a team's VR history when rendering the Team Selection step. If a team has used their single challenge (or failed their earned secondary challenge), their selection button disables itself and explicitly displays a "No Challenges Remaining" text warning.
+* **Timeline Fallback Overrides:** Patched a gap in the timeline UI where Video Reviews were rendering with an "Unknown" name placeholder because they lack a specific player entity. The timeline now explicitly recognizes `Video Review` events, replaces the header with either "Coach Challenge" or "Referee Review", and generates a clean, color-coded description block displaying the Reason, Specification, Result, and whether the challenge flag was successfully collected.
+
+---
+
 ## [v0.80] - 2026-03-16 - Dark Mode Contrast & VR Flow Refinements
 **Visual & UX Upgrades**
 * **Dynamic Dark Mode Contrast:** Implemented a real-time luminance calculation engine (`ensureVisibleInDark`). When Dark Mode is active, the system now automatically evaluates team brand colors (e.g., Navy Blue or Forest Green) and mathematically brightens them by 60% if they fall below a strict visibility threshold, guaranteeing UI legibility against the dark background without losing the team's core identity.
