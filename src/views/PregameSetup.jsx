@@ -14,9 +14,9 @@ export default function PregameSetup({
     awayBench, setAwayBench, homeBench, setHomeBench,
     activeRosterModal, setActiveRosterModal,
     showStartersModal, setShowStartersModal,
-    newPlayer, setNewPlayer,
-    newBench, setNewBench,
-    setCurrentView, clearAllGameData, onExportPDF, appVersion
+    newPlayer, setNewPlayer, newBench, setNewBench,
+    setCurrentView, clearAllGameData, onExportPDF, appVersion,
+    isDarkMode, setIsDarkMode
 }) {
 
     const [showCrewModal, setShowCrewModal] = useState(false);
@@ -130,6 +130,12 @@ export default function PregameSetup({
                         <div className="flex justify-between items-end border-b-2 border-slate-200 pb-2 mb-4">
                             <h2 className="text-xl font-bold text-slate-700">Match Information</h2>
                             <div className="flex items-center space-x-4">
+                                {/* NEW: Dark Mode Toggle */}
+                                <label className="flex items-center space-x-2 cursor-pointer bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-200 transition">
+                                    <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} className="w-4 h-4 accent-slate-800" />
+                                    <span className="text-sm font-bold text-slate-700">🌙 Dark Mode</span>
+                                </label>
+
                                 <button onClick={() => setShowCrewModal(true)} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 transition">
                                     🧑‍⚖️ Officiating Crew
                                 </button>
@@ -186,20 +192,8 @@ export default function PregameSetup({
             </div>
 
             <CrewEditorModal show={showCrewModal} onClose={() => setShowCrewModal(false)} gameData={gameData} handleInputChange={handleInputChange} />
-
-            <StartersViewerModal 
-                showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal} 
-                gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} 
-                awayRoster={awayRoster} homeRoster={homeRoster} 
-            />
-            
-            <RosterEditorModal 
-                activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} 
-                gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
-                awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster} 
-                awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench}
-                newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench}
-            />
+            <StartersViewerModal showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal} gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} awayRoster={awayRoster} homeRoster={homeRoster} />
+            <RosterEditorModal activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster} awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench} newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} />
             
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
                 Author: Dave Wolgast | v{appVersion}

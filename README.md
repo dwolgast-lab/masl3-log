@@ -4,6 +4,15 @@
 
 ## Recent Updates
 
+## [v0.79] - 2026-03-16 - Broadcast Theme & VR Subsystem
+**Major Features & Refinements**
+* **Dark Mode Theme Engine:** Added a universal dark mode engine toggleable from the Pregame Setup screen. When active, it deeply injects custom slate-and-white tailwind classes across the entire `InGameDashboard` and UI modals to significantly reduce stadium glare during live operations.
+* **Real-Time Status Bar:** Embedded a data-driven status bar directly beneath the central scoreboard. It automatically tracks "Timeouts Remaining" for both teams in real-time, and conditionally evaluates the strict MASL logic rules to display if a "VR Challenge" remains available.
+* **Video Review (VR) Subsystem:** Created a complex, multi-step `VideoReviewModal.jsx` specifically for `MASL` tier matches. This flow cleanly documents Quarter, Time, Initiator (Referee vs. Coach), Specific MASL Reason Code arrays, Outcome (Stands vs Overturned), and forces flag-collection verification on failed coach challenges.
+* **PDF VR Rendering:** The `alternatePdfEngine.js` dynamically intercepts Video Review events and routes them into dedicated tracking tables on the team data sheets, as well as printing their complex descriptions cleanly into the chronological Game Log.
+
+---
+
 ## [v0.78] - 2026-03-13 - Data Extraction Failsafe
 **Bug Fixes**
 * **Assist "Undefined" Render Bug:** Fixed a Javascript evaluation quirk where skipping the assist entry or manually selecting "Unassisted" from the player modal stored a flat string instead of a player object. Attempting to extract the `.name` property from this string caused the UI and PDF engine to output the literal text `"undefined"`. The extraction logic has been hardened to securely check object types before rendering, ensuring `--unassisted--` reliably prints across all contexts.
@@ -61,16 +70,6 @@
 * **Dynamic Event Logos:** Updated the `EventLog` timeline so that team events physically stamp the active team's franchise logo on the inner edge of the event card (closest to the center line timeline) for immediate visual team recognition.
 * **Inline Card Icons:** Relocated the visual colored penalty cards inside the timeline view to immediately follow the offending player/coach's name in a strict flex-row, exactly mirroring the PDF report format.
 * **Enhanced System Headers:** The "Start/End Quarter" system events in the center of the timeline now render their real-world 12-hour time-of-day in bright, bold white text for maximum readability against the dark slate background. Additionally, Media Timeouts and Team Timeouts now clearly output their associated match clock times below the header.
-
----
-
-## [v0.69] - 2026-03-13 - Dashboard Timeline & PDF Iconography Engine
-**UI & PDF Upgrades**
-* **MLS-Style Game Log Timeline:** Completely rewrote the `EventLog.jsx` UI from a rigid table into a broadcast-style vertical timeline. Events are now dynamically sorted to their respective team's side (Home on Right, Away on Left) with a central spine rendering quarter/time pills.
-* **Dynamic PDF Canvas Icons:** Removed background color shading in the Game Log PDF. The engine now uses advanced `jsPDF-autotable` callback hooks to physically draw exact-scale replica colored penalty cards (Blue, Yellow, Red) next to penalty descriptions.
-* **Accumulation Iconography:** The Team Data Foul and Coach Penalty tables now represent active penalties visually by drawing multiple side-by-side card icons in sequential order (e.g. 🟦 🟨) instead of just displaying an integer.
-* **Game Log Team Logos:** The PDF Game Log table now dynamically renders the active franchise logos directly into the table cells in place of raw team names, drastically increasing visual scannability during post-game review.
-* **Halftime Engine Logic:** Hardcoded the central logic engine to adhere to specific MASL league rules regarding halftime clocks. Selecting MASL/M2 now enforces a 15-minute countdown clock, whereas selecting MASL3/MASLW scales it down to 10 minutes.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

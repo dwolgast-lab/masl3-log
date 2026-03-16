@@ -1,7 +1,7 @@
 /* =========================================================================
  * MASL 4th Official Log App
  * Author: Dave Wolgast
- * Version: 0.78
+ * Version: 0.79
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ import TimeKeypadModal from './components/modals/TimeKeypadModal';
 import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 
-const APP_VERSION = "0.78";
+const APP_VERSION = "0.79";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -87,6 +87,9 @@ export default function App() {
 
     const [timeConfirmDialog, setTimeConfirmDialog] = useState(null);
     const [lastAddedEventId, setLastAddedEventId] = useState(null);
+
+    // NEW: Dark Mode State
+    const [isDarkMode, setIsDarkMode] = useStickyState(false, 'masl-dark-mode');
 
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
     const homeScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'HOME').length;
@@ -492,11 +495,8 @@ export default function App() {
         if (event.type === 'Log Foul') setModalStep('PLAYER'); else setModalStep('TIME');
     };
 
-    // --- REVERSE-CHRONOLOGICAL GAME LOG SORTER ---
-    // Enforces Newest-First display for live operations, with forced boundaries for Quarters
     const quarterOrder = { 'Q1': 1, 'Q2': 2, 'Q3': 3, 'Q4': 4, 'OT': 5 };
     const getEventSortTime = (ev) => {
-        // Force Start to bottom (older than 15:00) and End to top (newer than 00:00)
         if (ev.type === 'Period Marker') return ev.action === 'Start' ? '99:99' : '-01:00';
         return ev.time || "00:00";
     };
@@ -504,16 +504,10 @@ export default function App() {
     const sortedGameEvents = [...gameEvents].sort((a, b) => {
         const qA = quarterOrder[a.quarter] || 0;
         const qB = quarterOrder[b.quarter] || 0;
-        
-        // 1. Sort by Quarter Descending (OT -> Q4 -> Q3...)
         if (qA !== qB) return qB - qA;
-        
-        // 2. Sort by Time Ascending (-01:00 -> 00:00 -> 15:00 -> 99:99)
         const timeA = getEventSortTime(a);
         const timeB = getEventSortTime(b);
         if (timeA !== timeB) return timeA.localeCompare(timeB);
-        
-        // 3. Fallback to entry ID to keep simultaneous events in exact entered order
         return b.id - a.id;
     });
 
@@ -529,18 +523,19 @@ export default function App() {
                 newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} 
                 setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} 
                 onExportPDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
+                isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}
             />
         );
     }
 
     return (
-        <div className="flex flex-col h-screen font-sans relative bg-gray-100 overflow-hidden">
+        <div className={`flex flex-col h-screen font-sans relative overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-gray-100' : 'bg-gray-100 text-gray-800'}`}>
             <TimerOverlay appTimer={appTimer} setAppTimer={setAppTimer} />
             <AlertOverlay foulAlert={foulAlert} setFoulAlert={setFoulAlert} />
 
             <InGameDashboard 
                 gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
-                awayScore={awayScore} homeScore={homeScore} quarter={quarter} gameEvents={gameEvents}
+                awayScore={awayScore} homeScore={homeScore} quarter={quarter} gameEvents={gameEvents} setGameEvents={setGameEvents}
                 setModalStep={setModalStep} setSummaryTeam={setSummaryTeam} triggerAction={triggerAction}
                 activePenaltiesAway={activePenaltiesAway} activePenaltiesHome={activePenaltiesHome}
                 handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired}
@@ -549,6 +544,7 @@ export default function App() {
                 lastAddedEventId={lastAddedEventId} setLastAddedEventId={setLastAddedEventId}
                 startEditingEvent={startEditingEvent} deleteEvent={deleteEvent}
                 startEditingReleaseTime={startEditingReleaseTime}
+                isDarkMode={isDarkMode}
             />
 
             {modalStep === 'FOUL_SUMMARY' && (
@@ -556,7 +552,7 @@ export default function App() {
             )}
 
             {modalStep === 'EVENT_LOG' && (
-                <EventLog gameEvents={sortedGameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} />
+                <EventLog gameEvents={sortedGameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} isDarkMode={isDarkMode} />
             )}
 
             <TimeKeypadModal 

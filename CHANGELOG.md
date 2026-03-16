@@ -2,6 +2,15 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.79] - 2026-03-16 - Broadcast Theme & VR Subsystem
+**Major Features & Refinements**
+* **Dark Mode Theme Engine:** Added a universal dark mode engine toggleable from the Pregame Setup screen. When active, it deeply injects custom slate-and-white tailwind classes across the entire `InGameDashboard` and UI modals to significantly reduce stadium glare during live operations.
+* **Real-Time Status Bar:** Embedded a data-driven status bar directly beneath the central scoreboard. It automatically tracks "Timeouts Remaining" for both teams in real-time, and conditionally evaluates the strict MASL logic rules to display if a "VR Challenge" remains available.
+* **Video Review (VR) Subsystem:** Created a complex, multi-step `VideoReviewModal.jsx` specifically for `MASL` tier matches. This flow cleanly documents Quarter, Time, Initiator (Referee vs. Coach), Specific MASL Reason Code arrays, Outcome (Stands vs Overturned), and forces flag-collection verification on failed coach challenges.
+* **PDF VR Rendering:** The `alternatePdfEngine.js` dynamically intercepts Video Review events and routes them into dedicated tracking tables on the team data sheets, as well as printing their complex descriptions cleanly into the chronological Game Log.
+
+---
+
 ## [v0.78] - 2026-03-13 - Data Extraction Failsafe
 **Bug Fixes**
 * **Assist "Undefined" Render Bug:** Fixed a Javascript evaluation quirk where skipping the assist entry or manually selecting "Unassisted" from the player modal stored a flat string instead of a player object. Attempting to extract the `.name` property from this string caused the UI and PDF engine to output the literal text `"undefined"`. The extraction logic has been hardened to securely check object types before rendering, ensuring `--unassisted--` reliably prints across all contexts.
