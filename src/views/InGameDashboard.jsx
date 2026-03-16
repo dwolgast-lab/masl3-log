@@ -44,59 +44,59 @@ export default function InGameDashboard({
     return (
         <div className={`flex flex-col h-full w-full ${themeBg} transition-colors duration-300`}>
             <header className={`flex flex-col ${headerBg} z-10 w-full min-w-0`}>
-                <div className="flex justify-between items-center p-2 md:p-3 lg:p-4">
-                    {/* Left League Logo Container (Scaled Down for iPad) */}
-                    <div className="flex-none w-16 md:w-20 lg:w-28 flex items-center justify-start">
-                        {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className={`w-12 h-12 md:w-16 md:h-16 lg:w-24 lg:h-24 object-contain drop-shadow-md ${isDarkMode ? 'brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]' : ''}`} />}
+                
+                {/* MODIFIED: Fixed percentage layout (20-60-20) prevents Flexbox Squeeze on iPads */}
+                <div className="flex justify-between items-center p-2 md:p-3 lg:p-4 w-full">
+                    
+                    {/* Left: League Logo */}
+                    <div className="w-1/4 md:w-1/5 flex items-center justify-start">
+                        {activeLeague?.logo && <img src={activeLeague.logo} alt="League" className={`w-12 h-12 md:w-16 md:h-16 lg:w-20 lg:h-20 object-contain drop-shadow-md ${isDarkMode ? 'brightness-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]' : ''}`} />}
                     </div>
                     
-                    {/* Center Scoreboard Container */}
-                    <div className="flex-1 flex justify-center items-center min-w-0 px-1 md:px-2 lg:px-4">
-                        
+                    {/* Center: Scoreboard (Explicitly owns 60% of the screen width) */}
+                    <div className="w-2/4 md:w-3/5 flex justify-center items-center min-w-0">
                         <div className="flex flex-1 justify-end items-center space-x-2 md:space-x-3 min-w-0">
                             {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 object-contain shrink-0 drop-shadow-md hidden sm:block" />}
-                            {/* Team Name scaling smoothed out */}
-                            <span className="truncate text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black uppercase tracking-wider" style={{ color: awayCSSColor, textShadow: isDarkMode ? '0px 2px 4px rgba(0,0,0,0.8)' : 'none' }}>
+                            <span className="truncate text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-4xl font-black uppercase tracking-wider text-right" style={{ color: awayCSSColor, textShadow: isDarkMode ? '0px 2px 4px rgba(0,0,0,0.8)' : 'none' }}>
                                 {gameData.awayTeam || 'AWAY'}
                             </span>
                         </div>
 
-                        {/* Score Box padding and font-size reduced on md breakpoint */}
-                        <div className={`shrink-0 font-mono text-2xl sm:text-3xl md:text-4xl lg:text-5xl px-3 md:px-4 lg:px-8 py-1 rounded-xl shadow-inner border flex items-center justify-center mx-2 md:mx-4 ${isDarkMode ? 'bg-slate-900 border-slate-700 text-gray-300' : 'bg-gray-100 border-gray-200 text-gray-400'}`}>
-                            <span className="w-6 sm:w-8 md:w-10 lg:w-12 text-right">{awayScore}</span> 
+                        <div className={`shrink-0 font-mono text-xl sm:text-2xl md:text-4xl lg:text-5xl px-2 sm:px-3 md:px-6 py-1 rounded-xl shadow-inner border flex items-center justify-center mx-1 sm:mx-2 md:mx-4 ${isDarkMode ? 'bg-slate-900 border-slate-700 text-gray-300' : 'bg-gray-100 border-gray-200 text-gray-400'}`}>
+                            <span className="w-4 sm:w-6 md:w-8 lg:w-10 text-right">{awayScore}</span> 
                             <span className="mx-1 md:mx-2 lg:mx-4 opacity-50">-</span> 
-                            <span className="w-6 sm:w-8 md:w-10 lg:w-12 text-left">{homeScore}</span>
+                            <span className="w-4 sm:w-6 md:w-8 lg:w-10 text-left">{homeScore}</span>
                         </div> 
 
                         <div className="flex flex-1 justify-start items-center space-x-2 md:space-x-3 min-w-0">
-                            <span className="truncate text-base sm:text-lg md:text-2xl lg:text-3xl xl:text-4xl font-black uppercase tracking-wider" style={{ color: homeCSSColor, textShadow: isDarkMode ? '0px 2px 4px rgba(0,0,0,0.8)' : 'none' }}>
+                            <span className="truncate text-sm sm:text-lg md:text-xl lg:text-2xl xl:text-4xl font-black uppercase tracking-wider text-left" style={{ color: homeCSSColor, textShadow: isDarkMode ? '0px 2px 4px rgba(0,0,0,0.8)' : 'none' }}>
                                 {gameData.homeTeam || 'HOME'}
                             </span>
                             {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home" className="w-6 h-6 md:w-8 md:h-8 lg:w-10 lg:h-10 object-contain shrink-0 drop-shadow-md hidden sm:block" />}
                         </div>
                     </div>
 
-                    {/* Right Controls Container */}
-                    <div className="flex-none flex items-center justify-end space-x-2 md:space-x-3 lg:space-x-4">
-                        <div className={`rounded-lg p-1 hidden lg:flex ${isDarkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
+                    {/* Right: Controls */}
+                    <div className="w-1/4 md:w-1/5 flex items-center justify-end space-x-2 md:space-x-3">
+                        {/* Pushed to xl breakpoint only so it doesn't crush the iPad layout */}
+                        <div className={`rounded-lg p-1 hidden xl:flex ${isDarkMode ? 'bg-slate-700' : 'bg-gray-200'}`}>
                             {QUARTERS.map(q => (
-                                <div key={q} className={`px-2 py-1 lg:px-4 lg:py-2 rounded-md font-bold transition-colors ${quarter === q ? (isDarkMode ? 'bg-white text-slate-900 shadow' : 'bg-black text-white shadow') : textMuted}`}>{q}</div>
+                                <div key={q} className={`px-2 py-1 md:px-3 md:py-1.5 rounded-md font-bold transition-colors ${quarter === q ? (isDarkMode ? 'bg-white text-slate-900 shadow' : 'bg-black text-white shadow') : textMuted}`}>{q}</div>
                             ))}
                         </div>
-                        {/* Log button scaled down on tablets */}
-                        <button onClick={() => setModalStep('EVENT_LOG')} className={`flex items-center px-3 py-2 md:px-4 md:py-2 lg:px-6 lg:py-3 font-bold text-sm md:text-base lg:text-lg rounded-lg shadow transition ${isDarkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-800 text-white hover:bg-slate-700'}`}>
-                            Log <span className={`ml-2 px-1.5 py-0.5 lg:px-2 rounded-full text-xs lg:text-sm ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'}`}>{gameEvents.length}</span>
+                        <button onClick={() => setModalStep('EVENT_LOG')} className={`flex items-center px-3 py-2 md:px-5 md:py-2.5 font-bold text-sm md:text-lg rounded-lg shadow transition ${isDarkMode ? 'bg-slate-700 text-white hover:bg-slate-600' : 'bg-slate-800 text-white hover:bg-slate-700'}`}>
+                            Log <span className={`ml-2 px-1.5 py-0.5 md:px-2 rounded-full text-xs md:text-sm ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-white text-slate-800'}`}>{gameEvents.length}</span>
                         </button>
                     </div>
                 </div>
 
-                <div className={`flex justify-between items-center px-4 md:px-8 lg:px-8 py-1.5 text-[10px] md:text-xs font-black tracking-widest uppercase border-t ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
-                    <div className="flex-1 text-right pr-4 md:pr-12 lg:pr-[12rem]">
+                <div className={`flex justify-between items-center px-8 py-1.5 text-[10px] md:text-xs font-black tracking-widest uppercase border-t ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+                    <div className="flex-1 text-right pr-6 md:pr-[12rem]">
                         <span className="mr-2 md:mr-4">Timeouts Left: <span className={awayTOs === 0 ? 'text-red-500' : (isDarkMode ? 'text-white' : 'text-slate-800')}>{awayTOs}</span></span>
                         {isMASL && <span>VR Challenge: <span className={checkVR('AWAY') === 'N' ? 'text-red-500' : 'text-green-500'}>{checkVR('AWAY')}</span></span>}
                     </div>
-                    <div className="w-4 md:w-10 lg:w-10"></div>
-                    <div className="flex-1 text-left pl-4 md:pl-12 lg:pl-[12rem]">
+                    <div className="w-10"></div>
+                    <div className="flex-1 text-left pl-6 md:pl-[12rem]">
                         <span className="mr-2 md:mr-4">Timeouts Left: <span className={homeTOs === 0 ? 'text-red-500' : (isDarkMode ? 'text-white' : 'text-slate-800')}>{homeTOs}</span></span>
                         {isMASL && <span>VR Challenge: <span className={checkVR('HOME') === 'N' ? 'text-red-500' : 'text-green-500'}>{checkVR('HOME')}</span></span>}
                     </div>
@@ -105,12 +105,13 @@ export default function InGameDashboard({
 
             <div className="flex flex-1 overflow-hidden relative">
                 <div className={`w-1/2 p-4 flex flex-col border-r-4 ${panelBg} ${isDarkMode ? 'border-slate-900' : 'border-gray-800'}`}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase flex items-center space-x-3" style={{ color: awayCSSColor, textShadow: isDarkMode ? '0px 1px 3px rgba(0,0,0,0.8)' : 'none' }}>
-                            {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-6 h-6 md:w-8 md:h-8 object-contain hidden sm:block" />}
-                            <span className="truncate">{gameData.awayTeam || 'AWAY TEAM'}</span>
+                    <div className="flex justify-between items-start mb-4 gap-2">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-black uppercase flex items-start space-x-2 md:space-x-3" style={{ color: awayCSSColor, textShadow: isDarkMode ? '0px 1px 3px rgba(0,0,0,0.8)' : 'none' }}>
+                            {gameData.awayLogo && <img src={gameData.awayLogo} alt="Away" className="w-6 h-6 md:w-8 md:h-8 object-contain shrink-0 mt-0.5" />}
+                            {/* line-clamp allows it to wrap nicely instead of truncating */}
+                            <span className="leading-tight line-clamp-2">{gameData.awayTeam || 'AWAY TEAM'}</span>
                         </h2>
-                        <button onClick={() => {setSummaryTeam('AWAY'); setModalStep('FOUL_SUMMARY');}} className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base font-bold rounded shadow-sm border" style={{ color: awayCSSColor, borderColor: awayCSSColor }}>Foul Summary</button>
+                        <button onClick={() => {setSummaryTeam('AWAY'); setModalStep('FOUL_SUMMARY');}} className="shrink-0 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold rounded shadow-sm border" style={{ color: awayCSSColor, borderColor: awayCSSColor }}>Foul Summary</button>
                     </div>
                     <div className="grid grid-cols-2 gap-2 md:gap-3 flex-1">
                         {ACTION_BUTTONS.map(btn => (
@@ -122,12 +123,12 @@ export default function InGameDashboard({
                 </div>
 
                 <div className={`w-1/2 p-4 flex flex-col ${panelBg}`}>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl sm:text-2xl md:text-3xl font-black uppercase flex items-center space-x-3" style={{ color: homeCSSColor, textShadow: isDarkMode ? '0px 1px 3px rgba(0,0,0,0.8)' : 'none' }}>
-                            {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home" className="w-6 h-6 md:w-8 md:h-8 object-contain hidden sm:block" />}
-                            <span className="truncate">{gameData.homeTeam || 'HOME TEAM'}</span>
+                    <div className="flex justify-between items-start mb-4 gap-2">
+                        <h2 className="text-lg sm:text-xl md:text-2xl font-black uppercase flex items-start space-x-2 md:space-x-3" style={{ color: homeCSSColor, textShadow: isDarkMode ? '0px 1px 3px rgba(0,0,0,0.8)' : 'none' }}>
+                            {gameData.homeLogo && <img src={gameData.homeLogo} alt="Home" className="w-6 h-6 md:w-8 md:h-8 object-contain shrink-0 mt-0.5" />}
+                            <span className="leading-tight line-clamp-2">{gameData.homeTeam || 'HOME TEAM'}</span>
                         </h2>
-                        <button onClick={() => {setSummaryTeam('HOME'); setModalStep('FOUL_SUMMARY');}} className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base font-bold rounded shadow-sm border" style={{ color: homeCSSColor, borderColor: homeCSSColor }}>Foul Summary</button>
+                        <button onClick={() => {setSummaryTeam('HOME'); setModalStep('FOUL_SUMMARY');}} className="shrink-0 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-bold rounded shadow-sm border" style={{ color: homeCSSColor, borderColor: homeCSSColor }}>Foul Summary</button>
                     </div>
                     <div className="grid grid-cols-2 gap-2 md:gap-3 flex-1">
                         {ACTION_BUTTONS.map(btn => (

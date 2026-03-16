@@ -4,6 +4,14 @@
 
 ## Recent Updates
 
+## [v0.83] - 2026-03-16 - iPad Flexbox Layout Squeeze Fix
+**UI Optimization**
+* **Strict Proportional Header:** Re-engineered the master `InGameDashboard` flexbox to prevent aggressive scaling loops on 11" iPad screens (`md`/`lg` breakpoints). The header is now strictly segmented (Left Logo: 20%, Center Scoreboard: 60%, Right Controls: 20%), guaranteeing the team names have ample horizontal space and eliminating the visual "C..." and "B..." truncation squeeze.
+* **Redundant Quarter Cleanup:** The `Q1/Q2/Q3` display toggle in the header has been explicitly hidden on all displays smaller than large PC monitors (`xl`). Because the active quarter is already prominently displayed on the primary toggle button in the footer, removing this read-only element from tablets successfully frees up an additional 250px of critical layout space.
+* **Control Panel Text Wrapping:** Removed the forced single-line `truncate` class from the main team name headers in the central control block. Long franchise names (e.g., "BUFFALO GUNNERS FC") will now gracefully wrap to a second line (`line-clamp-2`) instead of randomly cutting off characters.
+
+---
+
 ## [v0.82] - 2026-03-16 - iPad Responsiveness & Layout Scaling
 **Visual & UX Patch**
 * **Dynamic Font Scaling:** Fixed an extreme truncation bug present on 11" tablets operating in landscape orientation. The team name header fonts were statically locked to `text-4xl`, which forced flexbox to aggressively calculate intrinsic widths and compress names like "BUFFALO GUNNERS FC" down to a single letter. The font logic has been updated to scale smoothly (`text-2xl` on iPad, scaling up to `text-4xl` only on massive desktop monitors), allowing long team names to breathe and wrap appropriately.
@@ -69,13 +77,6 @@
 ## [v0.74] - 2026-03-13 - Foul Timeline Display Refinement
 **UI Enhancements**
 * **Cleaned Timeline Badges:** Refined the Game Log timeline display for standard foul events. Because standard fouls do not require a specific match clock time, the central timeline "time pill" now dynamically hides the default `--:--` placeholder and instead perfectly centers an enlarged Quarter badge for a much cleaner, more intentional aesthetic, while still properly sorting in the exact order the foul was logged.
-
----
-
-## [v0.73] - 2026-03-13 - Early Release Data Display Fix
-**Bug Fixes**
-* **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.
-
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 
