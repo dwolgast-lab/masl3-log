@@ -4,6 +4,14 @@
 
 ## Recent Updates
 
+## [v0.82] - 2026-03-16 - iPad Responsiveness & Layout Scaling
+**Visual & UX Patch**
+* **Dynamic Font Scaling:** Fixed an extreme truncation bug present on 11" tablets operating in landscape orientation. The team name header fonts were statically locked to `text-4xl`, which forced flexbox to aggressively calculate intrinsic widths and compress names like "BUFFALO GUNNERS FC" down to a single letter. The font logic has been updated to scale smoothly (`text-2xl` on iPad, scaling up to `text-4xl` only on massive desktop monitors), allowing long team names to breathe and wrap appropriately.
+* **Scorebox Diet:** Shaved down the internal padding, icon widths, and font sizing of the central scorebox specifically on the `md` UI breakpoint, surrendering significant horizontal layout space back to the team name containers.
+
+---
+
+
 ## [v0.81] - 2026-03-16 - Video Review Safeguards & Logging
 **Logic & UX Upgrades**
 * **VR Availability Locks:** Passed the master `gameEvents` state into the VR Modal to act as a logic guard. The modal now actively evaluates a team's VR history when rendering the Team Selection step. If a team has used their single challenge (or failed their earned secondary challenge), their selection button disables itself and explicitly displays a "No Challenges Remaining" text warning.
@@ -67,13 +75,6 @@
 ## [v0.73] - 2026-03-13 - Early Release Data Display Fix
 **Bug Fixes**
 * **Early Release PDF/UI Mismatch:** Fixed a mapping error where early penalty releases (triggered dynamically by Power Play Goals in the active dashboard) correctly updated the internal system state to `actualReleaseTime`, but the PDF generator and the UI Timeline were hardcoded to only display the initially calculated `releaseTime`. Both the `EventLog` timeline and the `alternatePdfEngine` now correctly check for and prioritize early release strings before falling back to the standard scheduled release math.
-
-
-
-## [v0.72] - 2026-03-13 - PDF Sub-Component Sorting & Header Overlap Fix
-**Data Sorting & PDF Integrity**
-* **Total PDF Chronological Sorting:** Patched the `alternatePdfEngine.js` builder. The chronological mapping hook (Quarter Ascending, Time Descending) is now heavily applied to every individual sub-table containing timestamped events (Goals, Timeouts, Warnings, and Injuries), ensuring perfect time alignment throughout the entire multi-page document.
-* **Orphan Header Collision Fix:** `jsPDF-autotable` naturally ignores top page limits when automatically spanning an elongated table across multiple pages. To fix the resulting header overlaps, a hard boundary override of `margin: { top: 80, bottom: 50 }` was applied to all 13 rendering blocks in the PDF engine, creating 40pt of protected clearance below the repeated League Logo on every page.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

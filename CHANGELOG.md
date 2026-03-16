@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.82] - 2026-03-16 - iPad Responsiveness & Layout Scaling
+**Visual & UX Patch**
+* **Dynamic Font Scaling:** Fixed an extreme truncation bug present on 11" tablets operating in landscape orientation. The team name header fonts were statically locked to `text-4xl`, which forced flexbox to aggressively calculate intrinsic widths and compress names like "BUFFALO GUNNERS FC" down to a single letter. The font logic has been updated to scale smoothly (`text-2xl` on iPad, scaling up to `text-4xl` only on massive desktop monitors), allowing long team names to breathe and wrap appropriately.
+* **Scorebox Diet:** Shaved down the internal padding, icon widths, and font sizing of the central scorebox specifically on the `md` UI breakpoint, surrendering significant horizontal layout space back to the team name containers.
+
+---
+
 ## [v0.81] - 2026-03-16 - Video Review Safeguards & Logging
 **Logic & UX Upgrades**
 * **VR Availability Locks:** Passed the master `gameEvents` state into the VR Modal to act as a logic guard. The modal now actively evaluates a team's VR history when rendering the Team Selection step. If a team has used their single challenge (or failed their earned secondary challenge), their selection button disables itself and explicitly displays a "No Challenges Remaining" text warning.
