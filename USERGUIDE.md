@@ -1,5 +1,3 @@
----
-
 # MASL 4th Official Log App: User Guide
 **Version 1.0.1-beta+**
 
