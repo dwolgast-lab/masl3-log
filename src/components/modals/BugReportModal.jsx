@@ -20,7 +20,7 @@ export default function BugReportModal({ isOpen, onClose, appVersion }) {
         setStatus('SUBMITTING');
 
         // REPLACE THIS URL WITH YOUR FORMSPREE ENDPOINT
-        const FORMSPREE_URL = "https://formspree.io/f/YOUR_ENDPOINT_HERE";
+        const FORMSPREE_URL = "https://formspree.io/f/mkoqkpjb";
 
         const payload = {
             ...formData,
