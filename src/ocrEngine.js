@@ -84,7 +84,6 @@ export const parseRosterText = (scanResult, currentRoster, currentBench) => {
     let newPlayers = [];
     let newStaff = [];
     const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
-    let importedPlayerCount = 0;
 
     const lines = scanResult.split('\n');
     
@@ -99,7 +98,6 @@ export const parseRosterText = (scanResult, currentRoster, currentBench) => {
         
         let candidates = [];
         let nameParts = [];
-        let isGK = false;
         let hitText = false;
         let foundBenchRole = false;
 
@@ -141,26 +139,23 @@ export const parseRosterText = (scanResult, currentRoster, currentBench) => {
                     
                     if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
                         hitText = true;
-                        if (upperCell.includes('G')) isGK = true;
                         continue;
                     }
                     
                     if (/[A-Za-z]/.test(cell)) {
                         hitText = true;
                         if (upperCell.includes('GK')) {
-                            isGK = true;
                             cell = cell.replace(/GK/ig, '').trim();
                         }
                         if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
                     }
                 } else {
                     if (upperCell === 'GK' || upperCell === 'G') {
-                        isGK = true;
+                        // Skip
                     } else if (/^[DMFET]$/.test(upperCell)) {
                         continue; 
                     } else {
                         if (upperCell.includes('GK')) {
-                            isGK = true;
                             cell = cell.replace(/GK/ig, '').trim();
                         }
                         if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
@@ -174,16 +169,14 @@ export const parseRosterText = (scanResult, currentRoster, currentBench) => {
                 const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
                 
                 if (finalName.length > 1 && finalName.toUpperCase() !== 'BENCH STAFF' && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
-                    importedPlayerCount++;
-                    const isAutoStarter = importedPlayerCount <= 6;
-                    const isAutoGK = isGK || importedPlayerCount === 1;
-
+                    
+                    // MODIFIED: Removed auto-guessing logic. All OCR players now require manual verification.
                     newPlayers.push({
                         id: Date.now() + Math.random(),
                         number: jerseyNum,
                         name: finalName,
-                        isGK: isAutoGK,
-                        isStarter: isAutoStarter,
+                        isGK: false,
+                        isStarter: false,
                         isCaptain: false
                     });
                 }

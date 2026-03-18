@@ -35,7 +35,27 @@ export default function TeamConfigCard({
             
             <div className="flex space-x-2 mb-4">
                 <input type="text" name={`${type}Team`} placeholder="Team Name" value={teamNameStr || ''} onChange={handleInputChange} className="flex-[2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
-                <input type="text" name={`${type}ColorName`} placeholder="Jersey Color" value={colorNameStr || ''} onChange={handleInputChange} className="flex-1 p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" title="Report Color Name" />
+                
+                {/* MODIFIED: Combined Color Picker Swatch + Text Name Input */}
+                <div className="flex-1 flex border rounded bg-white overflow-hidden focus-within:border-blue-500">
+                    <input 
+                        type="color" 
+                        name={`${type}Color`} 
+                        value={gameData[`${type}Color`] || (isAway ? '#1e40af' : '#991b1b')} 
+                        onChange={handleInputChange} 
+                        className="w-10 h-full p-0 border-0 cursor-pointer shrink-0" 
+                        title="Dashboard UI Color" 
+                    />
+                    <input 
+                        type="text" 
+                        name={`${type}ColorName`} 
+                        placeholder="Color Name" 
+                        value={colorNameStr || ''} 
+                        onChange={handleInputChange} 
+                        className="w-full p-2 text-sm outline-none min-w-0" 
+                        title="PDF Report Color Name" 
+                    />
+                </div>
             </div>
 
             <button onClick={() => setActiveRosterModal(type.toUpperCase())} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: cssColor }}>

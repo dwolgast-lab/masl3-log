@@ -155,7 +155,7 @@ export const TEAMS = [
     { id: 'side_fc_cyclones', name: 'Side FC Cyclones', league: 'MASLW', division: 'Heartland', color: '#000000', colorName: 'Black', logo: '/logos/Side_FC_Cyclones_logo.png' },
     { id: 'tulsa_fc_channel_cats', name: 'Tulsa FC Channel Cats', league: 'MASLW', division: 'Heartland', color: '#F58220', colorName: 'Orange', logo: '/logos/Tulsa_FC_Channel_Cats_logo.png' },
     { id: 'wichita_aero', name: 'Wichita Aero', league: 'MASLW', division: 'Heartland', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Wichita_Aero_logo.png' },
-    { id: 'wichita_lady_luck', name: 'Wichita Lady Luck', league: 'MASLW', division: 'Heartland', color: '#E31837', colorName: 'Red', logo: '/logos/Wichita_Lady_Luck_logo.png' },
+    { id: 'wichita_lady_luck', name: 'Wichita Lady Luck', league: 'MASLW', division: 'Heartland', color: '#24A14837', colorName: 'Green', logo: '/logos/Wichita_Lady_Luck_logo.png' },
     { id: 'iowa_demon_hawks_maslw', name: 'Iowa Demon Hawks', league: 'MASLW', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASLW_logo.png' },
     { id: 'iowa_raptors_maslw', name: 'Iowa Raptors', league: 'MASLW', division: 'Midwest', color: '#008000', colorName: 'Green', logo: '/logos/Iowa_Raptors_MASLW_logo.png' },
     { id: 'ks_astras', name: 'KS Astras', league: 'MASLW', division: 'Midwest', color: '#002244', colorName: 'Navy', logo: '/logos/KS_Astras_logo.png' },

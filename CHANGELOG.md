@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.0.0-beta] - 2026-03-18 - Beta Release & OCR Refinements
+**Features & Fixes**
+* **Manual Color Overrides:** Fixed a bug where overriding the team's Color Name string on the setup screen failed to update the visual UI theme. The `TeamConfigCard` now features a native `<input type="color">` swatch picker, allowing officials to dynamically overwrite the underlying HEX code if a team is wearing alternate white/away kits.
+* **OCR Reliability Rollback:** Analyzed live-fire edge cases where the OCR engine misidentified Starters and Goalkeepers on heavily scrambled, handwritten lineup sheets. To improve data integrity on the sideline, the auto-guessing math was removed. The OCR engine now focuses strictly on extracting Names and Jersey Numbers, defaulting all `isGK` and `isStarter` flags to `false` and requiring the 4th official to perform a fast, manual verification step.
+
+---
+
 ## [v0.85] - 2026-03-18 - Integrated Bug Reporting Subsystem
 **Support & Feedback**
 * **In-App Bug Reporting:** Built a dedicated `BugReportModal` directly into the Pregame Setup screen, allowing officials to securely report bugs or submit feature requests without leaving the application or needing a third-party account.
