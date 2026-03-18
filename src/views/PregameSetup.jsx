@@ -200,6 +200,7 @@ export default function PregameSetup({
                 isOpen={showBugModal} 
                 onClose={() => setShowBugModal(false)} 
                 appVersion={appVersion}
+            />
             <div className="absolute bottom-2 w-full flex justify-between px-4 z-[1000] drop-shadow-md">
                 <button 
                     onClick={() => setShowBugModal(true)} 
