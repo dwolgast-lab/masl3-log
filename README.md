@@ -44,6 +44,8 @@
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 
+👉 **[User Guide is available in USERGUIDE.md](./USERGUIDE.md)**
+
 ---
 
 ## React + Vite
