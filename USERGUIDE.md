@@ -1,6 +1,6 @@
 ________________________________________
 MASL 4th Official Log App: User Guide
-Version 1.0.0-beta
+Version 1.0.1-beta+
 Welcome to the digital MASL 4th Official Log App. This platform is designed to replace the traditional paper worksheet, automating penalty math, foul accumulation, and timeline tracking so Assistant Referees and 4th Officials can keep their eyes on the game.
 This guide will walk you through setting up a match, logging live game events, exporting the final official PDF worksheet, and submitting bug reports.
 ________________________________________
@@ -25,13 +25,13 @@ Match Information & Crew
 4.	Dark Mode: If you are working in a dimly lit arena and want to reduce screen glare, toggle "🌙 Dark Mode" on.
 Setting Up Teams and Rosters
 Use the Team Configuration cards to set up the Home and Away teams.
-1.	Select the franchise from the dropdown menu. The app will automatically load the team's official colors and logo.
-2.	Alternate Kits (Color Override): If a team is wearing an alternate uniform (e.g., an all-white away kit), you can click the color swatch block next to the "Color Name" text box to manually override the dashboard's display color for that team.
+1.	Select Team: Choose the franchise from the dropdown menu. The app will automatically load the team's default colors and logo.
+2.	Jersey Colors (The Color Picker): If a team is wearing an alternate uniform, click the color swatch block to open the Color Picker. You can select a Primary Color and a Secondary Trim from the predefined list. This ensures the exact color names (e.g., "Pink / White") are perfectly formatted on your final PDF report.
 3.	Click "Edit Roster & Bench" to open the roster editor.
-💡 PRO TIP: While the app is fully touch-compatible for tablets like the iPad, using a physical keyboard (like an iPad Magic Keyboard or a Bluetooth keyboard) for entering and editing team rosters is highly recommended. It will make pregame data entry significantly faster.
+💡 PRO TIP: While the app is fully touch-compatible for tablets like the iPad, using a physical keyboard (like an iPad Magic Keyboard or a Bluetooth keyboard) for entering and editing team rosters is highly recommended, but not strictly necessary. It will make pregame data entry significantly faster.
 [Insert Screenshot: The Roster Editor Modal]
-•	Adding Players: Enter the player's number and name.
-•	Goalkeepers & Starters: To ensure absolute accuracy on the final report, all players default to non-starters and field players. You must manually tap the GK and Starter checkboxes for the appropriate players before starting the match.
+•	Adding Players: Enter the player's number and name, or use the "Scan Lineup Sheet" tool to import the names automatically.
+•	Goalkeepers & Starters: To ensure absolute accuracy on the final report, all players default to non-starters and field players. Whether you typed them manually or used the lineup scanner, you must manually tap the GK and Starter checkboxes for the appropriate players before starting the match.
 •	Adding Bench Staff: Switch to the Bench tab to add the Head Coach and assistant staff.
 •	Validation: When you click "Proceed to Kickoff", the app will warn you if a roster violates MASL rules (e.g., missing a starting GK, no Head Coach, or missing the minimum required GKs for pro leagues).
 ________________________________________

@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v1.0.1-beta] - 2026-03-18 - Visual Color Dictionary
+**Features & Fixes**
+* **Custom Color Dictionary:** Replaced the native OS color picker with a curated, visual dropdown interface. Officials can now explicitly select a generic Primary Color and a Secondary Trim color (e.g., "Pink / White") from a defined grid of colored swatches. This ensures exact, standardized nomenclature is printed on the final PDF report, eliminating formatting inconsistencies.
+* **White-UI Contrast Fix:** Implemented a UI failsafe for teams wearing primary White kits. Selecting "White" mathematically sets the background UI engine to a dark silver (`#9CA3AF`) while explicitly saving the text "White" for the report, preventing the catastrophic UI failure of drawing invisible white text on a white dashboard background.
+
+---
+
 ## [v1.0.0-beta] - 2026-03-18 - Beta Release & OCR Refinements
 **Features & Fixes**
 * **Manual Color Overrides:** Fixed a bug where overriding the team's Color Name string on the setup screen failed to update the visual UI theme. The `TeamConfigCard` now features a native `<input type="color">` swatch picker, allowing officials to dynamically overwrite the underlying HEX code if a team is wearing alternate white/away kits.
