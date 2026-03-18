@@ -23,6 +23,8 @@ This guide will walk you through setting up a match, logging live game events, e
 
 ## 1. Initial Setup & Rosters
 
+The app currently lives at [MASL Game Log App](https://masl3-log.vercel.app/)
+
 When you first load the app, you will land on the **Pregame Setup** screen. This is where you configure the match details before kickoff. 
 
 *Note: The app features an Auto-Save function. If you accidentally close your browser or refresh the page, your data will remain safely stored on your device.*
