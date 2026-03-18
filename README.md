@@ -4,6 +4,14 @@
 
 ## Recent Updates
 
+## [v0.85] - 2026-03-18 - Integrated Bug Reporting Subsystem
+**Support & Feedback**
+* **In-App Bug Reporting:** Built a dedicated `BugReportModal` directly into the Pregame Setup screen, allowing officials to securely report bugs or submit feature requests without leaving the application or needing a third-party account.
+* **Automated Diagnostics:** The reporting engine automatically captures and appends the active App Version and the user's raw System/Browser information (`navigator.userAgent`) to the payload, drastically improving developer troubleshooting capabilities.
+* **Secure Form Routing:** Implemented a secure, serverless Formspree POST endpoint to route feedback directly to the developer's email without exposing private API tokens or requiring heavy backend architecture.
+
+---
+
 ## [v0.84] - 2026-03-16 - iPad Flexbox Header Override
 **UI Polish**
 * **Fluid Center Weighting:** Removed the rigid 20/60/20 container widths introduced in v0.83, which inadvertently shrunk the central scoreboard container on iPad landscape orientations. The left and right headers now use `flex-none` (consuming only minimum required space), while the central container utilizes `flex-1` to greedily absorb all remaining horizontal real estate.
@@ -32,53 +40,6 @@
 **Logic & UX Upgrades**
 * **VR Availability Locks:** Passed the master `gameEvents` state into the VR Modal to act as a logic guard. The modal now actively evaluates a team's VR history when rendering the Team Selection step. If a team has used their single challenge (or failed their earned secondary challenge), their selection button disables itself and explicitly displays a "No Challenges Remaining" text warning.
 * **Timeline Fallback Overrides:** Patched a gap in the timeline UI where Video Reviews were rendering with an "Unknown" name placeholder because they lack a specific player entity. The timeline now explicitly recognizes `Video Review` events, replaces the header with either "Coach Challenge" or "Referee Review", and generates a clean, color-coded description block displaying the Reason, Specification, Result, and whether the challenge flag was successfully collected.
-
----
-
-
-## [v0.80] - 2026-03-16 - Dark Mode Contrast & VR Flow Refinements
-**Visual & UX Upgrades**
-* **Dynamic Dark Mode Contrast:** Implemented a real-time luminance calculation engine (`ensureVisibleInDark`). When Dark Mode is active, the system now automatically evaluates team brand colors (e.g., Navy Blue or Forest Green) and mathematically brightens them by 60% if they fall below a strict visibility threshold, guaranteeing UI legibility against the dark background without losing the team's core identity.
-* **Standardized VR Time Entry:** Rerouted the Video Review initiation flow. Instead of requiring manual typing into a dedicated text box, pressing "VIDEO REVIEW" now opens the standard Time Keypad (defaulting to the current quarter). After the user inputs the clock time, the system seamlessly hijacks the routing and passes the data directly into the Video Review wizard.
-
-**Bug Fixes**
-* **VR Modal State Reset:** Fixed a bug where the Video Review modal would incorrectly remember its previous state (getting "stuck" on the Failed Challenge or Outcome screens after a previous review). A new React `useEffect` hook now forcefully resets the internal wizard state back to the first step every single time the modal is opened.
-
----
-
-## [v0.79] - 2026-03-16 - Broadcast Theme & VR Subsystem
-**Major Features & Refinements**
-* **Dark Mode Theme Engine:** Added a universal dark mode engine toggleable from the Pregame Setup screen. When active, it deeply injects custom slate-and-white tailwind classes across the entire `InGameDashboard` and UI modals to significantly reduce stadium glare during live operations.
-* **Real-Time Status Bar:** Embedded a data-driven status bar directly beneath the central scoreboard. It automatically tracks "Timeouts Remaining" for both teams in real-time, and conditionally evaluates the strict MASL logic rules to display if a "VR Challenge" remains available.
-* **Video Review (VR) Subsystem:** Created a complex, multi-step `VideoReviewModal.jsx` specifically for `MASL` tier matches. This flow cleanly documents Quarter, Time, Initiator (Referee vs. Coach), Specific MASL Reason Code arrays, Outcome (Stands vs Overturned), and forces flag-collection verification on failed coach challenges.
-* **PDF VR Rendering:** The `alternatePdfEngine.js` dynamically intercepts Video Review events and routes them into dedicated tracking tables on the team data sheets, as well as printing their complex descriptions cleanly into the chronological Game Log.
-
----
-
-## [v0.78] - 2026-03-13 - Data Extraction Failsafe
-**Bug Fixes**
-* **Assist "Undefined" Render Bug:** Fixed a Javascript evaluation quirk where skipping the assist entry or manually selecting "Unassisted" from the player modal stored a flat string instead of a player object. Attempting to extract the `.name` property from this string caused the UI and PDF engine to output the literal text `"undefined"`. The extraction logic has been hardened to securely check object types before rendering, ensuring `--unassisted--` reliably prints across all contexts.
-
----
-
-## [v0.77] - 2026-03-13 - Live Foul Accumulation & Special Goal UI
-**Features & UX Upgrades**
-* **Live Foul Accumulation:** Replaced the generic "Foul Logged" text in the live `EventLog` timeline with dynamic, mathematically calculated historical foul counts. The engine now looks back through the match array at the specific timestamp of the foul to output both `Foul Count (half)` and `Foul Count (game)` directly onto the offending player's timeline card, removing the need to check the Foul Summary screen.
-* **Goal Type Data Mapping:** Updated both the live UI and the PDF Engine to explicitly format special-teams goals. If a goal does not have an assist, it now explicitly reads `--unassisted--` to prove to auditors it was not forgotten. Furthermore, if a goal is tagged as a Penalty Kick (`PK`) or Shootout (`SO`), the system entirely strips out the assist UI/PDF logic, adhering strictly to MASL logging rules where assists cannot be awarded on direct free kicks.
-
----
-
-## [v0.76] - 2026-03-13 - PDF Report: Special Goal Designators
-**Reporting & Export Updates**
-* **Goal Type Column Added:** Added a dedicated `Type` column to the far right of the Goals table in the PDF report export.
-* **Dynamic Designator Injection:** The PDF engine now detects and intercepts active `goalFlags`. Standard goals leave the new column blank, but any goal tagged as a Power Play (`PP`), Penalty Kick (`PK`), or Shootout (`SO`) is explicitly categorized in the new column for immediate context during post-game review.
-
----
-
-## [v0.75] - 2026-03-13 - Timeline Absolute Boundary Math
-**UI & PDF Synchronization**
-* **Strict Period Boundaries:** Re-engineered the timeline sorting algorithms across both `App.jsx` and the PDF builder to utilize "Virtual Sort Times." Start markers are dynamically injected into the array as happening at `99:99`, and End markers as `-01:00`. This mathematical trick absolutely guarantees that Start and End markers act as solid bookends at the top and bottom of their respective quarters, regardless of when they were actually clicked relative to other events.
-* **Media Timeout Highlighting:** Extracted Media Timeouts from the standard system design. They now render on the live dashboard timeline as bright `bg-orange-500` pills with matching white/orange sub-text styling to immediately stand out from standard period breaks during live gameplay.
 
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**

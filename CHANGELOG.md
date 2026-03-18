@@ -2,6 +2,14 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v0.85] - 2026-03-18 - Integrated Bug Reporting Subsystem
+**Support & Feedback**
+* **In-App Bug Reporting:** Built a dedicated `BugReportModal` directly into the Pregame Setup screen, allowing officials to securely report bugs or submit feature requests without leaving the application or needing a third-party account.
+* **Automated Diagnostics:** The reporting engine automatically captures and appends the active App Version and the user's raw System/Browser information (`navigator.userAgent`) to the payload, drastically improving developer troubleshooting capabilities.
+* **Secure Form Routing:** Implemented a secure, serverless Formspree POST endpoint to route feedback directly to the developer's email without exposing private API tokens or requiring heavy backend architecture.
+
+---
+
 ## [v0.84] - 2026-03-16 - iPad Flexbox Header Override
 **UI Polish**
 * **Fluid Center Weighting:** Removed the rigid 20/60/20 container widths introduced in v0.83, which inadvertently shrunk the central scoreboard container on iPad landscape orientations. The left and right headers now use `flex-none` (consuming only minimum required space), while the central container utilizes `flex-1` to greedily absorb all remaining horizontal real estate.
