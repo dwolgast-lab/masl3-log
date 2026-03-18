@@ -7,6 +7,7 @@ import TeamConfigCard from '../components/TeamConfigCard';
 import StartersViewerModal from '../components/modals/StartersViewerModal';
 import RosterEditorModal from '../components/modals/RosterEditorModal';
 import CrewEditorModal from '../components/modals/CrewEditorModal';
+import BugReportModal from '../components/modals/BugReportModal';
 
 export default function PregameSetup({
     gameData, setGameData, handleInputChange, awayCSSColor, homeCSSColor,
@@ -20,6 +21,7 @@ export default function PregameSetup({
 }) {
 
     const [showCrewModal, setShowCrewModal] = useState(false);
+    const [showBugModal, setShowBugModal] = useState(false);
     const activeLeague = LEAGUES.find(l => l.id === gameData.league);
     
     const teamsByDivision = TEAMS.filter(t => t.league === gameData.league).reduce((acc, team) => {
@@ -194,9 +196,20 @@ export default function PregameSetup({
             <CrewEditorModal show={showCrewModal} onClose={() => setShowCrewModal(false)} gameData={gameData} handleInputChange={handleInputChange} />
             <StartersViewerModal showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal} gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} awayRoster={awayRoster} homeRoster={homeRoster} />
             <RosterEditorModal activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster} awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench} newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} />
-            
-            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">
-                Author: Dave Wolgast | v{appVersion}
+            <BugReportModal 
+                isOpen={showBugModal} 
+                onClose={() => setShowBugModal(false)} 
+                appVersion={appVersion}
+            <div className="absolute bottom-2 w-full flex justify-between px-4 z-[1000] drop-shadow-md">
+                <button 
+                    onClick={() => setShowBugModal(true)} 
+                    className="text-xs font-bold text-gray-500 hover:text-blue-600 transition bg-white/80 px-2 py-1 rounded"
+                >
+                    🐞 Report a Bug / Feedback
+                </button>
+                <div className="text-xs font-bold text-gray-400 bg-white/80 px-2 py-1 rounded">
+                    Author: Dave Wolgast | v{appVersion}
+                </div>
             </div>
         </div>
     );
