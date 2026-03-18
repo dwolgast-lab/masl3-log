@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.0.3-beta] - 2026-03-18 - Picker UI Polishing
+**Bug Fixes & Tweaks**
+* **Color Picker Clipping:** Adjusted the directional rendering of the custom color picker popover. It now explicitly opens upwards (`bottom-full`) to prevent it from being abruptly cut off by the `overflow-hidden` rule on the master setup card container.
+* **Auto-Dismiss Workflow:** Added workflow smoothing to the color picker tool. The popover will now automatically close itself immediately after the user makes a Secondary Trim color selection, eliminating an unnecessary extra click.
+
+---
+
 ## [v1.0.2-beta] - 2026-03-18 - Picker State Batching Fix
 **Bug Fixes**
 * **React State Clobbering:** Resolved a deep framework quirk where selecting a Primary Color from the custom dropdown failed to update the dashboard's background UI (leaving the preview box looking white/incorrect). The `TeamConfigCard` now utilizes a sequential `useEffect` state queue, forcing the application to securely save the Hex code, fully process the render cycle, and *then* save the text name, eliminating the race condition.

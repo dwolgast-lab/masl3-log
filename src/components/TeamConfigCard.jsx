@@ -84,6 +84,11 @@ export default function TeamConfigCard({
 
         // Drop the update into the sequential queue instead of firing simultaneously
         setUpdateQueue({ hex: newHex, name: finalName, phase: 'HEX' });
+        
+        // Auto-dismiss the picker when the secondary color is chosen
+        if (!isPrimary) {
+            setShowPicker(false);
+        }
     };
 
     // Derived properties to render the visual swatch inside the button safely
@@ -135,7 +140,8 @@ export default function TeamConfigCard({
                     </button>
 
                     {showPicker && (
-                        <div className="absolute z-[500] top-full mt-2 right-0 w-64 sm:w-72 bg-white rounded-xl shadow-2xl border border-slate-200 p-4">
+                        /* POP OVER MODIFIED TO RENDER UPWARDS (bottom-full) */
+                        <div className="absolute z-[500] bottom-full mb-2 right-0 w-64 sm:w-72 bg-white rounded-xl shadow-2xl border border-slate-200 p-4">
                             
                             <h4 className="text-xs font-black text-slate-500 uppercase mb-2">Primary Color</h4>
                             <div className="flex flex-wrap gap-2 mb-4">
