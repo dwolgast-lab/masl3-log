@@ -4,6 +4,12 @@
 
 ## Recent Updates
 
+## [v1.0.2-beta] - 2026-03-18 - Picker State Batching Fix
+**Bug Fixes**
+* **React State Clobbering:** Resolved a deep framework quirk where selecting a Primary Color from the custom dropdown failed to update the dashboard's background UI (leaving the preview box looking white/incorrect). The `TeamConfigCard` now utilizes a sequential `useEffect` state queue, forcing the application to securely save the Hex code, fully process the render cycle, and *then* save the text name, eliminating the race condition.
+
+---
+
 ## [v1.0.1-beta] - 2026-03-18 - Visual Color Dictionary
 **Features & Fixes**
 * **Custom Color Dictionary:** Replaced the native OS color picker with a curated, visual dropdown interface. Officials can now explicitly select a generic Primary Color and a Secondary Trim color (e.g., "Pink / White") from a defined grid of colored swatches. This ensures exact, standardized nomenclature is printed on the final PDF report, eliminating formatting inconsistencies.
@@ -40,12 +46,6 @@
 * **Redundant Quarter Cleanup:** The `Q1/Q2/Q3` display toggle in the header has been explicitly hidden on all displays smaller than large PC monitors (`xl`). Because the active quarter is already prominently displayed on the primary toggle button in the footer, removing this read-only element from tablets successfully frees up an additional 250px of critical layout space.
 * **Control Panel Text Wrapping:** Removed the forced single-line `truncate` class from the main team name headers in the central control block. Long franchise names (e.g., "BUFFALO GUNNERS FC") will now gracefully wrap to a second line (`line-clamp-2`) instead of randomly cutting off characters.
 
----
-
-## [v0.82] - 2026-03-16 - iPad Responsiveness & Layout Scaling
-**Visual & UX Patch**
-* **Dynamic Font Scaling:** Fixed an extreme truncation bug present on 11" tablets operating in landscape orientation. The team name header fonts were statically locked to `text-4xl`, which forced flexbox to aggressively calculate intrinsic widths and compress names like "BUFFALO GUNNERS FC" down to a single letter. The font logic has been updated to scale smoothly (`text-2xl` on iPad, scaling up to `text-4xl` only on massive desktop monitors), allowing long team names to breathe and wrap appropriately.
-* **Scorebox Diet:** Shaved down the internal padding, icon widths, and font sizing of the central scorebox specifically on the `md` UI breakpoint, surrendering significant horizontal layout space back to the team name containers.
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

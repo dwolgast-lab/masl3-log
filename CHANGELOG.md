@@ -2,6 +2,12 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.0.2-beta] - 2026-03-18 - Picker State Batching Fix
+**Bug Fixes**
+* **React State Clobbering:** Resolved a deep framework quirk where selecting a Primary Color from the custom dropdown failed to update the dashboard's background UI (leaving the preview box looking white/incorrect). The `TeamConfigCard` now utilizes a sequential `useEffect` state queue, forcing the application to securely save the Hex code, fully process the render cycle, and *then* save the text name, eliminating the race condition.
+
+---
+
 ## [v1.0.1-beta] - 2026-03-18 - Visual Color Dictionary
 **Features & Fixes**
 * **Custom Color Dictionary:** Replaced the native OS color picker with a curated, visual dropdown interface. Officials can now explicitly select a generic Primary Color and a Secondary Trim color (e.g., "Pink / White") from a defined grid of colored swatches. This ensures exact, standardized nomenclature is printed on the final PDF report, eliminating formatting inconsistencies.

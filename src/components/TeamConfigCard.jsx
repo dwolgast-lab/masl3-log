@@ -30,6 +30,20 @@ export default function TeamConfigCard({
     
     const [showPicker, setShowPicker] = useState(false);
     const pickerRef = useRef(null);
+    const [updateQueue, setUpdateQueue] = useState(null);
+
+    // Sequential State Queue: Prevents React from clobbering the Hex code when updating the Name string
+    useEffect(() => {
+        if (!updateQueue) return;
+
+        if (updateQueue.phase === 'HEX') {
+            handleInputChange({ target: { name: `${type}Color`, value: updateQueue.hex } });
+            setUpdateQueue({ ...updateQueue, phase: 'NAME' });
+        } else if (updateQueue.phase === 'NAME') {
+            handleInputChange({ target: { name: `${type}ColorName`, value: updateQueue.name } });
+            setUpdateQueue(null);
+        }
+    }, [updateQueue]); 
 
     // Close the custom popover if the user clicks anywhere else on the screen
     useEffect(() => {
@@ -68,16 +82,21 @@ export default function TeamConfigCard({
             finalName = `${primName} / ${secName}`;
         }
 
-        handleInputChange({ target: { name: `${type}Color`, value: newHex } });
-        handleInputChange({ target: { name: `${type}ColorName`, value: finalName } });
+        // Drop the update into the sequential queue instead of firing simultaneously
+        setUpdateQueue({ hex: newHex, name: finalName, phase: 'HEX' });
     };
 
-    // Derived properties to render the visual swatch inside the button
+    // Derived properties to render the visual swatch inside the button safely
     const parts = colorNameStr.split('/');
+    const primName = parts[0] ? parts[0].trim() : '';
     const secName = parts[1] ? parts[1].trim() : '';
+    
+    const primObj = STANDARD_COLORS.find(c => c.name.toLowerCase() === primName.toLowerCase());
     const secObj = STANDARD_COLORS.find(c => c.name.toLowerCase() === secName.toLowerCase());
-    const secHex = secObj ? (secObj.displayHex || secObj.hex) : null;
-    const currentPrimaryHex = gameData[`${type}Color`] || (isAway ? '#1e40af' : '#991b1b');
+    
+    const displayPrimaryHex = primObj ? (primObj.displayHex || primObj.hex) : (gameData[`${type}Color`] || (isAway ? '#1e40af' : '#991b1b'));
+    const displaySecondaryHex = secObj ? (secObj.displayHex || secObj.hex) : null;
+    const currentPrimaryEngineHex = gameData[`${type}Color`] || (isAway ? '#1e40af' : '#991b1b');
 
     return (
         <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
@@ -107,9 +126,9 @@ export default function TeamConfigCard({
                         title="Select Jersey Colors"
                     >
                         <div className="w-8 h-5 rounded border shadow-sm shrink-0 mr-2 flex overflow-hidden">
-                            <div className="flex-1" style={{ backgroundColor: currentPrimaryHex }}></div>
+                            <div className="flex-1" style={{ backgroundColor: displayPrimaryHex }}></div>
                             {secName && secName !== 'None' && (
-                                <div className="flex-1 border-l border-gray-200/50" style={{ backgroundColor: secHex || currentPrimaryHex }}></div>
+                                <div className="flex-1 border-l border-gray-200/50" style={{ backgroundColor: displaySecondaryHex || displayPrimaryHex }}></div>
                             )}
                         </div>
                         <span className="truncate font-bold text-gray-700 text-xs">{colorNameStr || 'Color...'}</span>
@@ -126,7 +145,7 @@ export default function TeamConfigCard({
                                         type="button"
                                         onClick={() => handleColorSelect(true, c)}
                                         title={c.name}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${currentPrimaryHex.toUpperCase() === c.hex.toUpperCase() ? 'ring-2 ring-blue-500 border-white' : 'border-gray-200'}`}
+                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${currentPrimaryEngineHex.toUpperCase() === c.hex.toUpperCase() ? 'ring-2 ring-blue-500 border-white' : 'border-gray-200'}`}
                                         style={{ backgroundColor: c.displayHex || c.hex }}
                                     />
                                 ))}
