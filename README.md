@@ -4,6 +4,20 @@
 
 ## Recent Updates
 
+## [v1.1.0-beta] - 2026-06-02 - Major Penalty Release Workflow & Code Refactor
+
+**New Features**
+* **Major Penalty (Y6) Release Workflow:** The Active Penalties board now fully supports the stoppage-based release mechanic for Y6 (Major Penalty) offenders. When a Y6 is logged, the offender's board entry displays **"Earliest: Q3 08:14"** (the calculated 7-minute minimum). Once the 7-minute minimum has elapsed, a green **Released** button appears. Tapping it opens the time keypad so the 4th Official can record the exact stoppage time. That time is stored as the official release timestamp and printed in the PDF "Time Out" column.
+* **PDF & Event Log Time-Out Column:** The penalty time-out column now resolves in priority order: actual stoppage release time → PPG release time → calculated expiration.
+
+**Improvements**
+* **App.jsx Refactor:** Extracted penalty board and modal workflow handlers into dedicated custom hooks (`usePenaltyHandlers`, `useModalWorkflow`), reducing `App.jsx` by ~95 lines.
+
+**Cleanup**
+* Removed unused legacy `pdfEngine.js` and `glob` npm dependency.
+
+---
+
 ## [v1.0.3-beta] - 2026-03-18 - Picker UI Polishing
 **Bug Fixes & Tweaks**
 * **Color Picker Clipping:** Adjusted the directional rendering of the custom color picker popover. It now explicitly opens upwards (`bottom-full`) to prevent it from being abruptly cut off by the `overflow-hidden` rule on the master setup card container.
@@ -30,21 +44,6 @@
 * **OCR Reliability Rollback:** Analyzed live-fire edge cases where the OCR engine misidentified Starters and Goalkeepers on heavily scrambled, handwritten lineup sheets. To improve data integrity on the sideline, the auto-guessing math was removed. The OCR engine now focuses strictly on extracting Names and Jersey Numbers, defaulting all `isGK` and `isStarter` flags to `false` and requiring the 4th official to perform a fast, manual verification step.
 
 ---
-
-## [v0.85] - 2026-03-18 - Integrated Bug Reporting Subsystem
-**Support & Feedback**
-* **In-App Bug Reporting:** Built a dedicated `BugReportModal` directly into the Pregame Setup screen, allowing officials to securely report bugs or submit feature requests without leaving the application or needing a third-party account.
-* **Automated Diagnostics:** The reporting engine automatically captures and appends the active App Version and the user's raw System/Browser information (`navigator.userAgent`) to the payload, drastically improving developer troubleshooting capabilities.
-* **Secure Form Routing:** Implemented a secure, serverless Formspree POST endpoint to route feedback directly to the developer's email without exposing private API tokens or requiring heavy backend architecture.
-
----
-
-## [v0.84] - 2026-03-16 - iPad Flexbox Header Override
-**UI Polish**
-* **Fluid Center Weighting:** Removed the rigid 20/60/20 container widths introduced in v0.83, which inadvertently shrunk the central scoreboard container on iPad landscape orientations. The left and right headers now use `flex-none` (consuming only minimum required space), while the central container utilizes `flex-1` to greedily absorb all remaining horizontal real estate.
-* **Scorebox Padding Diet:** Heavily reduced the padding and margins around the central numbers inside the scorebox, returning critical horizontal layout space to the team names.
-* **Header Line-Clamp:** Replaced the single-line `truncate` instruction on the header team names with a dynamic `line-clamp-2 leading-none` rule. Long franchise names will now gracefully stack onto two lines in the header rather than being cut off.
-
 
 👉 **[View all previous release notes in CHANGELOG.md](./CHANGELOG.md)**
 

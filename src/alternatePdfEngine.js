@@ -220,7 +220,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             checkSpace(60);
             const teamPenalties = gameEvents.filter(e => e.team === teamId && e.type === 'Time Penalty' && roster.some(p => p.id === e.entity?.id) && !e.isJustServing).sort(chronoSort);
             const playerPens = teamPenalties.map(e => {
-                const outTimeObj = e.actualReleaseTime || e.releaseTime;
+                const outTimeObj = e.majorReleaseTime || e.actualReleaseTime || e.releaseTime;
                 const outTimeStr = outTimeObj ? `${outTimeObj.quarter} ${outTimeObj.time}` : '---';
 
                 return [

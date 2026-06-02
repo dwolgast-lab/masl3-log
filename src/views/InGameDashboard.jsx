@@ -6,7 +6,7 @@ import ActiveInjuriesWidget from '../components/widgets/ActiveInjuriesWidget';
 export default function InGameDashboard({
     gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents, setGameEvents,
     setModalStep, setSummaryTeam, triggerAction, activePenaltiesAway, activePenaltiesHome,
-    handlePPGoalScored, handlePenaltyExpired, togglePeriod, isPeriodRunning, setCurrentView,
+    handlePPGoalScored, handlePenaltyExpired, handleMajorPenaltyRelease, togglePeriod, isPeriodRunning, setCurrentView,
     handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent,
     startEditingReleaseTime, isDarkMode
 }) {
@@ -143,7 +143,8 @@ export default function InGameDashboard({
             <ActivePenaltiesWidget 
                 activePenaltiesAway={activePenaltiesAway} activePenaltiesHome={activePenaltiesHome} 
                 awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} 
-                handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired} 
+                handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired}
+                handleMajorPenaltyRelease={handleMajorPenaltyRelease}
                 startEditingReleaseTime={startEditingReleaseTime} isDarkMode={isDarkMode}
             />
 

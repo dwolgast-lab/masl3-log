@@ -8,7 +8,7 @@ export default function EventLog({
     const getEventDescription = (ev, isSystemContext = false) => {
         if (ev.type === 'Time Penalty') {
             const code = ev.penalty?.code ? `[${ev.penalty.code}]` : '';
-            const outTimeObj = ev.actualReleaseTime || ev.releaseTime;
+            const outTimeObj = ev.majorReleaseTime || ev.actualReleaseTime || ev.releaseTime;
             
             return (
                 <div>

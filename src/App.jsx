@@ -5,8 +5,10 @@
  * ========================================================================= */
 
 import { useState, useEffect } from 'react';
-import { useStickyState, formatTime, toElapsedSeconds, calcReleaseTime, calcInjuryReturn, getTeamColor } from './utils';
+import { useStickyState, formatTime, calcReleaseTime, calcInjuryReturn, getTeamColor } from './utils';
 import { generateAlternatePDF } from './alternatePdfEngine';
+import { usePenaltyHandlers } from './hooks/usePenaltyHandlers';
+import { useModalWorkflow } from './hooks/useModalWorkflow';
 
 import PregameSetup from './views/PregameSetup';
 import InGameDashboard from './views/InGameDashboard';
@@ -22,7 +24,7 @@ import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 import VideoReviewModal from './components/modals/VideoReviewModal';
 
-const APP_VERSION = "1.0.3-beta";
+const APP_VERSION = "1.1.0-beta";
 
 let audioCtx = null;
 const initAudio = () => {
@@ -33,12 +35,12 @@ const initAudio = () => {
 const playBells = (count) => {
     if (!audioCtx) return;
     for (let i = 0; i < count; i++) {
-        const startTime = audioCtx.currentTime + (i * 0.6); 
+        const startTime = audioCtx.currentTime + (i * 0.6);
         const osc1 = audioCtx.createOscillator();
         const osc2 = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        osc1.type = 'sine'; osc1.frequency.value = 1046.50; 
-        osc2.type = 'sine'; osc2.frequency.value = 2093.00; 
+        osc1.type = 'sine'; osc1.frequency.value = 1046.50;
+        osc2.type = 'sine'; osc2.frequency.value = 2093.00;
         gain.gain.setValueAtTime(0, startTime);
         gain.gain.linearRampToValueAtTime(0.6, startTime + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
@@ -53,10 +55,10 @@ const ensureVisibleInDark = (hex, isDark) => {
     let r = parseInt(hex.substring(1,3), 16);
     let g = parseInt(hex.substring(3,5), 16);
     let b = parseInt(hex.substring(5,7), 16);
-    
+
     let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    if (luma < 90) { 
-        const blend = 0.6; 
+    if (luma < 90) {
+        const blend = 0.6;
         r = Math.round(r + (255 - r) * blend);
         g = Math.round(g + (255 - g) * blend);
         b = Math.round(b + (255 - b) * blend);
@@ -66,11 +68,11 @@ const ensureVisibleInDark = (hex, isDark) => {
 };
 
 export default function App() {
-    const [currentView, setCurrentView] = useStickyState('pregame', 'masl-view'); 
+    const [currentView, setCurrentView] = useStickyState('pregame', 'masl-view');
     const [gameData, setGameData] = useStickyState({
-        date: new Date().toISOString().split('T')[0], scheduledKO: '', gameNumber: '', venue: '', city: '', league: 'MASL3', 
-        awayTeam: '', awayColor: '', awayColorName: '', awayLogo: '', 
-        homeTeam: '', homeColor: '', homeColorName: '', homeLogo: '', 
+        date: new Date().toISOString().split('T')[0], scheduledKO: '', gameNumber: '', venue: '', city: '', league: 'MASL3',
+        awayTeam: '', awayColor: '', awayColorName: '', awayLogo: '',
+        homeTeam: '', homeColor: '', homeColorName: '', homeLogo: '',
         crewChief: '', referee: '', assistantRef: '', fourthOfficial: ''
     }, 'masl-data');
 
@@ -80,25 +82,25 @@ export default function App() {
     const [homeBench, setHomeBench] = useStickyState([], 'masl-homeBench');
     const [quarter, setQuarter] = useStickyState('Q1', 'masl-quarter');
     const [isPeriodRunning, setIsPeriodRunning] = useStickyState(false, 'masl-period-running');
-    const [gameEvents, setGameEvents] = useStickyState([], 'masl-events'); 
+    const [gameEvents, setGameEvents] = useStickyState([], 'masl-events');
 
-    const [activeRosterModal, setActiveRosterModal] = useState(null); 
+    const [activeRosterModal, setActiveRosterModal] = useState(null);
     const [showStartersModal, setShowStartersModal] = useState(false);
     const [newPlayer, setNewPlayer] = useState({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false });
     const [newBench, setNewBench] = useState({ name: '', role: 'Head Coach' });
-    const [modalStep, setModalStep] = useState(null); 
+    const [modalStep, setModalStep] = useState(null);
     const [activeAction, setActiveAction] = useState({ team: '', type: '', time: null });
     const [timeInput, setTimeInput] = useState('');
-    const [modalQuarter, setModalQuarter] = useState('Q1'); 
+    const [modalQuarter, setModalQuarter] = useState('Q1');
     const [playerSearchInput, setPlayerSearchInput] = useState('');
     const [editingEventId, setEditingEventId] = useState(null);
-    const [summaryTeam, setSummaryTeam] = useState(null); 
-    const [foulAlert, setFoulAlert] = useState(null); 
+    const [summaryTeam, setSummaryTeam] = useState(null);
+    const [foulAlert, setFoulAlert] = useState(null);
     const [goalScorer, setGoalScorer] = useState(null);
     const [penaltyData, setPenaltyData] = useState({ color: null, code: null, desc: null, blueCode: null, blueDesc: null });
-    const [benchPenaltyEntity, setBenchPenaltyEntity] = useState(null); 
-    const [targetPenaltyId, setTargetPenaltyId] = useState(null); 
-    const [manualTimeMode, setManualTimeMode] = useState(null); 
+    const [benchPenaltyEntity, setBenchPenaltyEntity] = useState(null);
+    const [targetPenaltyId, setTargetPenaltyId] = useState(null);
+    const [manualTimeMode, setManualTimeMode] = useState(null);
     const [goalFlags, setGoalFlags] = useState({ pp: false, shootout: false, pk: false });
     const [requiresSubstituteServer, setRequiresSubstituteServer] = useState(false);
     const [appTimer, setAppTimer] = useState({ active: false, time: 0, initialTime: 0, label: '', minimized: false });
@@ -109,14 +111,14 @@ export default function App() {
 
     const awayScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'AWAY').length;
     const homeScore = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === 'HOME').length;
-    
-    const rawAwayColor = getTeamColor(gameData.awayColor, '#1e40af'); 
-    const rawHomeColor = getTeamColor(gameData.homeColor, '#991b1b'); 
+
+    const rawAwayColor = getTeamColor(gameData.awayColor, '#1e40af');
+    const rawHomeColor = getTeamColor(gameData.homeColor, '#991b1b');
     const awayCSSColor = ensureVisibleInDark(rawAwayColor, isDarkMode);
     const homeCSSColor = ensureVisibleInDark(rawHomeColor, isDarkMode);
 
-    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
-    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && (ev.releaseTime || ev.majorReleaseTime));
+    const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && ev.releaseTime);
+    const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && ev.releaseTime);
     const flowTeamRoster = activeAction.team === 'AWAY' ? awayRoster : homeRoster;
     const flowTeamColor = activeAction.team === 'AWAY' ? awayCSSColor : homeCSSColor;
     const flowTeamName = activeAction.team === 'AWAY' ? (gameData.awayTeam || 'AWAY') : (gameData.homeTeam || 'HOME');
@@ -133,7 +135,7 @@ export default function App() {
                     const isTimeout = prev.label === 'MEDIA TIMEOUT' || prev.label === 'TEAM TIMEOUT';
                     let nextState = { ...prev, time: newTime };
                     if (!prev.minimized && elapsed === 15) nextState.minimized = true;
-                    
+
                     if (isTimeout) {
                         if (newTime === 30) playBells(1);
                         if (newTime === 15) playBells(2);
@@ -156,79 +158,13 @@ export default function App() {
         else if (timeInput.length < 4) setTimeInput(prev => prev + num);
     };
 
-    const commitTime = (timeStr, nextStepStr) => {
-        let mm = parseInt(timeStr.substring(0, 2));
-        let ss = parseInt(timeStr.substring(2, 4));
-        if (activeAction.type === 'Media Timeout' && (mm * 60 + ss > 8 * 60)) {
-            alert("Media Timeouts cannot be taken before 8:00 remaining in the quarter.");
-            return; 
-        }
-        setTimeInput(timeStr); 
-        setActiveAction(prev => ({ ...prev, time: timeStr }));
-        
-        if (activeAction.type === 'Video Review') {
-            setModalStep('VIDEO_REVIEW');
-        } else if (nextStepStr === 'FINALIZE_TEAM_EVENT') {
-            finalizeEvent('Team', null, null, timeStr);
-        } else if (nextStepStr === 'FINALIZE_MANUAL_TIME') {
-            processManualTime(timeStr);
-        } else {
-            setModalStep(nextStepStr);
-        }
-    };
-
-    const validateAndAdvanceTime = (nextStepStr) => {
-        let raw = timeInput || '';
-        let padded = raw.padEnd(4, '0');
-        let mm = parseInt(padded.substring(0, 2));
-        let ss = parseInt(padded.substring(2, 4));
-
-        const isValid = (m, s) => (m <= 15 && !(m === 15 && s > 0) && s <= 59);
-        let isPrimaryValid = isValid(mm, ss);
-
-        let suggRaw = '0' + padded.substring(0, 3);
-        let suggMm = parseInt(suggRaw.substring(0, 2));
-        let suggSs = parseInt(suggRaw.substring(2, 4));
-        let isSuggValid = isValid(suggMm, suggSs);
-
-        let shouldAsk = false;
-        
-        if (!isPrimaryValid && isSuggValid) {
-            shouldAsk = true; 
-        } else if (isPrimaryValid && isSuggValid && raw.length === 3) {
-            shouldAsk = true; 
-        } else if (isPrimaryValid && isSuggValid && raw.length === 4 && raw.endsWith('0') && raw[0] !== '0') {
-            shouldAsk = true; 
-        }
-
-        if (shouldAsk) {
-            setTimeConfirmDialog({ original: padded, suggested: suggRaw, nextStepStr: nextStepStr, isOriginalValid: isPrimaryValid });
-            return;
-        }
-
-        if (isPrimaryValid) {
-            commitTime(padded, nextStepStr);
-        } else { 
-            alert("Invalid Time. Please enter a valid match time between 15:00 and 00:00."); 
-        }
-    };
-
-    const triggerAction = (teamIdentifier, actionType) => {
-        if (actionType === 'Team Timeout') {
-            const timeoutsUsed = gameEvents.filter(ev => ev.type === 'Team Timeout' && ev.team === teamIdentifier).length;
-            if (timeoutsUsed >= 2) {
-                alert(`The ${teamIdentifier === 'AWAY' ? gameData.awayTeam || 'Away' : gameData.homeTeam || 'Home'} team has already used their maximum of 2 timeouts.`);
-                return;
-            }
-        }
-        setActiveAction({ team: teamIdentifier, type: actionType, time: null });
-        setModalQuarter(quarter); setPlayerSearchInput(''); setGoalScorer(null); 
-        setPenaltyData({ color: null, code: null, desc: null, blueCode: null, blueDesc: null }); 
-        setBenchPenaltyEntity(null); setGoalFlags({ pp: false, shootout: false, pk: false }); setRequiresSubstituteServer(false);
-        
-        if (actionType === 'Log Foul') { setTimeInput(''); setModalStep('PLAYER'); } 
-        else { setTimeInput(''); setModalStep('TIME'); }
-    };
+    const { handlePPGoalScored, startEditingReleaseTime, handleMajorPenaltyRelease, processManualTime, handlePenaltyExpired } = usePenaltyHandlers({
+        gameEvents, setGameEvents,
+        quarter, modalQuarter, setModalQuarter,
+        targetPenaltyId, setTargetPenaltyId,
+        setModalStep, setManualTimeMode, setTimeInput,
+        manualTimeMode
+    });
 
     const clearAllGameData = () => {
         if(window.confirm("WARNING: This will permanently delete all rosters, settings, and game logs. Are you starting a new game?")) { localStorage.clear(); window.location.reload(); }
@@ -247,11 +183,11 @@ export default function App() {
             if (unattributed.length > 0) alert(`WARNING: There are ${unattributed.length} Unattributed Foul(s) in ${quarter}. Please assign them via the Game Log.`);
 
             if (quarter === 'Q1' || quarter === 'Q3') {
-                setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false }); 
+                setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false });
             } else if (quarter === 'Q2') {
                 const isProLeague = ['MASL', 'MASL2'].includes(gameData.league);
                 const htSeconds = isProLeague ? 900 : 600;
-                setAppTimer({ active: true, time: htSeconds, initialTime: htSeconds, label: 'HALFTIME', minimized: false }); 
+                setAppTimer({ active: true, time: htSeconds, initialTime: htSeconds, label: 'HALFTIME', minimized: false });
             } else if (quarter === 'Q4') {
                 alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
             }
@@ -264,7 +200,7 @@ export default function App() {
     const handlePlayerSelect = (entity) => {
         if (modalStep === 'PLAYER') {
             if (activeAction.type === 'Goal / Assist') {
-                if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted'); 
+                if (entity === 'Own Goal') finalizeEvent(entity, 'Unassisted');
                 else { setGoalScorer(entity); setPlayerSearchInput(''); setModalStep('ASSIST'); }
             } else if (activeAction.type === 'Time Penalty') {
                 finalizeEvent(entity);
@@ -298,16 +234,16 @@ export default function App() {
             const prevWarningCount = gameEvents.filter(ev => ev.type === 'Team Warnings' && ev.team === activeAction.team && ev.warningReason === reason).length;
             const newEventId = Date.now();
             const newEvent = { id: newEventId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team / Bench', warningReason: reason };
-            
+
             setGameEvents([newEvent, ...gameEvents]);
             setLastAddedEventId(newEventId);
-            
+
             if (prevWarningCount >= 1) {
                 const mappedCode = WARNING_TO_YELLOW_MAP[reason] || 'Y';
                 setActiveAction({ team: activeAction.team, type: 'Time Penalty', time: finalTimeRaw });
                 setPenaltyData({ color: 'Yellow', code: mappedCode, desc: `2nd Warning: ${reason}`, blueCode: null, blueDesc: null });
-                setModalStep('PLAYER'); 
-                return; 
+                setModalStep('PLAYER');
+                return;
             }
             setModalStep(null);
         }
@@ -321,7 +257,7 @@ export default function App() {
             const newId = Date.now();
             setGameEvents([{ id: newId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team' }, ...gameEvents]);
             setLastAddedEventId(newId);
-            setModalStep(null); initAudio(); 
+            setModalStep(null); initAudio();
             if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, initialTime: 90, label: 'MEDIA TIMEOUT', minimized: false });
             if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, initialTime: 60, label: 'TEAM TIMEOUT', minimized: false });
             return;
@@ -332,30 +268,30 @@ export default function App() {
 
         let existingBlueCombo = null;
         if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && penaltyData.code !== 'Y6' && selectedEntity?.id) {
-            existingBlueCombo = updatedEvents.find(ev => 
-                ev.type === 'Time Penalty' && ev.entity?.id === selectedEntity.id && 
+            existingBlueCombo = updatedEvents.find(ev =>
+                ev.type === 'Time Penalty' && ev.entity?.id === selectedEntity.id &&
                 ev.penalty?.color === 'Blue' && !ev.isJustServing && !ev.clearedFromBoard
             );
         }
 
         if (existingBlueCombo) {
             const newOffenderRelease = calcReleaseTime(existingBlueCombo.releaseTime.quarter, existingBlueCombo.releaseTime.time, 5);
-            
-            updatedEvents = updatedEvents.map(ev => 
-                ev.id === existingBlueCombo.id ? { 
-                    ...ev, 
-                    isReleasable: false, 
-                    releaseTime: newOffenderRelease, 
-                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})`, isCombo: true } 
+
+            updatedEvents = updatedEvents.map(ev =>
+                ev.id === existingBlueCombo.id ? {
+                    ...ev,
+                    isReleasable: false,
+                    releaseTime: newOffenderRelease,
+                    penalty: { ...ev.penalty, desc: ev.penalty.desc + ` (+ ${penaltyData.code})`, isCombo: true }
                 } : ev
             );
 
             const serverEvent = {
                 id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
-                entity: servingPlayerEntity, servingPlayer: null, assist: null, 
-                penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
-                goalFlags: null, eligibleReturnTime: null, 
-                isReleasable: true, 
+                entity: servingPlayerEntity, servingPlayer: null, assist: null,
+                penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` },
+                goalFlags: null, eligibleReturnTime: null,
+                isReleasable: true,
                 releaseTime: existingBlueCombo.releaseTime,
                 majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false, isJustServing: true
@@ -364,37 +300,37 @@ export default function App() {
             const yellowEvent = {
                 id: primaryAddedId, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
-                isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true 
+                isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true
             };
-            
+
             updatedEvents = [serverEvent, yellowEvent, ...updatedEvents];
-        } 
+        }
         else if (!editingEventId && activeAction.type === 'Time Penalty' && penaltyData.code === 'Y6') {
             const offenderEvent = {
                 id: primaryAddedId, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
-                entity: selectedEntity, servingPlayer: null, assist: null, 
+                entity: selectedEntity, servingPlayer: null, assist: null,
                 penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
                 isReleasable: false, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 7), majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false
             };
             const serverEvent = {
                 id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
-                entity: servingPlayerEntity, servingPlayer: null, assist: null, 
-                penalty: { color: 'Blue', code: penaltyData.blueCode, desc: `Serving ${penaltyData.blueCode} for ${selectedEntity.name || '#' + selectedEntity.number}` }, 
+                entity: servingPlayerEntity, servingPlayer: null, assist: null,
+                penalty: { color: 'Blue', code: penaltyData.blueCode, desc: `Serving ${penaltyData.blueCode} for ${selectedEntity.name || '#' + selectedEntity.number}` },
                 goalFlags: null, eligibleReturnTime: null,
                 isReleasable: true, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 2), majorReleaseTime: null, actualReleaseTime: null,
                 clearedFromBoard: false, isJustServing: true
             };
             updatedEvents = [serverEvent, offenderEvent, ...gameEvents];
-        } 
+        }
         else if (!editingEventId) {
-            let duration = 0, isReleasable = false, releaseTime = null; 
+            let duration = 0, isReleasable = false, releaseTime = null;
             if (activeAction.type === 'Time Penalty' && penaltyData.color) {
                 const isBenchStaff = activeBench.some(b => b.id === selectedEntity?.id) || selectedEntity === 'Team / Bench';
-                if (isBenchStaff && penaltyData.code !== 'B1') { duration = 0; } 
+                if (isBenchStaff && penaltyData.code !== 'B1') { duration = 0; }
                 else {
                     if (penaltyData.color === 'Blue') { duration = 2; isReleasable = true; }
-                    else if (penaltyData.color === 'Yellow') { duration = 5; isReleasable = false; } 
+                    else if (penaltyData.color === 'Yellow') { duration = 5; isReleasable = false; }
                     else if (penaltyData.color === 'Red') { if (penaltyData.code !== 'R8' && penaltyData.code !== 'R9') { duration = 2; isReleasable = true; } }
                 }
                 if (duration > 0) releaseTime = calcReleaseTime(modalQuarter, finalTimeStr, duration);
@@ -402,13 +338,13 @@ export default function App() {
             let eligibleReturnTime = null;
             if (activeAction.type === 'Injury') eligibleReturnTime = calcInjuryReturn(modalQuarter, finalTimeStr);
 
-            updatedEvents = [{ 
+            updatedEvents = [{
                 id: primaryAddedId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: activeAction.type === 'Log Foul' ? null : finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: assistEntity, penalty: activeAction.type === 'Time Penalty' ? penaltyData : null,
                 goalFlags: activeAction.type === 'Goal / Assist' ? goalFlags : null, eligibleReturnTime: eligibleReturnTime, clearedInjury: false,
-                isReleasable: isReleasable, releaseTime: releaseTime, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: false 
+                isReleasable: isReleasable, releaseTime: releaseTime, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: false
             }, ...gameEvents];
-        } 
+        }
         else {
             updatedEvents = gameEvents.map(ev => {
                 if (ev.id === editingEventId) {
@@ -440,10 +376,10 @@ export default function App() {
                 updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: modalQuarter, time: finalTimeStr } };
             }
         }
-        
+
         setGameEvents(updatedEvents);
         if (!editingEventId) setLastAddedEventId(primaryAddedId);
-        
+
         if (['Log Foul', 'Time Penalty'].includes(activeAction.type) && selectedEntity !== 'Unattributed') {
             const isFirstHalf = modalQuarter === 'Q1' || modalQuarter === 'Q2';
             const playerFouls = updatedEvents.filter(ev => ev.type === 'Log Foul' && ev.team === activeAction.team && ev.entity?.id === selectedEntity.id);
@@ -468,46 +404,17 @@ export default function App() {
         if(editingEventId) setModalStep('EVENT_LOG'); else setModalStep(null);
     };
 
-    const handlePPGoalScored = (eventId) => {
-        const penalty = gameEvents.find(ev => ev.id === eventId);
-        if (!penalty || !penalty.releaseTime) return;
-        const penaltyElapsed = toElapsedSeconds(penalty.quarter, penalty.time);
-        const releaseElapsed = toElapsedSeconds(penalty.releaseTime.quarter, penalty.releaseTime.time);
-        const oppTeam = penalty.team === 'AWAY' ? 'HOME' : 'AWAY';
-        const ppGoals = gameEvents.filter(ev => ev.type === 'Goal / Assist' && ev.team === oppTeam && ev.goalFlags?.pp);
-        ppGoals.sort((a, b) => toElapsedSeconds(b.quarter, b.time) - toElapsedSeconds(a.quarter, a.time));
-        const validGoal = ppGoals.find(g => { const gElapsed = toElapsedSeconds(g.quarter, g.time); return gElapsed >= penaltyElapsed && gElapsed <= releaseElapsed; });
-
-        if (validGoal) {
-            setGameEvents(gameEvents.map(ev => ev.id === eventId ? { ...ev, actualReleaseTime: { quarter: validGoal.quarter, time: validGoal.time }, clearedFromBoard: true } : ev));
-            alert(`Penalty successfully released based on PPG at ${validGoal.quarter} ${validGoal.time}.`);
-        } else {
-            setModalQuarter(quarter); setTargetPenaltyId(eventId); setTimeInput(''); 
-            setManualTimeMode('PPG'); setModalStep('MANUAL_TIME_ENTRY');
-        }
-    };
-
-    const startEditingReleaseTime = (eventId) => {
-        const ev = gameEvents.find(e => e.id === eventId);
-        if (ev && ev.releaseTime) {
-            setTargetPenaltyId(eventId); setModalQuarter(ev.releaseTime.quarter);
-            setTimeInput(ev.releaseTime.time.replace(':', ''));
-            setManualTimeMode('RELEASE'); setModalStep('MANUAL_TIME_ENTRY');
-        }
-    }
-
-    const processManualTime = (validTimeStr) => {
-        if (manualTimeMode === 'PPG') {
-            setGameEvents(gameEvents.map(ev => ev.id === targetPenaltyId ? { ...ev, actualReleaseTime: { quarter: modalQuarter, time: formatTime(validTimeStr) }, clearedFromBoard: true } : ev));
-            setModalStep(null);
-        } else if (manualTimeMode === 'RELEASE') {
-            setGameEvents(gameEvents.map(ev => ev.id === targetPenaltyId ? { ...ev, releaseTime: { quarter: modalQuarter, time: formatTime(validTimeStr) } } : ev));
-            setModalStep('EVENT_LOG');
-        }
-        setTargetPenaltyId(null); setManualTimeMode(null);
-    };
-
-    const handlePenaltyExpired = (eventId) => setGameEvents(gameEvents.map(ev => ev.id === eventId ? { ...ev, clearedFromBoard: true } : ev));
+    const { commitTime, validateAndAdvanceTime, triggerAction } = useModalWorkflow({
+        timeInput, setTimeInput,
+        activeAction, setActiveAction,
+        setModalStep, setTimeConfirmDialog,
+        setModalQuarter,
+        quarter, gameData, gameEvents,
+        setGoalScorer, setPlayerSearchInput,
+        setPenaltyData, setBenchPenaltyEntity,
+        setGoalFlags, setRequiresSubstituteServer,
+        finalizeEvent, processManualTime
+    });
 
     const deleteEvent = (id) => {
         if(window.confirm("Are you sure you want to delete this event?")) setGameEvents(gameEvents.filter(ev => ev.id !== id));
@@ -540,15 +447,15 @@ export default function App() {
 
     if (currentView === 'pregame') {
         return (
-            <PregameSetup 
+            <PregameSetup
                 appVersion={APP_VERSION}
-                gameData={gameData} setGameData={setGameData} handleInputChange={handleInputChange} 
+                gameData={gameData} setGameData={setGameData} handleInputChange={handleInputChange}
                 awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
-                awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster} 
+                awayRoster={awayRoster} setAwayRoster={setAwayRoster} homeRoster={homeRoster} setHomeRoster={setHomeRoster}
                 awayBench={awayBench} setAwayBench={setAwayBench} homeBench={homeBench} setHomeBench={setHomeBench}
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
-                newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench} 
-                setCurrentView={setCurrentView} clearAllGameData={clearAllGameData} 
+                newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench}
+                setCurrentView={setCurrentView} clearAllGameData={clearAllGameData}
                 onExportPDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
                 isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}
             />
@@ -560,12 +467,13 @@ export default function App() {
             <TimerOverlay appTimer={appTimer} setAppTimer={setAppTimer} />
             <AlertOverlay foulAlert={foulAlert} setFoulAlert={setFoulAlert} />
 
-            <InGameDashboard 
+            <InGameDashboard
                 gameData={gameData} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor}
                 awayScore={awayScore} homeScore={homeScore} quarter={quarter} gameEvents={gameEvents} setGameEvents={setGameEvents}
                 setModalStep={setModalStep} setSummaryTeam={setSummaryTeam} triggerAction={triggerAction}
                 activePenaltiesAway={activePenaltiesAway} activePenaltiesHome={activePenaltiesHome}
                 handlePPGoalScored={handlePPGoalScored} handlePenaltyExpired={handlePenaltyExpired}
+                handleMajorPenaltyRelease={handleMajorPenaltyRelease}
                 togglePeriod={togglePeriod} isPeriodRunning={isPeriodRunning} setCurrentView={setCurrentView}
                 handleInjuryCleared={(id) => setGameEvents(gameEvents.map(ev => ev.id === id ? { ...ev, clearedInjury: true } : ev))}
                 lastAddedEventId={lastAddedEventId} setLastAddedEventId={setLastAddedEventId}
@@ -582,7 +490,7 @@ export default function App() {
                 <EventLog gameEvents={sortedGameEvents} setModalStep={setModalStep} awayCSSColor={awayCSSColor} homeCSSColor={homeCSSColor} gameData={gameData} startEditingEvent={startEditingEvent} deleteEvent={deleteEvent} startEditingReleaseTime={startEditingReleaseTime} isDarkMode={isDarkMode} />
             )}
 
-            <TimeKeypadModal 
+            <TimeKeypadModal
                 modalStep={modalStep} setModalStep={setModalStep} activeAction={activeAction} flowTeamName={flowTeamName} flowTeamColor={flowTeamColor}
                 isPeriodRunning={isPeriodRunning} editingEventId={editingEventId} modalQuarter={modalQuarter} setModalQuarter={setModalQuarter}
                 timeInput={timeInput} handleKeypad={handleKeypad} validateAndAdvanceTime={validateAndAdvanceTime} goalFlags={goalFlags} setGoalFlags={setGoalFlags}
@@ -593,18 +501,18 @@ export default function App() {
 
             <PenaltyModal modalStep={modalStep} setModalStep={setModalStep} penaltyData={penaltyData} setPenaltyData={setPenaltyData} flowTeamColor={flowTeamColor} />
 
-            <PlayerSelectModal 
+            <PlayerSelectModal
                 modalStep={modalStep} setModalStep={setModalStep} activeAction={activeAction} flowTeamColor={flowTeamColor} modalQuarter={modalQuarter} timeInput={timeInput}
                 penaltyData={penaltyData} editingEventId={editingEventId} playerSearchInput={playerSearchInput} setPlayerSearchInput={setPlayerSearchInput} filteredFlowRoster={filteredFlowRoster}
                 handlePlayerSelect={handlePlayerSelect} activeBench={activeBench} requiresSubstituteServer={requiresSubstituteServer} setRequiresSubstituteServer={setRequiresSubstituteServer}
                 benchPenaltyEntity={benchPenaltyEntity} setBenchPenaltyEntity={setBenchPenaltyEntity} goalScorer={goalScorer} isPeriodRunning={isPeriodRunning} setModalQuarter={setModalQuarter} gameEvents={gameEvents}
             />
 
-            <TimeConfirmModal 
-                dialog={timeConfirmDialog} 
-                onConfirm={(suggested, nextStepStr) => { 
-                    commitTime(suggested, nextStepStr); 
-                    setTimeConfirmDialog(null); 
+            <TimeConfirmModal
+                dialog={timeConfirmDialog}
+                onConfirm={(suggested, nextStepStr) => {
+                    commitTime(suggested, nextStepStr);
+                    setTimeConfirmDialog(null);
                 }}
                 onReject={(original, nextStepStr, isValid) => {
                     if (isValid) commitTime(original, nextStepStr);
@@ -613,7 +521,7 @@ export default function App() {
                 }}
             />
 
-            <VideoReviewModal 
+            <VideoReviewModal
                 modalStep={modalStep} setModalStep={setModalStep}
                 activeAction={activeAction} modalQuarter={modalQuarter} timeInput={timeInput} gameData={gameData}
                 gameEvents={gameEvents}
@@ -623,7 +531,7 @@ export default function App() {
                     setLastAddedEventId(id);
                 }}
             />
-            
+
             <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>
         </div>
     );

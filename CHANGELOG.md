@@ -2,6 +2,21 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.1.0-beta] - 2026-06-02 - Major Penalty Release Workflow & Code Refactor
+
+**New Features**
+* **Major Penalty (Y6) Release Workflow:** The Active Penalties board now fully supports the stoppage-based release mechanic for Y6 (Major Penalty) offenders. When a Y6 is logged, the offender's board entry displays **"Earliest: Q3 08:14"** (the calculated 7-minute minimum) instead of "Exp:". Once the 7-minute minimum has elapsed, a green **Released** button appears. Tapping it opens the time keypad so the 4th Official can record the exact stoppage time. That time is stored as the official release timestamp and is printed in the PDF report's "Time Out" column.
+* **PDF & Event Log Time-Out Column:** The penalty time-out column now resolves in priority order: actual stoppage release time → PPG release time → calculated expiration. This ensures the correct timestamp is always displayed on the final PDF worksheet for all penalty types.
+
+**Improvements**
+* **App.jsx Refactor:** Extracted penalty board handlers (`handlePPGoalScored`, `startEditingReleaseTime`, `handleMajorPenaltyRelease`, `processManualTime`, `handlePenaltyExpired`) and modal workflow handlers (`commitTime`, `validateAndAdvanceTime`, `triggerAction`) into dedicated custom hooks (`usePenaltyHandlers`, `useModalWorkflow`), reducing `App.jsx` by ~95 lines.
+
+**Cleanup**
+* Removed unused legacy `pdfEngine.js` (pdf-lib based engine, superseded by `alternatePdfEngine.js`).
+* Removed unused `glob` npm dependency.
+
+---
+
 ## [v1.0.3-beta] - 2026-03-18 - Picker UI Polishing
 **Bug Fixes & Tweaks**
 * **Color Picker Clipping:** Adjusted the directional rendering of the custom color picker popover. It now explicitly opens upwards (`bottom-full`) to prevent it from being abruptly cut off by the `overflow-hidden` rule on the master setup card container.

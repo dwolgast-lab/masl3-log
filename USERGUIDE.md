@@ -1,5 +1,5 @@
 # MASL 4th Official Log App: User Guide
-**Version 1.0.1-beta+**
+**Version 1.1.0-beta+**
 
 Welcome to the digital MASL 4th Official Log App. This platform is designed to replace the traditional paper worksheet, automating penalty math, foul accumulation, and timeline tracking so Assistant Referees and 4th Officials can keep their eyes on the game.
 
@@ -114,6 +114,19 @@ If the opposing team scores a Power Play Goal, the penalized player may be eligi
 1. Look at the **Active Penalties** board at the bottom of the screen.
 2. Locate the releasable penalty and tap the **PPG Scored** button next to it.
 3. The app will verify if a valid Power Play goal was logged during the penalty window. If it finds one, it will automatically release the player and remove them from the active board.
+
+### Major Penalty (Y6) Release
+A Y6 (Major Penalty) creates two entries on the Active Penalties board:
+
+* **Teammate (Server):** Serves the first 2 minutes of power play time. This entry shows a **PPG Scored** button and is released early if the opponent scores.
+* **Offender:** Serves the remaining 5 minutes with no early release possible. This entry shows **"Earliest: Q3 08:14"** — the 7-minute minimum calculated from the penalty time.
+
+Once the 7-minute minimum has elapsed and play stops:
+1. Tap the green **Released** button on the offender's entry.
+2. The time keypad will open — enter the clock time of the stoppage when the player is officially released.
+3. Tap **Confirm**. The player is removed from the board and the exact release time is recorded on the final PDF report.
+
+> **Note:** If the player is released at a stoppage but you do not have the exact time, you can tap **Expired** as a fallback to clear the entry from the board without logging a specific release time.
 
 ---
 

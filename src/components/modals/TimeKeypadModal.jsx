@@ -13,15 +13,18 @@ export default function TimeKeypadModal({
     const isManualTime = modalStep === 'MANUAL_TIME_ENTRY';
     const isPPG = manualTimeMode === 'PPG';
     const isRelease = manualTimeMode === 'RELEASE';
-    
+    const isMajorRelease = manualTimeMode === 'MAJOR_RELEASE';
+
     let title = '';
     if (isPPG) title = 'Enter PPG Time';
     else if (isRelease) title = 'Edit Release Time';
+    else if (isMajorRelease) title = 'Log Major Penalty Release';
     else title = activeAction.team === 'SYSTEM' ? activeAction.type : `${flowTeamName} - ${activeAction.type}`;
 
     let subtitle = '';
     if (isPPG) subtitle = 'No auto-match found. When did the goal happen?';
     else if (isRelease) subtitle = 'Manually override the penalty expiration time.';
+    else if (isMajorRelease) subtitle = 'Enter the stoppage time when the player was released (first stoppage after 7 min).';
 
     return (
         <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
@@ -35,7 +38,7 @@ export default function TimeKeypadModal({
                 {(!isPeriodRunning || editingEventId || isManualTime) ? (
                     <div className="w-full mb-6">
                         <label className={`block text-xs font-bold mb-2 uppercase text-center tracking-widest ${isManualTime ? 'text-blue-800' : 'text-gray-600'}`}>
-                            {isPPG ? 'Quarter Scored:' : isRelease ? 'Release Quarter:' : 'Event Quarter'}
+                            {isPPG ? 'Quarter Scored:' : (isRelease || isMajorRelease) ? 'Release Quarter:' : 'Event Quarter'}
                         </label>
                         <div className={`flex rounded-lg p-1 w-full justify-between shadow-inner ${isManualTime ? 'bg-blue-100' : 'bg-gray-200 border border-gray-300'}`}>
                             {QUARTERS.map(q => (
@@ -77,6 +80,7 @@ export default function TimeKeypadModal({
                             setModalStep(null);
                         }
                     }} className="flex-1 py-3 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50">Cancel</button>
+
                     <button onClick={() => {
                         if (isManualTime) validateAndAdvanceTime('FINALIZE_MANUAL_TIME');
                         else {
