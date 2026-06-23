@@ -1,94 +1,72 @@
-import { DocumentProcessorServiceClient } from '@google-cloud/documentai';
+import Anthropic from '@anthropic-ai/sdk';
+import { z } from 'zod';
+import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 
-const getText = (textAnchor, text) => {
-    if (!textAnchor || !textAnchor.textSegments || textAnchor.textSegments.length === 0) return '';
-    const startIndex = textAnchor.textSegments[0].startIndex || 0;
-    const endIndex = textAnchor.textSegments[0].endIndex;
-    return text.substring(startIndex, endIndex).trim().replace(/\n/g, ' ');
-};
+// Schema mirrors the three field blocks on the MASL 3 Official Lineup form.
+const RosterSchema = z.object({
+    players: z.array(z.object({
+        number: z.string().describe('Jersey number exactly as written, e.g. "0", "00", "15". Empty string if blank.'),
+        name: z.string().describe('Player name formatted "Last, First" exactly as written.'),
+        position: z.string().describe('Value from the Pos. column: GK, F, D, M, D/M, A, E, etc. Empty string if blank.'),
+        isStarter: z.boolean().describe('true if the row is in the STARTERS block, false if in the SUBSTITUTES block.')
+    })),
+    staff: z.array(z.object({
+        name: z.string().describe('Staff name formatted "Last, First" exactly as written.'),
+        role: z.string().describe('Value from the Job column, e.g. "Head Coach".')
+    }))
+});
+
+const SYSTEM_PROMPT = `You are extracting fields from a MASL official lineup / roster form. These come from several leagues (MASL, MASL2, MASL3, MASLW); the exact title, column header wording, and number of rows vary, but the structure is consistent: a player section split into starters and substitutes, plus a bench-staff section.
+
+Map every filled row to the correct field:
+- PLAYERS: each player row has a jersey number, a position, and a name. Players listed under the starters block (often labeled "Starters") get isStarter=true; players under the substitutes/bench block (often "Substitutes" or "Subs") get isStarter=false.
+- BENCH STAFF: the staff section (often "Bench Staff") lists non-players with a job/role and a name.
+
+Rules:
+- Names are written "Last, First". Return them exactly that way.
+- Put the position-column value in "position" verbatim (e.g. GK, F, D, M, D/M, A, E). It may be printed or handwritten.
+- The number of rows varies by league and form — read however many are actually filled in. Skip blank rows entirely.
+- Never invent a player, number, name, or role that is not on the form.
+- Forms may be typed or handwritten; transcribe handwriting as best you can. If a character is illegible, give your best single reading rather than a placeholder.
+- Ignore the header (Team/Opponent/Date/City), the instructional paragraph, and the Coach/Referee signature lines.`;
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
     try {
         const { imageBase64 } = req.body;
-        const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-        const projectId = process.env.DOCAI_PROJECT_ID;
-        const location = process.env.DOCAI_LOCATION; 
-        const processorId = process.env.DOCAI_PROCESSOR_ID;
+        if (!imageBase64) return res.status(400).json({ error: 'Missing imageBase64' });
 
-        const client = new DocumentProcessorServiceClient({ 
-            credentials, 
-            projectId, 
-            apiEndpoint: `${location}-documentai.googleapis.com` 
+        const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+        const response = await client.messages.parse({
+            model: 'claude-opus-4-8',
+            max_tokens: 16000,
+            thinking: { type: 'adaptive' },
+            system: SYSTEM_PROMPT,
+            messages: [
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'image',
+                            source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 }
+                        },
+                        { type: 'text', text: 'Extract the roster from this lineup sheet.' }
+                    ]
+                }
+            ],
+            output_config: { format: zodOutputFormat(RosterSchema) }
         });
-        
-        const name = `projects/${projectId}/locations/${location}/processors/${processorId}`;
-        const request = { name, rawDocument: { content: imageBase64, mimeType: 'image/jpeg' } };
 
-        const [result] = await client.processDocument(request);
-        const { document } = result;
-
-        let rows = [];
-
-        // 1. Math-based Line Builder: Group words by their physical Y-coordinates
-        if (document.pages && document.pages.length > 0) {
-            const page = document.pages[0];
-            if (page.tokens) {
-                page.tokens.forEach(token => {
-                    const text = getText(token.layout.textAnchor, document.text);
-                    if (!text) return;
-
-                    const vertices = token.layout.boundingPoly.normalizedVertices;
-                    if (!vertices || vertices.length === 0) return;
-
-                    // Find the mathematical center of the word
-                    const sumX = vertices.reduce((sum, v) => sum + (v.x || 0), 0);
-                    const sumY = vertices.reduce((sum, v) => sum + (v.y || 0), 0);
-                    const centerX = sumX / vertices.length;
-                    const centerY = sumY / vertices.length;
-
-                    // If a row exists at this approximate height (within 1.2% of page height), add the word to it
-                    let foundRow = rows.find(r => Math.abs(r.centerY - centerY) < 0.012);
-                    
-                    if (foundRow) {
-                        foundRow.tokens.push({ text, x: centerX });
-                        foundRow.centerY = ((foundRow.centerY * (foundRow.tokens.length - 1)) + centerY) / foundRow.tokens.length;
-                    } else {
-                        // Otherwise, create a new row
-                        rows.push({ centerY: centerY, tokens: [{ text, x: centerX }] });
-                    }
-                });
-            }
+        if (!response.parsed_output) {
+            return res.status(502).json({ error: 'Model did not return structured roster data' });
         }
 
-        // 2. Sort all physical rows from top of the page to the bottom
-        rows.sort((a, b) => a.centerY - b.centerY);
-
-        // 3. Construct the text strings, injecting spaces to represent physical columns
-        const formattedLines = rows.map(row => {
-            row.tokens.sort((a, b) => a.x - b.x);
-            let lineStr = "";
-            for (let i = 0; i < row.tokens.length; i++) {
-                if (i > 0) {
-                    const gap = row.tokens[i].x - row.tokens[i-1].x;
-                    if (gap > 0.03) { // If there is a large physical gap, force a column separation
-                        lineStr += "   "; 
-                    } else {
-                        lineStr += " ";
-                    }
-                }
-                lineStr += row.tokens[i].text;
-            }
-            return lineStr;
-        });
-
-        if (formattedLines.length === 0) formattedLines.push(document.text);
-
-        return res.status(200).json({ text: formattedLines.join('\n') });
+        return res.status(200).json(response.parsed_output);
 
     } catch (error) {
-        console.error('Document AI Error:', error);
-        return res.status(500).json({ error: error.message || 'Failed to process document via AI' });
+        console.error('Roster scan error:', error);
+        return res.status(500).json({ error: error.message || 'Failed to process roster' });
     }
 }

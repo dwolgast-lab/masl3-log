@@ -65,7 +65,8 @@ export const processRosterImage = (file) => {
                     const data = await response.json();
                     if (data.error) throw new Error(data.error);
 
-                    resolve(data.text);
+                    // Structured roster: { players: [...], staff: [...] }
+                    resolve(data);
                 } catch (error) {
                     reject(error);
                 }
@@ -78,110 +79,52 @@ export const processRosterImage = (file) => {
 
 
 // -----------------------------------------------------------------------------
-// BULLETPROOF OCR TEXT PARSER
+// STRUCTURED ROSTER MERGE
+// Consumes the field-mapped roster returned by /api/scanRoster
+// ({ players, staff }) and merges new rows into the current roster/bench.
 // -----------------------------------------------------------------------------
-export const parseRosterText = (scanResult, currentRoster, currentBench) => {
+const normalizeRole = (role) => {
+    const r = (role || '').toLowerCase();
+    if (r.includes('head')) return 'Head Coach';
+    if (r.includes('assistant')) return 'Assistant Coach';
+    if (r.includes('train')) return 'Trainer';
+    if (r.includes('manager')) return 'Manager';
+    return 'Other';
+};
+
+export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
+    const scannedPlayers = Array.isArray(scanData?.players) ? scanData.players : [];
+    const scannedStaff = Array.isArray(scanData?.staff) ? scanData.staff : [];
+
     let newPlayers = [];
     let newStaff = [];
-    const benchKeywords = ['COACH', 'TRAINER', 'MANAGER', 'ASSISTANT', 'DOCTOR', 'PHYSIO'];
 
-    const lines = scanResult.split('\n');
-    
-    lines.forEach(line => {
-        if (!line.trim()) return;
-        if (line.match(/LAST NAME|JERSEY NO|POS\.|OFFICIAL LINEUP|DATE|JOB|SUBSTITUTES|STARTERS|MASL\s*\d/i)) return;
-        if (line.match(/BENCH\s*STAFF/i)) return; 
-        if (line.match(/Referee/i)) return; 
-        if (line.match(/maximum|essential|credential|attire|uniform|shorts|discipline|manager team/i)) return; 
+    scannedPlayers.forEach(p => {
+        const number = (p.number || '').trim();
+        const name = (p.name || '').trim();
+        if (!number || name.length < 2) return;
+        if (currentRoster.some(x => x.number === number) || newPlayers.some(x => x.number === number)) return;
 
-        const cells = line.split(/\s{2,}/).map(c => c.trim()).filter(Boolean);
-        
-        let candidates = [];
-        let nameParts = [];
-        let hitText = false;
-        let foundBenchRole = false;
+        newPlayers.push({
+            id: Date.now() + Math.random(),
+            number,
+            name,
+            isGK: (p.position || '').toUpperCase().includes('GK'),
+            isStarter: !!p.isStarter,
+            isCaptain: false
+        });
+    });
 
-        let upperLine = line.toUpperCase();
-        let benchRoleMatch = benchKeywords.find(role => upperLine.includes(role));
+    scannedStaff.forEach(s => {
+        const name = (s.name || '').trim();
+        if (name.length < 2) return;
+        if (currentBench.some(x => x.name.toUpperCase() === name.toUpperCase()) || newStaff.some(x => x.name.toUpperCase() === name.toUpperCase())) return;
 
-        if (benchRoleMatch) {
-            foundBenchRole = true;
-            let staffName = upperLine.replace(benchRoleMatch, '').replace(/^\s*\d+[\.\)]\s*/, '').replace(/[^A-Z\s,-]/g, '').trim();
-            const wordCount = staffName.split(/\s+/).length;
-
-            if (staffName.length > 2 && wordCount <= 4 && !currentBench.some(b => b.name.toUpperCase() === staffName) && !newStaff.some(b => b.name.toUpperCase() === staffName)) {
-                newStaff.push({
-                    id: Date.now() + Math.random(),
-                    name: staffName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '), 
-                    role: (currentBench.length === 0 && newStaff.length === 0) ? 'Head Coach' : 'Assistant Coach'
-                });
-            }
-        } 
-        else {
-            for (let i = 0; i < cells.length; i++) {
-                let cell = cells[i];
-                let upperCell = cell.toUpperCase();
-
-                const listMatch = cell.match(/^(\d+)[\.\)]$/);
-                if (listMatch && !candidates.length) {
-                    candidates.push(listMatch[1]);
-                    continue;
-                }
-
-                if (!hitText) {
-                    let cleanCell = cell.replace(/\s+[\.\)]$/, '.');
-                    let numMatch = cleanCell.match(/^(\d{1,2})[\.\)]?$/);
-                    
-                    if (numMatch) {
-                        candidates.push(numMatch[1]);
-                        continue;
-                    }
-                    
-                    if (upperCell === 'GK' || upperCell === 'G' || /^[DMFET]$/.test(upperCell)) {
-                        hitText = true;
-                        continue;
-                    }
-                    
-                    if (/[A-Za-z]/.test(cell)) {
-                        hitText = true;
-                        if (upperCell.includes('GK')) {
-                            cell = cell.replace(/GK/ig, '').trim();
-                        }
-                        if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
-                    }
-                } else {
-                    if (upperCell === 'GK' || upperCell === 'G') {
-                        // Skip
-                    } else if (/^[DMFET]$/.test(upperCell)) {
-                        continue; 
-                    } else {
-                        if (upperCell.includes('GK')) {
-                            cell = cell.replace(/GK/ig, '').trim();
-                        }
-                        if (cell.replace(/[^a-zA-Z]/g, '').length > 0) nameParts.push(cell);
-                    }
-                }
-            }
-
-            let jerseyNum = candidates.length > 0 ? candidates[candidates.length - 1] : null;
-
-            if (jerseyNum && nameParts.length > 0) {
-                const finalName = nameParts.join(' ').replace(/[^a-zA-Z\s,-]/g, '').trim();
-                
-                if (finalName.length > 1 && finalName.toUpperCase() !== 'BENCH STAFF' && !currentRoster.some(p => p.number === jerseyNum) && !newPlayers.some(p => p.number === jerseyNum)) {
-                    
-                    // MODIFIED: Removed auto-guessing logic. All OCR players now require manual verification.
-                    newPlayers.push({
-                        id: Date.now() + Math.random(),
-                        number: jerseyNum,
-                        name: finalName,
-                        isGK: false,
-                        isStarter: false,
-                        isCaptain: false
-                    });
-                }
-            }
-        }
+        newStaff.push({
+            id: Date.now() + Math.random(),
+            name,
+            role: normalizeRole(s.role)
+        });
     });
 
     let updatedRoster = [...currentRoster];

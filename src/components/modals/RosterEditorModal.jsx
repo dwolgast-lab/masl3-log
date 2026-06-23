@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { BENCH_ROLES } from '../../config';
-import { robustNumericalSort, sortBench, processRosterImage, parseRosterText } from '../../ocrEngine';
+import { robustNumericalSort, sortBench, processRosterImage, mergeScannedRoster } from '../../ocrEngine';
 
 export default function RosterEditorModal({
     activeRosterModal, setActiveRosterModal,
@@ -117,8 +117,8 @@ export default function RosterEditorModal({
         setScanResult(null);
 
         try {
-            const text = await processRosterImage(file);
-            setScanResult(text);
+            const data = await processRosterImage(file);
+            setScanResult(data);
         } catch (error) {
             alert("Failed to scan roster: " + error.message);
         } finally {
@@ -135,16 +135,16 @@ export default function RosterEditorModal({
         const currentBench = activeRosterModal === 'AWAY' ? awayBench : homeBench;
         const setBench = activeRosterModal === 'AWAY' ? setAwayBench : setHomeBench;
         
-        const { updatedRoster, updatedBench, newPlayersCount, newStaffCount } = parseRosterText(scanResult, currentRoster, currentBench);
+        const { updatedRoster, updatedBench, newPlayersCount, newStaffCount } = mergeScannedRoster(scanResult, currentRoster, currentBench);
 
         if (newPlayersCount > 0 || newStaffCount > 0) {
             if (newPlayersCount > 0) setRoster(updatedRoster);
             if (newStaffCount > 0) setBench(updatedBench);
-            alert(`Imported ${newPlayersCount} players (${Math.min(newPlayersCount, 6)} auto-marked as Starters) and ${newStaffCount} bench staff!`);
+            alert(`Imported ${newPlayersCount} players and ${newStaffCount} bench staff!`);
         } else {
-            alert("Could not detect any valid data. Please ensure rows have a jersey number and a name.");
+            alert("Could not detect any new data. Players already on the roster are skipped.");
         }
-        setScanResult(null); 
+        setScanResult(null);
     };
 
     return (
@@ -154,25 +154,45 @@ export default function RosterEditorModal({
                 {isScanning && (
                     <div className="absolute inset-0 bg-white/90 z-[60] flex flex-col items-center justify-center">
                         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <h3 className="text-xl font-bold text-gray-800">Processing Document via Google Cloud AI...</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Reading lineup sheet with Claude AI...</h3>
                         <p className="text-gray-500">This may take a few seconds.</p>
                     </div>
                 )}
 
                 {scanResult !== null && (
                     <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6 overflow-hidden">
-                        <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED TEXT</h2>
+                        <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED ROSTER</h2>
                         <p className="text-sm text-gray-600 mb-4 border-b pb-4">
-                            Below is the raw text extracted. <strong>It may look messy, but our parser handles it.</strong> <br/>
-                            If it looks complete, just click "Import Data". Correct misspellings *after* import.
+                            Fields detected from the lineup sheet. <strong>Players already on the roster are skipped on import.</strong> <br/>
+                            Correct any misreads <em>after</em> importing.
                         </p>
-                        
-                        <textarea 
-                            className="flex-1 w-full p-4 border-2 border-gray-300 rounded-xl font-mono text-sm mb-4 outline-none focus:border-blue-500 bg-gray-50 overflow-y-auto"
-                            value={scanResult}
-                            onChange={(e) => setScanResult(e.target.value)}
-                        />
-                        
+
+                        <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+                            <div>
+                                <h3 className="text-xs font-black uppercase text-gray-500 mb-2">Players ({(scanResult.players || []).length})</h3>
+                                {(scanResult.players || []).length === 0 && <p className="text-sm text-gray-400 italic">None detected.</p>}
+                                {(scanResult.players || []).map((p, i) => (
+                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-gray-100 text-sm">
+                                        <span className="w-10 font-black text-gray-800">{p.number || '—'}</span>
+                                        <span className="flex-1">{p.name}</span>
+                                        {p.position && <span className="text-[10px] font-bold text-gray-500 uppercase">{p.position}</span>}
+                                        {(p.position || '').toUpperCase().includes('GK') && <span className="text-[10px] font-black text-orange-600 uppercase">GK</span>}
+                                        {p.isStarter && <span className="text-[10px] font-black text-green-600 uppercase">Starter</span>}
+                                    </div>
+                                ))}
+                            </div>
+                            <div>
+                                <h3 className="text-xs font-black uppercase text-gray-500 mb-2">Bench Staff ({(scanResult.staff || []).length})</h3>
+                                {(scanResult.staff || []).length === 0 && <p className="text-sm text-gray-400 italic">None detected.</p>}
+                                {(scanResult.staff || []).map((s, i) => (
+                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-gray-100 text-sm">
+                                        <span className="flex-1">{s.name}</span>
+                                        {s.role && <span className="text-[10px] font-bold text-gray-500 uppercase">{s.role}</span>}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="flex justify-end space-x-4 shrink-0 mt-4">
                             <button onClick={() => setScanResult(null)} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
                             <button onClick={handleImportScannedText} className="px-6 py-3 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700">Import Data</button>
