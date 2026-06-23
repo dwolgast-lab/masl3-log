@@ -26,4 +26,11 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  {
+    // Serverless functions and Node-run scripts use Node globals (process, etc.)
+    files: ['api/**/*.js', '**/*.mjs'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])
