@@ -4,6 +4,18 @@
 
 ## Recent Updates
 
+## [v1.2.0-beta] - 2026-06-23 - Claude Vision Roster Scanning
+
+**New Features**
+* **Claude Vision Lineup Scanning:** Replaced the Google Cloud Document AI OCR pipeline with a Claude vision call that returns field-mapped roster JSON. The model reads the form's structure directly (number, position, name, Starters vs. Substitutes section) and returns it already mapped to the app's roster model, with `isGK` derived from the position column and `isStarter` from the section — so scanned data lands in roughly the right place and only needs minor correction.
+* **League-Agnostic Extraction:** Handles the varying titles, headers, and row counts across MASL, MASL2, MASL3, and MASLW forms rather than being hard-coded to one layout.
+* **Automatic Name-Order Normalization:** Normalizes free-form names to "Last, First" — comma-written names are preserved, and "First Last" names are reordered using common-given-name knowledge; hyphenated surnames and quoted nicknames are kept intact.
+
+**Cleanup**
+* Removed the `@google-cloud/documentai` dependency; added `@anthropic-ai/sdk` and `zod`. `.gitignore` now excludes `.env`.
+
+---
+
 ## [v1.1.0-beta] - 2026-06-02 - Major Penalty Release Workflow & Code Refactor
 
 **New Features**

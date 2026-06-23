@@ -6,12 +6,12 @@ import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 const RosterSchema = z.object({
     players: z.array(z.object({
         number: z.string().describe('Jersey number exactly as written, e.g. "0", "00", "15". Empty string if blank.'),
-        name: z.string().describe('Player name formatted "Last, First" exactly as written.'),
+        name: z.string().describe('Player name normalized to "Last, First". Reorder if the team wrote it "First Last" — see the NAME ORDER rule.'),
         position: z.string().describe('Value from the Pos. column: GK, F, D, M, D/M, A, E, etc. Empty string if blank.'),
         isStarter: z.boolean().describe('true if the row is in the STARTERS block, false if in the SUBSTITUTES block.')
     })),
     staff: z.array(z.object({
-        name: z.string().describe('Staff name formatted "Last, First" exactly as written.'),
+        name: z.string().describe('Staff name normalized to "Last, First". Reorder if the team wrote it "First Last" — see the NAME ORDER rule.'),
         role: z.string().describe('Value from the Job column, e.g. "Head Coach".')
     }))
 });
@@ -23,7 +23,11 @@ Map every filled row to the correct field:
 - BENCH STAFF: the staff section (often "Bench Staff") lists non-players with a job/role and a name.
 
 Rules:
-- Names are written "Last, First". Return them exactly that way.
+- NAME ORDER: Always output every player and staff name as "Last, First". The forms ask for "Last Name, First Name", but teams fill them in inconsistently — some write "Last, First" and some write "First Last".
+  - If the name has a comma (e.g. "Bross, Sarah"), treat the part before the comma as the last name and keep that order.
+  - If the name has NO comma (e.g. "Sarah Bross"), use your knowledge of common given (first) names to decide which token is the first name, then reorder to "Last, First" (so "Sarah Bross" becomes "Bross, Sarah"). If the surname is multiple words or hyphenated (e.g. "Stasmas-Mondragon"), keep it together as the last name.
+  - Preserve any nickname in quotes and any suffix exactly, e.g. De Abreau, Maria ("Duda").
+  - If the order is genuinely ambiguous or only one name is given, output it as written rather than guessing.
 - Put the position-column value in "position" verbatim (e.g. GK, F, D, M, D/M, A, E). It may be printed or handwritten.
 - The number of rows varies by league and form — read however many are actually filled in. Skip blank rows entirely.
 - Never invent a player, number, name, or role that is not on the form.

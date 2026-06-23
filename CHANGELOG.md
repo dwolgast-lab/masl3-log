@@ -2,6 +2,22 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.2.0-beta] - 2026-06-23 - Claude Vision Roster Scanning
+
+**New Features**
+* **Claude Vision Lineup Scanning:** Replaced the Google Cloud Document AI OCR pipeline with a Claude vision call that returns field-mapped roster JSON. Instead of reading raw OCR tokens and hand-mapping them into fields (which scattered data into the wrong places), the model now reads the form's structure directly — jersey number, position, name, and which section (Starters vs. Substitutes) each row belongs to — and returns it already mapped to the app's roster model. The `isGK` flag is derived from the position column and the `isStarter` flag from the section, so scanned data lands in roughly the right place and only needs minor manual correction.
+* **League-Agnostic Extraction:** The extraction prompt handles the varying titles, column headers, and row counts across MASL, MASL2, MASL3, and MASLW lineup forms rather than being hard-coded to one layout.
+* **Automatic Name-Order Normalization:** Player and staff name fields are free-form, and teams fill them in inconsistently — some write "Last, First" and some write "First Last". The scanner now normalizes every name to "Last, First": comma-written names are preserved as-is, and no-comma "First Last" names are reordered using the model's knowledge of common given names. Hyphenated/multi-word surnames and quoted nicknames are kept intact. Genuinely ambiguous names are left as written for manual fixup.
+
+**Improvements**
+* **Structured Verify Step:** The post-scan verification screen presents a read-only structured preview (number · name · position · GK/Starter badges for players; name · role for staff) before import.
+
+**Cleanup**
+* Removed the `@google-cloud/documentai` dependency and its serverless authentication code. Added `@anthropic-ai/sdk` and `zod`.
+* `.gitignore` now excludes `.env` files to keep the Anthropic API key out of the repo.
+
+---
+
 ## [v1.1.0-beta] - 2026-06-02 - Major Penalty Release Workflow & Code Refactor
 
 **New Features**
