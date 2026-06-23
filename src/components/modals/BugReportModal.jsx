@@ -45,7 +45,7 @@ export default function BugReportModal({ isOpen, onClose, appVersion }) {
             } else {
                 setStatus('ERROR');
             }
-        } catch (error) {
+        } catch {
             setStatus('ERROR');
         }
     };

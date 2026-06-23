@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ACTION_BUTTONS, QUARTERS, LEAGUES } from '../config';
 import ActivePenaltiesWidget from '../components/widgets/ActivePenaltiesWidget';
 import ActiveInjuriesWidget from '../components/widgets/ActiveInjuriesWidget';
 
 export default function InGameDashboard({
-    gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents, setGameEvents,
+    gameData, awayCSSColor, homeCSSColor, awayScore, homeScore, quarter, gameEvents,
     setModalStep, setSummaryTeam, triggerAction, activePenaltiesAway, activePenaltiesHome,
     handlePPGoalScored, handlePenaltyExpired, handleMajorPenaltyRelease, togglePeriod, isPeriodRunning, setCurrentView,
     handleInjuryCleared, lastAddedEventId, setLastAddedEventId, startEditingEvent, deleteEvent,

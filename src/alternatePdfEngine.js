@@ -42,7 +42,7 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
                 img.src = src;
                 await new Promise((res, rej) => { img.onload = () => res(img); img.onerror = rej; });
                 return img;
-            } catch(e) { return null; }
+            } catch { return null; }
         };
 
         const leagueLogoImg = await loadImg(activeLeague?.logo);
