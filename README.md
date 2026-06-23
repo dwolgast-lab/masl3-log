@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v1.2.1-beta] - 2026-06-23 - Staff Role Normalization
+
+**Improvements**
+* **Bench Staff Role Mapping:** Scanned "Job" values are now mapped to canonical roles much more reliably — **Head Coach** ("Head Coach", "HC", or a bare "Coach" in the first staff row), **Assistant Coach** ("AC", "Assistant Coach", "Asst. Coach", or a bare "Coach" below the first row), and **Trainer** ("Trainer", "AT", "Athletic Trainer"). The first staff member listed defaults to head coach when the text is bare/unrecognized; explicit labels are respected. Anything else falls back to **Other**.
+
+---
+
 ## [v1.2.0-beta] - 2026-06-23 - Claude Vision Roster Scanning
 
 **New Features**

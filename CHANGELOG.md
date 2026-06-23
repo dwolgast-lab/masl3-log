@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.2.1-beta] - 2026-06-23 - Staff Role Normalization
+
+**Improvements**
+* **Bench Staff Role Mapping:** The scanned "Job" value is now mapped to a canonical role much more reliably. Coaches and trainers are written many ways on the forms, and these are now all recognized: **Head Coach** ("Head Coach", "HC", or a bare "Coach" in the first staff row), **Assistant Coach** ("AC", "Assistant Coach", "Asst. Coach", or a bare "Coach" below the first row), and **Trainer** ("Trainer", "AT", "Athletic Trainer"). Matching ignores punctuation/spacing and uses exact-match for the ambiguous two-letter abbreviations so "AC"/"AT" don't collide with the letters inside "Coach". The first staff member listed is treated as the head coach by convention when the job text is bare or unrecognized; an explicitly different label (e.g. "AC" listed first) is respected. Anything that matches none of these falls back to **Other**.
+
+---
+
 ## [v1.2.0-beta] - 2026-06-23 - Claude Vision Roster Scanning
 
 **New Features**

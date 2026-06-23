@@ -83,13 +83,23 @@ export const processRosterImage = (file) => {
 // Consumes the field-mapped roster returned by /api/scanRoster
 // ({ players, staff }) and merges new rows into the current roster/bench.
 // -----------------------------------------------------------------------------
-const normalizeRole = (role) => {
-    const r = (role || '').toLowerCase();
-    if (r.includes('head')) return 'Head Coach';
-    if (r.includes('assistant')) return 'Assistant Coach';
-    if (r.includes('train')) return 'Trainer';
-    if (r.includes('manager')) return 'Manager';
-    return 'Other';
+// Map the free-form "Job" value to a canonical BENCH_ROLE. Staff jobs are
+// written many ways (e.g. Head Coach / HC / Coach; AC / Asst. Coach; AT /
+// Athletic Trainer), so match on letters only (periods/spaces stripped) and
+// use exact-match for the ambiguous two-letter abbreviations. `isFirst` is
+// true for the first staff member listed on the form, who is the head coach
+// by convention — used to resolve a bare "Coach" and to default an
+// unrecognized first row.
+const normalizeRole = (role, isFirst) => {
+    const letters = (role || '').toLowerCase().replace(/[^a-z]/g, '');
+
+    if (letters.includes('head') || letters === 'hc') return 'Head Coach';
+    if (letters.includes('assistant') || letters.includes('asst') || letters === 'ac') return 'Assistant Coach';
+    if (letters.includes('trainer') || letters === 'at') return 'Trainer';
+    if (letters.includes('manager')) return 'Manager';
+    if (letters.includes('coach')) return isFirst ? 'Head Coach' : 'Assistant Coach';
+
+    return isFirst ? 'Head Coach' : 'Other';
 };
 
 export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
@@ -115,15 +125,20 @@ export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
         });
     });
 
+    let validStaffSeen = 0;
     scannedStaff.forEach(s => {
         const name = (s.name || '').trim();
         if (name.length < 2) return;
+
+        const isFirstStaff = validStaffSeen === 0;
+        validStaffSeen++;
+
         if (currentBench.some(x => x.name.toUpperCase() === name.toUpperCase()) || newStaff.some(x => x.name.toUpperCase() === name.toUpperCase())) return;
 
         newStaff.push({
             id: Date.now() + Math.random(),
             name,
-            role: normalizeRole(s.role)
+            role: normalizeRole(s.role, isFirstStaff)
         });
     });
 
