@@ -24,7 +24,7 @@ import PlayerSelectModal from './components/modals/PlayerSelectModal';
 import TimeConfirmModal from './components/modals/TimeConfirmModal';
 import VideoReviewModal from './components/modals/VideoReviewModal';
 
-const APP_VERSION = "1.2.1-beta";
+const APP_VERSION = "1.2.2-beta";
 
 let audioCtx = null;
 const initAudio = () => {

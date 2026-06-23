@@ -2,6 +2,16 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.2.2-beta] - 2026-06-23 - Staff Role Mapping Tuned on Real Forms
+
+**Improvements**
+* **More Job Abbreviations Recognized:** Tested the scanner against eight real lineup sheets across four form layouts (MASL3, MASLW, etc.) and tuned the staff-role mapping to match what teams actually write. **"AS"** (used for assistants on some MASLW sheets) now maps to **Assistant Coach**, and **"GM"** maps to the existing **Manager** role. "Owner" and any other unrecognized job continue to fall back to **Other**.
+
+**Internal**
+* **Local Scan Test Harness:** Added `scripts/scanLocal.mjs`, a developer tool that runs the exact production prompt, schema, and merge logic against a local image (key read from `.env`) and prints the structured output plus the merged roster — used to validate field mapping against real sheets before deploying. Refactored `api/scanRoster.js` to export the shared prompt/schema/extraction so the harness exercises the identical code path (no change to the deployed endpoint's behavior).
+
+---
+
 ## [v1.2.1-beta] - 2026-06-23 - Staff Role Normalization
 
 **Improvements**

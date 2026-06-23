@@ -84,19 +84,20 @@ export const processRosterImage = (file) => {
 // ({ players, staff }) and merges new rows into the current roster/bench.
 // -----------------------------------------------------------------------------
 // Map the free-form "Job" value to a canonical BENCH_ROLE. Staff jobs are
-// written many ways (e.g. Head Coach / HC / Coach; AC / Asst. Coach; AT /
-// Athletic Trainer), so match on letters only (periods/spaces stripped) and
-// use exact-match for the ambiguous two-letter abbreviations. `isFirst` is
-// true for the first staff member listed on the form, who is the head coach
-// by convention — used to resolve a bare "Coach" and to default an
-// unrecognized first row.
+// written many ways (e.g. Head Coach / HC / Coach; AC / AS / Asst. Coach; AT /
+// Athletic Trainer; GM -> Manager), so match on letters only (periods/spaces
+// stripped) and use exact-match for the ambiguous two-letter abbreviations so
+// "AC"/"AS"/"AT" don't collide with the letters inside other words. "Owner" and
+// anything else unrecognized falls back to Other. `isFirst` is true for the
+// first staff member listed on the form, who is the head coach by convention —
+// used to resolve a bare "Coach" and to default an unrecognized first row.
 const normalizeRole = (role, isFirst) => {
     const letters = (role || '').toLowerCase().replace(/[^a-z]/g, '');
 
     if (letters.includes('head') || letters === 'hc') return 'Head Coach';
-    if (letters.includes('assistant') || letters.includes('asst') || letters === 'ac') return 'Assistant Coach';
+    if (letters.includes('assistant') || letters.includes('asst') || letters === 'ac' || letters === 'as') return 'Assistant Coach';
     if (letters.includes('trainer') || letters === 'at') return 'Trainer';
-    if (letters.includes('manager')) return 'Manager';
+    if (letters.includes('manager') || letters === 'gm') return 'Manager';
     if (letters.includes('coach')) return isFirst ? 'Head Coach' : 'Assistant Coach';
 
     return isFirst ? 'Head Coach' : 'Other';

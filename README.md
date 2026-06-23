@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v1.2.2-beta] - 2026-06-23 - Staff Role Mapping Tuned on Real Forms
+
+**Improvements**
+* **More Job Abbreviations Recognized:** Validated the scanner against eight real lineup sheets and tuned staff-role mapping — **"AS"** now maps to **Assistant Coach** and **"GM"** to **Manager**. "Owner" and other unrecognized jobs continue to fall back to **Other**. Added an internal local scan test harness (`scripts/scanLocal.mjs`) for validating field mapping against real sheets before deploying.
+
+---
+
 ## [v1.2.1-beta] - 2026-06-23 - Staff Role Normalization
 
 **Improvements**

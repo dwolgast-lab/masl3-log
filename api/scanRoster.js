@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 
 // Schema mirrors the three field blocks on the MASL 3 Official Lineup form.
-const RosterSchema = z.object({
+export const RosterSchema = z.object({
     players: z.array(z.object({
         number: z.string().describe('Jersey number exactly as written, e.g. "0", "00", "15". Empty string if blank.'),
         name: z.string().describe('Player name normalized to "Last, First". Reorder if the team wrote it "First Last" — see the NAME ORDER rule.'),
@@ -16,7 +16,7 @@ const RosterSchema = z.object({
     }))
 });
 
-const SYSTEM_PROMPT = `You are extracting fields from a MASL official lineup / roster form. These come from several leagues (MASL, MASL2, MASL3, MASLW); the exact title, column header wording, and number of rows vary, but the structure is consistent: a player section split into starters and substitutes, plus a bench-staff section.
+export const SYSTEM_PROMPT = `You are extracting fields from a MASL official lineup / roster form. These come from several leagues (MASL, MASL2, MASL3, MASLW); the exact title, column header wording, and number of rows vary, but the structure is consistent: a player section split into starters and substitutes, plus a bench-staff section.
 
 Map every filled row to the correct field:
 - PLAYERS: each player row has a jersey number, a position, and a name. Players listed under the starters block (often labeled "Starters") get isStarter=true; players under the substitutes/bench block (often "Substitutes" or "Subs") get isStarter=false.
@@ -34,6 +34,33 @@ Rules:
 - Forms may be typed or handwritten; transcribe handwriting as best you can. If a character is illegible, give your best single reading rather than a placeholder.
 - Ignore the header (Team/Opponent/Date/City), the instructional paragraph, and the Coach/Referee signature lines.`;
 
+// Core extraction, shared by the serverless handler and the local test harness
+// so both exercise the identical prompt + schema + call. `mediaType` defaults
+// to JPEG (what the browser uploads); the harness may pass image/png.
+export async function extractRoster(client, imageBase64, mediaType = 'image/jpeg') {
+    const response = await client.messages.parse({
+        model: 'claude-opus-4-8',
+        max_tokens: 16000,
+        thinking: { type: 'adaptive' },
+        system: SYSTEM_PROMPT,
+        messages: [
+            {
+                role: 'user',
+                content: [
+                    {
+                        type: 'image',
+                        source: { type: 'base64', media_type: mediaType, data: imageBase64 }
+                    },
+                    { type: 'text', text: 'Extract the roster from this lineup sheet.' }
+                ]
+            }
+        ],
+        output_config: { format: zodOutputFormat(RosterSchema) }
+    });
+
+    return response.parsed_output ?? null;
+}
+
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -43,31 +70,13 @@ export default async function handler(req, res) {
 
         const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-        const response = await client.messages.parse({
-            model: 'claude-opus-4-8',
-            max_tokens: 16000,
-            thinking: { type: 'adaptive' },
-            system: SYSTEM_PROMPT,
-            messages: [
-                {
-                    role: 'user',
-                    content: [
-                        {
-                            type: 'image',
-                            source: { type: 'base64', media_type: 'image/jpeg', data: imageBase64 }
-                        },
-                        { type: 'text', text: 'Extract the roster from this lineup sheet.' }
-                    ]
-                }
-            ],
-            output_config: { format: zodOutputFormat(RosterSchema) }
-        });
+        const parsed = await extractRoster(client, imageBase64);
 
-        if (!response.parsed_output) {
+        if (!parsed) {
             return res.status(502).json({ error: 'Model did not return structured roster data' });
         }
 
-        return res.status(200).json(response.parsed_output);
+        return res.status(200).json(parsed);
 
     } catch (error) {
         console.error('Roster scan error:', error);
