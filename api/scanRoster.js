@@ -13,7 +13,8 @@ export const RosterSchema = z.object({
     staff: z.array(z.object({
         name: z.string().describe('Staff name normalized to "Last, First". Reorder if the team wrote it "First Last" — see the NAME ORDER rule.'),
         role: z.string().describe('Value from the Job column, e.g. "Head Coach".')
-    }))
+    })),
+    coachName: z.string().describe('The name written on the bottom "Coach" / "Head Coach" signature line, normalized to "Last, First" per the NAME ORDER rule. Only if a legible NAME is written there; empty string if that line holds only a signature scribble, is blank, or is illegible.')
 });
 
 export const SYSTEM_PROMPT = `You are extracting fields from a MASL official lineup / roster form. These come from several leagues (MASL, MASL2, MASL3, MASLW); the exact title, column header wording, and number of rows vary, but the structure is consistent: a player section split into starters and substitutes, plus a bench-staff section.
@@ -23,7 +24,7 @@ Map every filled row to the correct field:
 - BENCH STAFF: the staff section (often "Bench Staff") lists non-players with a job/role and a name.
 
 Rules:
-- NAME ORDER: Always output every player and staff name as "Last, First". The forms ask for "Last Name, First Name", but teams fill them in inconsistently — some write "Last, First" and some write "First Last".
+- NAME ORDER: Always output every player, staff, and coach name as "Last, First". The forms ask for "Last Name, First Name", but teams fill them in inconsistently — some write "Last, First" and some write "First Last".
   - If the name has a comma (e.g. "Bross, Sarah"), treat the part before the comma as the last name and keep that order.
   - If the name has NO comma (e.g. "Sarah Bross"), use your knowledge of common given (first) names to decide which token is the first name, then reorder to "Last, First" (so "Sarah Bross" becomes "Bross, Sarah"). If the surname is multiple words or hyphenated (e.g. "Stasmas-Mondragon"), keep it together as the last name.
   - Preserve any nickname in quotes and any suffix exactly, e.g. De Abreau, Maria ("Duda").
@@ -32,7 +33,8 @@ Rules:
 - The number of rows varies by league and form — read however many are actually filled in. Skip blank rows entirely.
 - Never invent a player, number, name, or role that is not on the form.
 - Forms may be typed or handwritten; transcribe handwriting as best you can. If a character is illegible, give your best single reading rather than a placeholder.
-- Ignore the header (Team/Opponent/Date/City), the instructional paragraph, and the Coach/Referee signature lines.`;
+- Ignore the header (Team/Opponent/Date/City) and the instructional paragraph. Ignore the Referee / Crew Chief signature line entirely.
+- COACH SIGNATURE LINE: at the very bottom there is usually a "Coach" or "Head Coach" line. If a legible NAME is written on it, put that name in coachName (formatted "Last, First" per the NAME ORDER rule). If that line holds only a signature scribble, is blank, or is illegible, set coachName to an empty string. Do not confuse it with the Referee/Crew Chief line.`;
 
 // Core extraction, shared by the serverless handler and the local test harness
 // so both exercise the identical prompt + schema + call. `mediaType` defaults

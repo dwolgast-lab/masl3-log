@@ -103,6 +103,16 @@ const normalizeRole = (role, isFirst) => {
     return isFirst ? 'Head Coach' : 'Other';
 };
 
+// True only when the job text *explicitly* names a head coach ("HC" / "Head
+// Coach") — NOT the first-row default. Used to decide whether a coach who only
+// signed the bottom line should be treated as the head coach.
+const isExplicitHeadCoach = (role) => {
+    const letters = (role || '').toLowerCase().replace(/[^a-z]/g, '');
+    return letters.includes('head') || letters === 'hc';
+};
+
+const sameName = (a, b) => (a || '').trim().toUpperCase() === (b || '').trim().toUpperCase();
+
 export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
     const scannedPlayers = Array.isArray(scanData?.players) ? scanData.players : [];
     const scannedStaff = Array.isArray(scanData?.staff) ? scanData.staff : [];
@@ -127,6 +137,7 @@ export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
     });
 
     let validStaffSeen = 0;
+    let hasExplicitHeadCoach = false;
     scannedStaff.forEach(s => {
         const name = (s.name || '').trim();
         if (name.length < 2) return;
@@ -134,7 +145,9 @@ export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
         const isFirstStaff = validStaffSeen === 0;
         validStaffSeen++;
 
-        if (currentBench.some(x => x.name.toUpperCase() === name.toUpperCase()) || newStaff.some(x => x.name.toUpperCase() === name.toUpperCase())) return;
+        if (isExplicitHeadCoach(s.role)) hasExplicitHeadCoach = true;
+
+        if (currentBench.some(x => sameName(x.name, name)) || newStaff.some(x => sameName(x.name, name))) return;
 
         newStaff.push({
             id: Date.now() + Math.random(),
@@ -142,6 +155,24 @@ export const mergeScannedRoster = (scanData, currentRoster, currentBench) => {
             role: normalizeRole(s.role, isFirstStaff)
         });
     });
+
+    // Non-standard form: the head coach signed the bottom "Coach"/"Head Coach"
+    // line without listing themselves in bench staff. If a legible name is
+    // there, isn't already a staff member, and no one is *explicitly* the head
+    // coach, treat the signer as head coach — demoting any first-row default HC
+    // so we don't end up with two.
+    const coachName = (scanData?.coachName || '').trim();
+    if (coachName.length >= 2 && !hasExplicitHeadCoach) {
+        const alreadyListed = currentBench.some(x => sameName(x.name, coachName)) || newStaff.some(x => sameName(x.name, coachName));
+        if (!alreadyListed) {
+            newStaff.forEach(x => { if (x.role === 'Head Coach') x.role = 'Assistant Coach'; });
+            newStaff.push({
+                id: Date.now() + Math.random(),
+                name: coachName,
+                role: 'Head Coach'
+            });
+        }
+    }
 
     let updatedRoster = [...currentRoster];
     let updatedBench = [...currentBench];

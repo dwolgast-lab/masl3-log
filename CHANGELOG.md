@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.3.0-beta] - 2026-06-23 - Head Coach From the Signature Line
+
+**New Features**
+* **Coach Signature Fallback:** Some head coaches sign the bottom "Coach" / "Head Coach" line but never list themselves in the Bench Staff section. The scanner now reads a legible name from that signature line and, when it isn't already a bench-staff member **and** no one in bench staff is *explicitly* labeled Head Coach, adds that person as the **Head Coach** (demoting any first-row default head coach so there's never two). If the line holds only a signature scribble or is blank, it's ignored. The Referee / Crew Chief line is never used. Validated on a real MASL3 sheet where the head coach (Reno DiStefano) had only signed at the bottom — he is now correctly imported as Head Coach while the listed assistant stays an assistant.
+
+---
+
 ## [v1.2.2-beta] - 2026-06-23 - Staff Role Mapping Tuned on Real Forms
 
 **Improvements**

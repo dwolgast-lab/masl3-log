@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v1.3.0-beta] - 2026-06-23 - Head Coach From the Signature Line
+
+**New Features**
+* **Coach Signature Fallback:** When a head coach signs the bottom "Coach" / "Head Coach" line but isn't listed in Bench Staff, the scanner now reads that name and — if no one in bench staff is explicitly the head coach — imports the signer as **Head Coach** (demoting any first-row default so there's never two). Signature scribbles and the Referee line are ignored. Validated on a real MASL3 sheet (Reno DiStefano, who had only signed at the bottom).
+
+---
+
 ## [v1.2.2-beta] - 2026-06-23 - Staff Role Mapping Tuned on Real Forms
 
 **Improvements**
