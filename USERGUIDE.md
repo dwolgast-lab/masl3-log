@@ -1,5 +1,5 @@
 # MASL 4th Official Log App: User Guide
-**Version 1.1.0-beta+**
+**Version 1.3.0-beta+**
 
 Welcome to the digital MASL 4th Official Log App. This platform is designed to replace the traditional paper worksheet, automating penalty math, foul accumulation, and timeline tracking so Assistant Referees and 4th Officials can keep their eyes on the game.
 
@@ -45,10 +45,28 @@ Use the Team Configuration cards to set up the Home and Away teams.
 
 `[Insert Screenshot: The Roster Editor Modal]`
 
-* **Adding Players:** Enter the player's number and name, or use the "Scan Lineup Sheet" tool to import the names automatically. 
-* **Goalkeepers & Starters:** To ensure absolute accuracy on the final report, **all players default to non-starters and field players.** Whether you typed them manually or used the lineup scanner, you must manually tap the **GK** and **Starter** checkboxes for the appropriate players before starting the match.
-* **Adding Bench Staff:** Switch to the Bench tab to add the Head Coach and assistant staff. 
+* **Adding Players Manually:** Enter the player's number and name (formatted "Last Name, First Name"), tick the **GK**, **Start**, or **Capt** boxes as needed, and press **+ Add**. Manually added players start as non-starting field players, so set those flags yourself.
+* **Scanning a Lineup Sheet:** Instead of typing each player, you can photograph the team's paper lineup sheet and let the app fill the roster in for you — see *Scanning a Lineup Sheet* below.
+* **Goalkeepers, Starters & Captain:** A **scanned** import already sets goalkeepers, the starters/substitutes split, and names for you. **Manually** added players, by contrast, start as non-starting field players. Either way, the **team captain is never auto-detected** — designate it yourself with the **© CAPT** button, and always review the **GK** and **STARTER** flags on each player row against the paper sheet before kickoff.
+* **Adding Bench Staff:** Use the **Bench Staff** panel on the right to add the Head Coach and other staff — enter a name, pick a role from the dropdown (Head Coach, Assistant Coach, Trainer, Manager, Other), and tap **+ Add Staff**. (Scanning fills this in automatically.)
 * **Validation:** When you click "Proceed to Kickoff", the app will warn you if a roster violates MASL rules (e.g., missing a starting GK, no Head Coach, or missing the minimum required GKs for pro leagues).
+
+### Scanning a Lineup Sheet
+
+Most teams hand you a paper lineup sheet before the match. Instead of typing every player, you can scan it:
+
+1. In the Roster Editor, tap **📷 Scan Lineup Sheet** in the top bar. On a phone or tablet this usually opens your device's camera so you can photograph the sheet; on a laptop it lets you choose an image file.
+2. The app reads the form using Claude AI. A **"Reading lineup sheet with Claude AI..."** spinner appears for a few seconds.
+3. A **VERIFY SCANNED ROSTER** screen shows everything it detected — each player's number, name and position, with a **GK** tag for goalkeepers and a **Starter** tag for the starting block — plus the bench staff and their roles.
+4. Review the list, then tap **Import Data** (or **Cancel** to discard). Players whose jersey number is already on the roster are skipped, so you can re-scan without creating duplicates.
+
+**What scanning fills in for you:** unlike manual entry, a scanned import carries over what the form actually shows — goalkeepers (from the Position column), the starters-vs-substitutes split (from which block a player is in), names reformatted to "Last, First", and bench-staff roles. The head coach is taken from the Bench Staff section, or — if a coach only signed the bottom of the sheet without listing themselves there — from that signature line.
+
+`[Insert Screenshot: The "📷 Scan Lineup Sheet" button in the Roster Editor top bar]`
+`[Insert Screenshot: The "Reading lineup sheet with Claude AI..." spinner]`
+`[Insert Screenshot: The VERIFY SCANNED ROSTER screen]`
+
+> **⚠️ Always verify a scan.** The scanner is very good at putting data in the *right fields*, but it is **not** a perfect transcriber — especially with messy handwriting. Expect a few minor corrections after importing (a misspelled name, a wrong jersey digit, a GK/Starter flag). On each player row, tap the **GK / STARTER / © CAPT** buttons to fix flags, or **Edit** to change a number or name. Always confirm the imported roster against the paper sheet before kickoff.
 
 ---
 
