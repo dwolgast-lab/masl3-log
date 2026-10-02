@@ -114,36 +114,46 @@ export default function PregameSetup({
         setCurrentView('ingame');
     };
 
+    const btnDark = "min-h-11 px-4 bg-slate-800 dark:bg-slate-700 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 dark:hover:bg-slate-600 active:scale-[0.97] active:brightness-95 transition";
+
     return (
-        <div className="min-h-screen bg-gray-100 p-8 font-sans relative flex flex-col items-center">
-            <div className="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8">
-                <div className="bg-slate-800 p-6 text-white flex justify-between items-center relative">
+        <div className="min-h-dvh pt-safe pb-safe bg-slate-100 dark:bg-slate-900 p-4 landscape:p-8 font-sans relative flex flex-col items-center">
+            <div className="w-full max-w-5xl bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden mb-6">
+                <div className="bg-slate-800 dark:bg-slate-950 p-6 text-white flex justify-between items-center relative">
                     <div className="flex items-center space-x-4 z-10">
                         {activeLeague?.logo && <img src={activeLeague.logo} alt="League Logo" className="w-16 h-16 object-contain bg-white rounded-full p-1" />}
                         <div>
-                            <h1 className="text-3xl font-black tracking-wider">{activeLeague?.name || 'MASL'} PRE-GAME SETUP</h1>
+                            <h1 className="text-2xl md:text-3xl font-black tracking-wider">{activeLeague?.name || 'MASL'} PRE-GAME SETUP</h1>
                             <span className="font-bold text-slate-300">4th Official Log</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="p-8 space-y-8">
+                <div className="p-4 md:p-8 space-y-8">
                     <section>
-                        <div className="flex justify-between items-end border-b-2 border-slate-200 pb-2 mb-4">
-                            <h2 className="text-xl font-bold text-slate-700">Match Information</h2>
-                            <div className="flex items-center space-x-4">
-                                {/* NEW: Dark Mode Toggle */}
-                                <label className="flex items-center space-x-2 cursor-pointer bg-slate-100 px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-200 transition">
-                                    <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} className="w-4 h-4 accent-slate-800" />
-                                    <span className="text-sm font-bold text-slate-700">🌙 Dark Mode</span>
-                                </label>
+                        <div className="flex flex-wrap justify-between items-center gap-3 border-b-2 border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                            <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100">Match Information</h2>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={isDarkMode}
+                                    aria-pressed={isDarkMode}
+                                    onClick={() => setIsDarkMode(!isDarkMode)}
+                                    className="min-h-11 flex items-center gap-3 bg-slate-100 dark:bg-slate-700 px-3 rounded-lg border border-slate-200 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-[0.97] active:brightness-95 transition"
+                                >
+                                    <span className={`relative inline-block w-11 h-6 rounded-full shrink-0 transition-colors ${isDarkMode ? 'bg-blue-600' : 'bg-slate-400'}`}>
+                                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${isDarkMode ? 'translate-x-5' : ''}`}></span>
+                                    </span>
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-100">🌙 Dark Mode</span>
+                                </button>
 
-                                <button onClick={() => setShowCrewModal(true)} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 transition">
+                                <button onClick={() => setShowCrewModal(true)} className={btnDark}>
                                     🧑‍⚖️ Officiating Crew
                                 </button>
-                                <div className="flex items-center space-x-2 border-l pl-4">
-                                    <label className="text-sm font-bold text-gray-600">Select League:</label>
-                                    <select name="league" value={gameData.league || 'MASL3'} onChange={handleInputChange} className="p-2 border rounded bg-gray-50 font-bold shadow-sm">
+                                <div className="flex items-center gap-2">
+                                    <label htmlFor="league-select" className="text-sm font-bold text-slate-600 dark:text-slate-300">Select League:</label>
+                                    <select id="league-select" name="league" value={gameData.league || 'MASL3'} onChange={handleInputChange} className="min-h-11 px-3 text-base border border-slate-300 dark:bg-slate-900 dark:border-slate-600 dark:text-slate-100 rounded-lg bg-slate-50 font-bold shadow-sm">
                                         {LEAGUES.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                                     </select>
                                 </div>
@@ -153,13 +163,13 @@ export default function PregameSetup({
                     </section>
 
                     <section>
-                        <div className="flex justify-between items-center border-b-2 border-slate-200 pb-2 mb-4">
-                            <h2 className="text-xl font-bold text-slate-700">Teams & Rosters</h2>
-                            <button onClick={() => setShowStartersModal(true)} className="px-4 py-2 bg-slate-800 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 transition">
+                        <div className="flex flex-wrap justify-between items-center gap-3 border-b-2 border-slate-200 dark:border-slate-700 pb-3 mb-4">
+                            <h2 className="text-xl font-bold text-slate-700 dark:text-slate-100">Teams & Rosters</h2>
+                            <button onClick={() => setShowStartersModal(true)} className={btnDark}>
                                 👀 View Starting Lineups
                             </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-8">
+                        <div className="grid grid-cols-2 gap-4 md:gap-8">
                             <TeamConfigCard 
                                 type="away" gameData={gameData} handleInputChange={handleInputChange} 
                                 handleTeamSelect={handleTeamSelect} teamsByDivision={teamsByDivision} 
@@ -174,21 +184,21 @@ export default function PregameSetup({
                     </section>
                 </div>
 
-                <div className="bg-gray-50 p-6 border-t flex justify-between items-center">
-                    <span className="text-sm font-bold text-green-600 flex items-center">
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 md:p-6 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-3 justify-between items-center">
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400 flex items-center">
                         <span className="w-3 h-3 bg-green-500 rounded-full mr-2 animate-pulse"></span> Auto-Saving Enabled
                     </span>
-                    <button onClick={handleProceedToKickoff} className="px-8 py-4 bg-green-600 text-white font-black text-lg rounded-xl shadow-lg hover:bg-green-700 transition">
+                    <button onClick={handleProceedToKickoff} className="min-h-14 px-8 py-3 bg-green-600 text-white font-black text-lg rounded-xl shadow-lg hover:bg-green-700 active:scale-[0.97] active:brightness-95 transition">
                         PROCEED TO KICKOFF ➔
                     </button>
                 </div>
             </div>
 
-            <div className="w-full max-w-5xl flex justify-between px-4">
-                <button onClick={clearAllGameData} className="text-red-500 font-bold border-b border-transparent hover:border-red-500 transition">
+            <div className="w-full max-w-5xl flex flex-wrap gap-3 justify-between px-1">
+                <button onClick={clearAllGameData} className="min-h-11 px-4 text-sm text-red-600 dark:text-red-400 font-bold border-2 border-red-500 dark:border-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950 active:scale-[0.97] active:brightness-95 transition">
                     ⚠️ End Match & Wipe All Data
                 </button>
-                <button onClick={onExportPDF} className="px-6 py-3 bg-blue-600 text-white font-black rounded-lg shadow-lg hover:bg-blue-700 transition">
+                <button onClick={onExportPDF} className="min-h-11 px-6 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 active:scale-[0.97] active:brightness-95 transition">
                     📥 Export Official PDF Worksheet
                 </button>
             </div>
@@ -201,14 +211,14 @@ export default function PregameSetup({
                 onClose={() => setShowBugModal(false)} 
                 appVersion={appVersion}
             />
-            <div className="absolute bottom-2 w-full flex justify-between px-4 z-[1000] drop-shadow-md">
+            <div className="w-full max-w-5xl flex flex-wrap gap-3 justify-between items-center px-1 mt-6">
                 <button 
                     onClick={() => setShowBugModal(true)} 
-                    className="text-xs font-bold text-gray-500 hover:text-blue-600 transition bg-white/80 px-2 py-1 rounded"
+                    className="min-h-11 px-3 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 active:scale-[0.97] active:brightness-95 transition bg-white/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg"
                 >
                     🐞 Report a Bug / Feedback
                 </button>
-                <div className="text-xs font-bold text-gray-400 bg-white/80 px-2 py-1 rounded">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400 px-2 py-1">
                     Author: Dave Wolgast | v{appVersion}
                 </div>
             </div>

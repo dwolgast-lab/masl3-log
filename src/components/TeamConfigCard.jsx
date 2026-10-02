@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { readableTextOn } from '../utils';
 
 // The displayHex allows us to show a pure white bubble in the picker, 
 // while sending a darker silver (#9CA3AF) to the UI engine so button text doesn't vanish.
@@ -91,11 +92,11 @@ export default function TeamConfigCard({
     const currentPrimaryEngineHex = gameData[`${type}Color`] || (isAway ? '#1e40af' : '#991b1b');
 
     return (
-        <div className="p-4 rounded-xl border border-gray-200 bg-gray-50 flex flex-col relative">
+        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex flex-col relative">
             {logoStr && <img src={logoStr} alt={`${type} Logo`} className="absolute top-4 right-4 w-12 h-12 object-contain opacity-80 drop-shadow-sm" />}
             <h3 className="font-black mb-4 uppercase" style={{ color: cssColor }}>{type} TEAM</h3>
             
-            <select value={getTeamSelectValue()} onChange={(e) => handleTeamSelect(type, e)} className="w-full p-3 border rounded-lg mb-3 font-bold bg-white shadow-sm outline-none focus:border-blue-500">
+            <select value={getTeamSelectValue()} onChange={(e) => handleTeamSelect(type, e)} className="w-full min-h-11 px-3 text-base border border-slate-300 dark:border-slate-600 rounded-lg mb-3 font-bold bg-white dark:bg-slate-900 dark:text-slate-100 shadow-sm outline-none focus:border-blue-500">
                 <option value="custom">-- Custom / Manual Entry --</option>
                 {Object.keys(teamsByDivision).map(division => (
                     <optgroup key={division} label={`${division} Division`}>
@@ -106,31 +107,31 @@ export default function TeamConfigCard({
                 ))}
             </select>
             
-            <div className="flex space-x-2 mb-4">
-                <input type="text" name={`${type}Team`} placeholder="Team Name" value={teamNameStr || ''} onChange={handleInputChange} className="flex-[1.2] p-2 border rounded bg-white text-sm outline-none focus:border-blue-500" />
+            <div className="flex gap-2 mb-4">
+                <input type="text" name={`${type}Team`} placeholder="Team Name" value={teamNameStr || ''} onChange={handleInputChange} className="flex-[1.2] min-w-0 min-h-11 px-3 text-base border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 dark:text-slate-100 outline-none focus:border-blue-500" />
                 
                 {/* CUSTOM VISUAL COLOR PICKER */}
                 <div className="flex-1 relative" ref={pickerRef}>
                     <button 
                         type="button"
                         onClick={() => setShowPicker(!showPicker)}
-                        className="w-full h-full flex items-center p-2 border rounded bg-white text-sm outline-none focus:border-blue-500 hover:bg-gray-50 transition shadow-sm"
+                        className="w-full h-full min-h-11 flex items-center px-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-sm outline-none focus:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-[0.97] active:brightness-95 transition shadow-sm"
                         title="Select Jersey Colors"
                     >
                         <div className="w-8 h-5 rounded border shadow-sm shrink-0 mr-2 flex overflow-hidden">
                             <div className="flex-1" style={{ backgroundColor: displayPrimaryHex }}></div>
                             {secName && secName !== 'None' && (
-                                <div className="flex-1 border-l border-gray-200/50" style={{ backgroundColor: displaySecondaryHex || displayPrimaryHex }}></div>
+                                <div className="flex-1 border-l border-slate-200/50" style={{ backgroundColor: displaySecondaryHex || displayPrimaryHex }}></div>
                             )}
                         </div>
-                        <span className="truncate font-bold text-gray-700 text-xs">{colorNameStr || 'Color...'}</span>
+                        <span className="truncate font-bold text-slate-700 dark:text-slate-100 text-sm">{colorNameStr || 'Color...'}</span>
                     </button>
 
                     {showPicker && (
                         /* POP OVER MODIFIED TO RENDER UPWARDS (bottom-full) */
-                        <div className="absolute z-[500] bottom-full mb-2 right-0 w-64 sm:w-72 bg-white rounded-xl shadow-2xl border border-slate-200 p-4">
+                        <div className="absolute z-[500] bottom-full mb-2 right-0 w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-600 p-4">
                             
-                            <h4 className="text-xs font-black text-slate-500 uppercase mb-2">Primary Color</h4>
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Primary Color</h4>
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {STANDARD_COLORS.map(c => (
                                     <button 
@@ -138,18 +139,18 @@ export default function TeamConfigCard({
                                         type="button"
                                         onClick={() => handleColorSelect(true, c)}
                                         title={c.name}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${currentPrimaryEngineHex.toUpperCase() === c.hex.toUpperCase() ? 'ring-2 ring-blue-500 border-white' : 'border-gray-200'}`}
+                                        className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-110 active:scale-95 transition-transform ${currentPrimaryEngineHex.toUpperCase() === c.hex.toUpperCase() ? 'ring-2 ring-blue-500 border-white' : 'border-slate-300 dark:border-slate-500'}`}
                                         style={{ backgroundColor: c.displayHex || c.hex }}
                                     />
                                 ))}
                             </div>
 
-                            <h4 className="text-xs font-black text-slate-500 uppercase mb-2">Secondary Trim</h4>
+                            <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Secondary Trim</h4>
                             <div className="flex flex-wrap gap-2">
                                 <button 
                                     type="button"
                                     onClick={() => handleColorSelect(false, { name: 'None' })}
-                                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 border-dashed flex items-center justify-center text-[8px] sm:text-[9px] font-black hover:scale-110 transition-transform ${(!secName || secName === 'None') ? 'ring-2 ring-blue-500 border-white text-blue-600' : 'border-slate-300 text-slate-400'}`}
+                                    className={`w-10 h-10 rounded-full border-2 border-dashed flex items-center justify-center text-[11px] font-bold hover:scale-110 active:scale-95 transition-transform ${(!secName || secName === 'None') ? 'ring-2 ring-blue-500 border-white text-blue-600' : 'border-slate-300 dark:border-slate-500 text-slate-400'}`}
                                 >
                                     N/A
                                 </button>
@@ -159,23 +160,23 @@ export default function TeamConfigCard({
                                         type="button"
                                         onClick={() => handleColorSelect(false, c)}
                                         title={c.name}
-                                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border-2 shadow-sm hover:scale-110 transition-transform ${secName === c.name ? 'ring-2 ring-blue-500 border-white' : 'border-gray-200'}`}
+                                        className={`w-10 h-10 rounded-full border-2 shadow-sm hover:scale-110 active:scale-95 transition-transform ${secName === c.name ? 'ring-2 ring-blue-500 border-white' : 'border-slate-300 dark:border-slate-500'}`}
                                         style={{ backgroundColor: c.displayHex || c.hex }}
                                     />
                                 ))}
                             </div>
                             
-                            <div className="mt-4 pt-3 border-t text-right">
-                                <button type="button" onClick={() => setShowPicker(false)} className="px-4 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg shadow hover:bg-slate-700 transition">Done</button>
+                            <div className="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 text-right">
+                                <button type="button" onClick={() => setShowPicker(false)} className="min-h-11 px-6 bg-slate-800 dark:bg-slate-600 text-white text-sm font-bold rounded-lg shadow hover:bg-slate-700 active:scale-[0.97] active:brightness-95 transition">Done</button>
                             </div>
                         </div>
                     )}
                 </div>
             </div>
 
-            <button onClick={() => setActiveRosterModal(type.toUpperCase())} className="w-full mt-auto py-3 text-white font-bold rounded-lg shadow flex justify-between px-4 hover:opacity-90 transition" style={{ backgroundColor: cssColor }}>
+            <button onClick={() => setActiveRosterModal(type.toUpperCase())} className="w-full mt-auto min-h-11 py-3 font-bold rounded-lg shadow flex flex-wrap justify-between gap-x-3 px-4 hover:opacity-90 active:scale-[0.97] active:brightness-95 transition" style={{ backgroundColor: cssColor, color: readableTextOn(cssColor) }}>
                 <span>Edit Roster & Bench</span>
-                <span>{rosterCount} Plyrs / {benchCount} Staff</span>
+                <span className="tabular-nums">{rosterCount} Plyrs / {benchCount} Staff</span>
             </button>
         </div>
     );

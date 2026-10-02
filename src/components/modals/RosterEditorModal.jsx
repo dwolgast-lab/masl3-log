@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { BENCH_ROLES } from '../../config';
 import { robustNumericalSort, sortBench, processRosterImage, mergeScannedRoster } from '../../ocrEngine';
+import { readableTextOn } from '../../utils';
 
 export default function RosterEditorModal({
     activeRosterModal, setActiveRosterModal,
@@ -147,91 +148,102 @@ export default function RosterEditorModal({
         setScanResult(null);
     };
 
+    const teamColor = activeRosterModal === 'AWAY' ? awayCSSColor : homeCSSColor;
+    const headerText = readableTextOn(teamColor);
+    const fieldCls = "w-full min-h-11 px-3 text-base border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-900 dark:text-slate-100";
+    const lblCls = "block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1 uppercase";
+    const checkLbl = "min-h-11 px-2 flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 cursor-pointer active:brightness-95 transition";
+    const checkTxt = "font-bold text-xs uppercase text-slate-700 dark:text-slate-200";
+    const btnPrimary = (editing) => `min-h-11 px-4 text-white text-sm font-bold rounded-lg shadow active:scale-[0.97] active:brightness-95 transition ${editing ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 dark:bg-slate-600 hover:bg-slate-700'}`;
+    const btnCancel = "min-h-11 px-4 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 active:scale-[0.97] active:brightness-95 transition";
+    const toggleCls = (on, onCls) => `min-h-11 px-3 text-xs font-bold rounded-lg border active:scale-[0.97] active:brightness-95 transition ${on ? onCls : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-500 dark:border-slate-700 dark:hover:bg-slate-700'}`;
+    const editBtn = "min-h-11 min-w-11 px-3 text-sm rounded-lg font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-950 active:scale-[0.97] active:brightness-95 transition";
+    const delBtn = "min-h-11 min-w-11 px-3 text-sm rounded-lg font-bold text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950 active:scale-[0.97] active:brightness-95 transition";
+    const resetPlayer = () => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); };
+
     return (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-50 p-6 py-12">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90vh] overflow-hidden relative">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl flex flex-col h-full max-h-[90dvh] overflow-hidden relative">
                 
                 {isScanning && (
-                    <div className="absolute inset-0 bg-white/90 z-[60] flex flex-col items-center justify-center">
+                    <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/90 z-[60] flex flex-col items-center justify-center">
                         <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <h3 className="text-xl font-bold text-gray-800">Reading lineup sheet with Claude AI...</h3>
-                        <p className="text-gray-500">This may take a few seconds.</p>
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Reading lineup sheet with Claude AI...</h3>
+                        <p className="text-slate-500 dark:text-slate-400">This may take a few seconds.</p>
                     </div>
                 )}
 
                 {scanResult !== null && (
-                    <div className="absolute inset-0 bg-white z-[60] flex flex-col p-6 overflow-hidden">
-                        <h2 className="text-2xl font-black text-gray-800 mb-2">VERIFY SCANNED ROSTER</h2>
-                        <p className="text-sm text-gray-600 mb-4 border-b pb-4">
+                    <div className="absolute inset-0 bg-white dark:bg-slate-800 z-[60] flex flex-col p-4 md:p-6 overflow-hidden">
+                        <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2">VERIFY SCANNED ROSTER</h2>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
                             Fields detected from the lineup sheet. <strong>Players already on the roster are skipped on import.</strong> <br/>
                             Correct any misreads <em>after</em> importing.
                         </p>
 
                         <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                             <div>
-                                <h3 className="text-xs font-black uppercase text-gray-500 mb-2">Players ({(scanResult.players || []).length})</h3>
-                                {(scanResult.players || []).length === 0 && <p className="text-sm text-gray-400 italic">None detected.</p>}
+                                <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">Players ({(scanResult.players || []).length})</h3>
+                                {(scanResult.players || []).length === 0 && <p className="text-sm text-slate-400 italic">None detected.</p>}
                                 {(scanResult.players || []).map((p, i) => (
-                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-gray-100 text-sm">
-                                        <span className="w-10 font-black text-gray-800">{p.number || '—'}</span>
+                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-slate-100 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100">
+                                        <span className="w-10 font-black tabular-nums">{p.number || '—'}</span>
                                         <span className="flex-1">{p.name}</span>
-                                        {p.position && <span className="text-[10px] font-bold text-gray-500 uppercase">{p.position}</span>}
-                                        {(p.position || '').toUpperCase().includes('GK') && <span className="text-[10px] font-black text-orange-600 uppercase">GK</span>}
-                                        {p.isStarter && <span className="text-[10px] font-black text-green-600 uppercase">Starter</span>}
+                                        {p.position && <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">{p.position}</span>}
+                                        {(p.position || '').toUpperCase().includes('GK') && <span className="text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase">GK</span>}
+                                        {p.isStarter && <span className="text-[11px] font-bold text-green-600 dark:text-green-400 uppercase">Starter</span>}
                                     </div>
                                 ))}
                             </div>
                             <div>
-                                <h3 className="text-xs font-black uppercase text-gray-500 mb-2">Bench Staff ({(scanResult.staff || []).length})</h3>
-                                {(scanResult.staff || []).length === 0 && <p className="text-sm text-gray-400 italic">None detected.</p>}
+                                <h3 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 mb-2">Bench Staff ({(scanResult.staff || []).length})</h3>
+                                {(scanResult.staff || []).length === 0 && <p className="text-sm text-slate-400 italic">None detected.</p>}
                                 {(scanResult.staff || []).map((s, i) => (
-                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-gray-100 text-sm">
+                                    <div key={i} className="flex items-center gap-3 py-1.5 px-2 border-b border-slate-100 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-100">
                                         <span className="flex-1">{s.name}</span>
-                                        {s.role && <span className="text-[10px] font-bold text-gray-500 uppercase">{s.role}</span>}
+                                        {s.role && <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">{s.role}</span>}
                                     </div>
                                 ))}
                             </div>
                         </div>
 
-                        <div className="flex justify-end space-x-4 shrink-0 mt-4">
-                            <button onClick={() => setScanResult(null)} className="px-6 py-3 font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
-                            <button onClick={handleImportScannedText} className="px-6 py-3 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700">Import Data</button>
+                        <div className="flex justify-end gap-3 shrink-0 mt-4">
+                            <button onClick={() => setScanResult(null)} className="min-h-11 px-6 font-bold text-slate-600 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-[0.97] active:brightness-95 transition">Cancel</button>
+                            <button onClick={handleImportScannedText} className="min-h-11 px-6 font-black text-white bg-blue-600 rounded-xl shadow-md hover:bg-blue-700 active:scale-[0.97] active:brightness-95 transition">Import Data</button>
                         </div>
                     </div>
                 )}
 
-                <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: activeRosterModal === 'AWAY' ? awayCSSColor : homeCSSColor }}>
-                    <h2 className="text-2xl font-black uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                <div className="p-4 flex flex-wrap justify-between items-center gap-3 shrink-0" style={{ backgroundColor: teamColor, color: headerText }}>
+                    <h2 className="text-xl md:text-2xl font-black uppercase">
                         {(activeRosterModal === 'AWAY' ? gameData.awayTeam : gameData.homeTeam) || `${activeRosterModal} TEAM`} PERSONNEL
                     </h2>
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-3">
                         <input type="file" accept="image/*" capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
-                        <button onClick={() => fileInputRef.current.click()} className="flex items-center bg-white text-slate-800 px-4 py-2 rounded font-black shadow hover:bg-gray-100 transition text-sm">
+                        <button onClick={() => fileInputRef.current.click()} className="min-h-11 flex items-center bg-white text-slate-800 px-4 rounded-lg font-bold shadow hover:bg-slate-100 active:scale-[0.97] active:brightness-95 transition text-sm">
                             📷 Scan Lineup Sheet
                         </button>
-                        <button onClick={closeRosterModal} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">Done</button>
+                        <button onClick={closeRosterModal} className="min-h-11 font-bold bg-slate-900 text-white px-6 rounded-lg hover:bg-slate-800 shadow active:scale-[0.97] active:brightness-95 transition">Done</button>
                     </div>
                 </div>
                 
-                <div className="flex flex-1 overflow-hidden bg-gray-50">
-                    <div className="w-2/3 border-r flex flex-col h-full overflow-hidden">
-                        <div className="p-4 bg-white border-b shrink-0">
-                            <div className="flex gap-2 items-end">
-                                <div className="w-16"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">No.</label><input type="text" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value.toUpperCase().trim()})} className="w-full p-2 border rounded bg-gray-50 font-bold" placeholder="00" /></div>
-                                <div className="flex-1"><label className="block text-[10px] font-bold text-gray-500 mb-1 uppercase">Player Name</label><input type="text" value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50" placeholder="Last Name, First Name" /></div>
-                                <div className="flex flex-col space-y-1 pb-1">
-                                    <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isGK} onChange={e => setNewPlayer({...newPlayer, isGK: e.target.checked})} className="w-4 h-4 accent-orange-500" /><span className="font-bold text-[10px] uppercase text-gray-700">GK</span></label>
-                                    <div className="flex space-x-2">
-                                        <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isStarter} onChange={e => setNewPlayer({...newPlayer, isStarter: e.target.checked})} className="w-4 h-4 accent-green-600" /><span className="font-bold text-[10px] uppercase text-gray-700">Start</span></label>
-                                        <label className="flex items-center space-x-1"><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-4 h-4 accent-yellow-500" /><span className="font-bold text-[10px] uppercase text-gray-700">Capt</span></label>
-                                    </div>
+                <div className="flex flex-col landscape:flex-row flex-1 min-h-0 overflow-hidden bg-slate-50 dark:bg-slate-900">
+                    <div className="portrait:flex-[3] landscape:w-2/3 min-h-0 landscape:border-r portrait:border-b border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden">
+                        <div className="p-3 md:p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shrink-0">
+                            <div className="flex flex-wrap gap-2 items-end">
+                                <div className="w-20"><label className={lblCls}>No.</label><input type="text" inputMode="numeric" pattern="[0-9]*" value={newPlayer.number} onChange={e => setNewPlayer({...newPlayer, number: e.target.value.toUpperCase().trim()})} className={`${fieldCls} font-bold tabular-nums`} placeholder="00" /></div>
+                                <div className="flex-1 min-w-40"><label className={lblCls}>Player Name</label><input type="text" value={newPlayer.name} onChange={e => setNewPlayer({...newPlayer, name: e.target.value})} className={fieldCls} placeholder="Last Name, First Name" /></div>
+                                <div className="flex gap-2">
+                                    <label className={checkLbl}><input type="checkbox" checked={newPlayer.isGK} onChange={e => setNewPlayer({...newPlayer, isGK: e.target.checked})} className="w-5 h-5 accent-orange-500" /><span className={checkTxt}>GK</span></label>
+                                    <label className={checkLbl}><input type="checkbox" checked={newPlayer.isStarter} onChange={e => setNewPlayer({...newPlayer, isStarter: e.target.checked})} className="w-5 h-5 accent-green-600" /><span className={checkTxt}>Start</span></label>
+                                    <label className={checkLbl}><input type="checkbox" checked={newPlayer.isCaptain} onChange={e => setNewPlayer({...newPlayer, isCaptain: e.target.checked})} className="w-5 h-5 accent-yellow-500" /><span className={checkTxt}>Capt</span></label>
                                 </div>
-                                <div className="flex space-x-1">
-                                    <button onClick={handleAddPlayer} className={`px-4 py-2 text-white text-sm font-bold rounded shadow transition ${editingPlayerId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                                <div className="flex gap-2">
+                                    <button onClick={handleAddPlayer} className={btnPrimary(editingPlayerId)}>
                                         {editingPlayerId ? 'Update' : '+ Add'}
                                     </button>
                                     {editingPlayerId && (
-                                        <button onClick={() => { setEditingPlayerId(null); setNewPlayer({ number: '', name: '', isGK: false, isStarter: false, isCaptain: false }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
+                                        <button onClick={resetPlayer} className={btnCancel}>
                                             Cancel
                                         </button>
                                     )}
@@ -239,26 +251,26 @@ export default function RosterEditorModal({
                             </div>
                         </div>
                         
-                        <div className="p-4 overflow-y-auto flex-1">
+                        <div className="p-3 md:p-4 overflow-y-auto flex-1">
                             <div className="space-y-2">
                                 {[...(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)]
                                     .sort(robustNumericalSort) 
                                     .map(player => (
-                                    <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
-                                        <div className="flex items-center space-x-3 flex-1 min-w-0">
-                                            <span className="w-8 h-8 flex items-center justify-center bg-slate-100 border border-slate-300 rounded-full font-black text-sm text-slate-700 shrink-0">{player.number}</span>
-                                            <span className="font-bold text-sm text-gray-800 truncate flex-1">{player.name}</span>
+                                    <div key={player.id} className={`flex flex-wrap items-center justify-between gap-2 p-2 border rounded-lg shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300 dark:bg-blue-950 dark:border-blue-700' : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
+                                        <div className="flex items-center gap-3 flex-1 min-w-40">
+                                            <span className="w-9 h-9 flex items-center justify-center bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-500 rounded-full font-black tabular-nums text-sm text-slate-700 dark:text-slate-100 shrink-0">{player.number}</span>
+                                            <span className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate flex-1">{player.name}</span>
                                         </div>
                                         
-                                        <div className="flex space-x-1 shrink-0 ml-2">
-                                            <button onClick={() => togglePlayerAttr(player.id, 'isGK')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isGK ? 'bg-orange-100 text-orange-800 border-orange-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>GK</button>
-                                            <button onClick={() => togglePlayerAttr(player.id, 'isStarter')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isStarter ? 'bg-green-100 text-green-800 border-green-300' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>STARTER</button>
-                                            <button onClick={() => togglePlayerAttr(player.id, 'isCaptain')} className={`text-[10px] font-black px-2 py-1 rounded border transition ${player.isCaptain ? 'bg-yellow-100 text-yellow-800 border-yellow-400' : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-200'}`}>© CAPT</button>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => togglePlayerAttr(player.id, 'isGK')} className={toggleCls(player.isGK, 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-700')}>GK</button>
+                                            <button onClick={() => togglePlayerAttr(player.id, 'isStarter')} className={toggleCls(player.isStarter, 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950 dark:text-green-300 dark:border-green-700')}>STARTER</button>
+                                            <button onClick={() => togglePlayerAttr(player.id, 'isCaptain')} className={toggleCls(player.isCaptain, 'bg-yellow-100 text-yellow-800 border-yellow-400 dark:bg-yellow-950 dark:text-yellow-300 dark:border-yellow-700')}>© CAPT</button>
                                         </div>
 
-                                        <div className="flex space-x-1 shrink-0 ml-4 border-l pl-2">
-                                            <button onClick={() => { setEditingPlayerId(player.id); setNewPlayer(player); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
-                                            <button onClick={() => removePlayer(player.id)} className="text-red-500 hover:bg-red-100 px-2 py-1 text-xs rounded font-bold transition">Del</button>
+                                        <div className="flex gap-2 shrink-0 ml-2 border-l border-slate-200 dark:border-slate-700 pl-3">
+                                            <button onClick={() => { setEditingPlayerId(player.id); setNewPlayer(player); }} className={editBtn}>Edit</button>
+                                            <button onClick={() => removePlayer(player.id)} className={`${delBtn} ml-2`}>Del</button>
                                         </div>
                                     </div>
                                 ))}
@@ -266,34 +278,36 @@ export default function RosterEditorModal({
                         </div>
                     </div>
                     
-                    <div className="w-1/3 flex flex-col h-full bg-slate-50 overflow-hidden">
-                        <div className="p-4 bg-white border-b shrink-0">
+                    <div className="portrait:flex-[2] landscape:w-1/3 min-h-0 flex flex-col bg-slate-50 dark:bg-slate-900 overflow-hidden">
+                        <div className="p-3 md:p-4 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shrink-0">
                             <div className="flex flex-col gap-2">
-                                <input type="text" value={newBench.name} onChange={e => setNewBench({...newBench, name: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm" placeholder="Staff Name" />
-                                <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className="w-full p-2 border rounded bg-gray-50 text-sm font-bold">
+                                <input type="text" value={newBench.name} onChange={e => setNewBench({...newBench, name: e.target.value})} className={fieldCls} placeholder="Staff Name" />
+                                <select value={newBench.role} onChange={e => setNewBench({...newBench, role: e.target.value})} className={`${fieldCls} font-bold`}>
                                     {BENCH_ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                                 </select>
-                                <div className="flex gap-1">
-                                    <button onClick={handleAddBench} className={`flex-1 py-2 text-white text-sm font-bold rounded transition ${editingBenchId ? 'bg-blue-600 hover:bg-blue-700' : 'bg-slate-800 hover:bg-slate-700'}`}>
+                                <div className="flex gap-2">
+                                    <button onClick={handleAddBench} className={`flex-1 ${btnPrimary(editingBenchId)}`}>
                                         {editingBenchId ? 'Update Staff' : '+ Add Staff'}
                                     </button>
                                     {editingBenchId && (
-                                        <button onClick={() => { setEditingBenchId(null); setNewBench({ name: '', role: 'Assistant Coach' }); }} className="px-3 py-2 bg-gray-200 text-gray-600 text-sm font-bold rounded hover:bg-gray-300 transition">
+                                        <button onClick={() => { setEditingBenchId(null); setNewBench({ name: '', role: 'Assistant Coach' }); }} className={btnCancel}>
                                             Cancel
                                         </button>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 overflow-y-auto flex-1">
+                        <div className="p-3 md:p-4 overflow-y-auto flex-1">
                             <div className="space-y-2">
                                 {sortBench(activeRosterModal === 'AWAY' ? awayBench : homeBench).map(person => (
-                                    <div key={person.id} className={`flex flex-col p-2 bg-white border rounded shadow-sm relative ${editingBenchId === person.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
-                                        <span className="font-bold text-sm text-gray-800 pr-16">{person.name}</span>
-                                        <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border truncate max-w-full">{person.role}</span>
-                                        <div className="absolute top-2 right-2 flex space-x-1 shrink-0">
-                                            <button onClick={() => { setEditingBenchId(person.id); setNewBench(person); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
-                                            <button onClick={() => removeBench(person.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
+                                    <div key={person.id} className={`flex items-center gap-2 p-2 border rounded-lg shadow-sm ${editingBenchId === person.id ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-950' : 'bg-white border-slate-200 dark:bg-slate-800 dark:border-slate-700'}`}>
+                                        <div className="flex flex-col flex-1 min-w-0">
+                                            <span className="font-bold text-sm text-slate-800 dark:text-slate-100 break-words">{person.name}</span>
+                                            <span className="text-[11px] font-bold mt-1 uppercase w-fit px-1.5 py-0.5 bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600 truncate max-w-full">{person.role}</span>
+                                        </div>
+                                        <div className="flex gap-2 shrink-0">
+                                            <button onClick={() => { setEditingBenchId(person.id); setNewBench(person); }} className={editBtn}>Edit</button>
+                                            <button onClick={() => removeBench(person.id)} className={`${delBtn} ml-2`}>Remove</button>
                                         </div>
                                     </div>
                                 ))}
