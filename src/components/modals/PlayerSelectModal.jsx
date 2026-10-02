@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatTime } from '../../utils';
+import { formatTime, readableTextOn } from '../../utils';
 import { QUARTERS } from '../../config';
 
 export default function PlayerSelectModal({
@@ -79,24 +79,24 @@ export default function PlayerSelectModal({
     };
 
     return (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[85vh] overflow-hidden">
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full landscape:max-w-3xl max-w-2xl flex flex-col max-h-[90dvh] overflow-hidden">
                 
                 {modalStep === 'SERVING_PLAYER' && benchPenaltyEntity ? (
-                    <div className="bg-yellow-400 p-4 text-black text-center border-b-4 border-yellow-600 shrink-0 shadow-md z-10 relative">
-                        <button onClick={() => setModalStep('PLAYER')} className="absolute left-4 top-1/2 -translate-y-1/2 font-bold bg-yellow-500 px-3 py-1.5 rounded hover:bg-yellow-600 shadow-sm transition text-sm text-yellow-900">⬅ Back</button>
-                        <div className="text-xl font-black uppercase tracking-wider mb-1">
+                    <div className="bg-yellow-400 dark:bg-yellow-500 p-4 text-black text-center border-b-4 border-yellow-600 shrink-0 shadow-md z-10 relative">
+                        <button onClick={() => setModalStep('PLAYER')} className="absolute left-4 top-1/2 -translate-y-1/2 min-h-11 font-bold bg-yellow-500 dark:bg-yellow-600 px-4 rounded hover:bg-yellow-600 shadow-sm transition active:scale-[0.97] active:brightness-95 text-sm text-yellow-950">⬅ Back</button>
+                        <div className="text-xl font-black uppercase tracking-wider mb-1 px-20">
                             ✅ {benchPenaltyEntity.name || 'PLAYER'} ASSIGNED TO PENALTY
                         </div>
-                        <div className="text-sm font-bold text-yellow-900">
+                        <div className="text-sm font-bold text-yellow-950 px-20">
                             {penaltyData.color === 'Yellow' ? 'Serving Non-Releasable Major.' : 'Requires a substitute server.'} Please select the teammate to serve the 2-minute power play.
                         </div>
                     </div>
                 ) : (
-                    <div className="p-4 text-white flex justify-between items-center shrink-0" style={{ backgroundColor: flowTeamColor }}>
-                        <div className="flex flex-col" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
+                    <div className="p-4 flex justify-between items-center gap-3 shrink-0" style={{ backgroundColor: flowTeamColor, color: readableTextOn(flowTeamColor) }}>
+                        <div className="flex flex-col min-w-0">
                             <h2 className="text-2xl font-black uppercase">{headerTitle}</h2>
-                            <span className="text-sm font-bold opacity-80">{subTitle}</span>
+                            <span className="text-sm font-bold opacity-90">{subTitle}</span>
                         </div>
                         <button onClick={() => {
                             if (modalStep === 'PLAYER') {
@@ -107,71 +107,71 @@ export default function PlayerSelectModal({
                             } else {
                                 setModalStep('PLAYER');
                             }
-                        }} className="font-bold bg-slate-900 text-white px-4 py-2 rounded hover:bg-slate-800 shadow transition">
+                        }} className="shrink-0 min-h-11 font-bold bg-slate-900 text-white px-4 rounded hover:bg-slate-800 shadow transition active:scale-[0.97] active:brightness-95">
                             {modalStep === 'PLAYER' ? (editingEventId ? "Cancel Edit" : (activeAction.type === 'Log Foul' ? "Cancel Foul" : "⬅ Back")) : "⬅ Back"}
                         </button>
                     </div>
                 )}
 
-                <div className="p-6 overflow-y-auto flex-1 bg-gray-50 flex flex-col relative">
+                <div className="p-4 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-900 flex flex-col relative">
                     
                     {activeAction.type === 'Log Foul' && (!isPeriodRunning || editingEventId) && (
-                        <div className="w-full mb-6">
-                            <label className="block text-xs font-bold text-gray-600 mb-2 uppercase text-center tracking-widest">Event Quarter</label>
-                            <div className="flex bg-gray-200 rounded-lg p-1 w-full justify-between shadow-inner border border-gray-300">
+                        <div className="w-full mb-4">
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase text-center tracking-widest">Event Quarter</label>
+                            <div className="flex bg-slate-200 dark:bg-slate-800 rounded-lg p-1 w-full justify-between gap-1 shadow-inner border border-slate-300 dark:border-slate-700">
                                 {QUARTERS.map(q => (
-                                    <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 py-2 rounded-md font-bold text-sm transition-colors ${modalQuarter === q ? 'bg-black text-white shadow-md' : 'text-gray-600 hover:bg-gray-300'}`}>{q}</button>
+                                    <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 min-h-11 rounded-md font-bold text-sm transition active:scale-[0.97] ${modalQuarter === q ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'}`}>{q}</button>
                                 ))}
                             </div>
                         </div>
                     )}
 
                     {modalStep === 'ASSIST' && (
-                        <button onClick={() => onPlayerSelectClick('Unassisted')} className="mb-6 w-full p-4 border-2 border-dashed border-blue-400 bg-blue-50 rounded-xl text-center font-bold text-blue-700 hover:bg-blue-100 transition">UNASSISTED</button>
+                        <button onClick={() => onPlayerSelectClick('Unassisted')} className="mb-4 w-full min-h-14 p-3 border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-950 rounded-xl text-center font-bold text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 transition active:scale-[0.97] active:brightness-95">UNASSISTED</button>
                     )}
 
-                    <div className="mb-6">
-                        <label className="block text-sm font-bold text-gray-600 mb-2 uppercase">Quick Jersey # Search:</label>
-                        <input type="number" autoFocus value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full p-4 border-2 border-gray-300 rounded-xl text-xl font-bold outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
+                    <div className="mb-4">
+                        <label className="block text-sm font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase">Quick Jersey # Search:</label>
+                        <input type="text" inputMode="numeric" pattern="[0-9]*" value={playerSearchInput} onChange={(e) => setPlayerSearchInput(e.target.value)} placeholder="Type jersey number to filter..." className="w-full min-h-12 p-3 border-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 rounded-xl text-xl font-bold tabular-nums outline-none focus:border-blue-500 transition" style={{ borderColor: playerSearchInput ? flowTeamColor : '' }} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 lg:landscape:grid-cols-3 gap-3">
                         {rosterToDisplay.map(player => (
-                            <button key={player.id} onClick={() => onPlayerSelectClick(player)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition group">
-                                <span className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-full font-black text-xl text-gray-800 group-hover:bg-gray-200 transition" style={{ color: flowTeamColor }}>{player.number}</span>
-                                <span className="ml-4 font-bold text-lg text-gray-800 text-left truncate">{player.name}</span>
+                            <button key={player.id} onClick={() => onPlayerSelectClick(player)} className="flex items-center min-h-14 min-w-0 p-2 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-slate-400 dark:hover:border-slate-500 transition active:scale-[0.97] active:brightness-95 group">
+                                <span className="w-12 h-12 shrink-0 flex items-center justify-center bg-slate-100 dark:bg-slate-900 rounded-full font-black text-2xl tabular-nums text-slate-800 dark:text-slate-100 transition" style={{ color: flowTeamColor }}>{player.number}</span>
+                                <span className="ml-3 min-w-0 flex-1 font-bold text-base text-slate-800 dark:text-slate-100 text-left truncate">{player.name}</span>
                             </button>
                         ))}
                     </div>
                     
                     {modalStep === 'PLAYER' && activeAction.type === 'Time Penalty' && penaltyData.color === 'Yellow' && (
                         <div className="mt-6">
-                            <h3 className="font-bold text-gray-500 mb-3 uppercase text-sm border-b pb-1">Bench Personnel</h3>
+                            <h3 className="font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase text-sm border-b border-slate-200 dark:border-slate-700 pb-1">Bench Personnel</h3>
                             <div className="grid grid-cols-2 gap-3">
                                 {activeBench.map(person => (
-                                    <button key={person.id} onClick={() => onPlayerSelectClick(person)} className="flex items-center p-3 bg-white border-2 border-transparent rounded-lg shadow-sm hover:border-gray-300 transition text-left">
-                                        <span className="font-bold text-lg text-gray-800 truncate">{person.name}</span>
-                                        <span className="ml-2 text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded">({person.role})</span>
+                                    <button key={person.id} onClick={() => onPlayerSelectClick(person)} className="flex items-center min-h-14 min-w-0 p-3 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-lg shadow-sm hover:border-slate-400 transition active:scale-[0.97] active:brightness-95 text-left">
+                                        <span className="font-bold text-base text-slate-800 dark:text-slate-100 truncate min-w-0">{person.name}</span>
+                                        <span className="ml-2 shrink-0 text-xs font-bold text-slate-500 dark:text-slate-300 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded">({person.role})</span>
                                     </button>
                                 ))}
                             </div>
                         </div>
                     )}
 
-                    {rosterToDisplay.length === 0 && !playerSearchInput && <div className="text-center text-gray-500 font-bold italic py-8">No active roster found.</div>}
+                    {rosterToDisplay.length === 0 && !playerSearchInput && <div className="text-center text-slate-500 dark:text-slate-400 font-bold italic py-8">No active roster found.</div>}
 
                     {modalStep === 'PLAYER' && !playerSearchInput && (
                         <>
                             {activeAction.type === 'Time Penalty' && (
-                                <label className="flex items-center space-x-3 mt-6 p-4 bg-gray-200 rounded-xl cursor-pointer">
-                                    <input type="checkbox" className="w-6 h-6 accent-blue-600" checked={requiresSubstituteServer} onChange={e => setRequiresSubstituteServer(e.target.checked)} />
-                                    <span className="font-bold text-gray-700">Check if penalty will be served by a substitute (e.g. injured/ejected offender)</span>
+                                <label className="flex items-center gap-3 mt-6 min-h-11 p-4 bg-slate-200 dark:bg-slate-800 rounded-xl cursor-pointer">
+                                    <input type="checkbox" className="w-6 h-6 shrink-0 accent-blue-600" checked={requiresSubstituteServer} onChange={e => setRequiresSubstituteServer(e.target.checked)} />
+                                    <span className="font-bold text-sm text-slate-700 dark:text-slate-200">Check if penalty will be served by a substitute (e.g. injured/ejected offender)</span>
                                 </label>
                             )}
                             <button onClick={() => {
                                 if (activeAction.type === 'Log Foul') onPlayerSelectClick('Unattributed');
                                 else onPlayerSelectClick(activeAction.type === 'Goal / Assist' ? 'Own Goal' : 'Team / Bench');
-                            }} className={`mt-4 w-full p-4 border-2 border-dashed rounded-xl text-center font-bold transition ${activeAction.type === 'Log Foul' ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100' : 'border-gray-400 bg-white text-gray-600 hover:bg-gray-100'}`}>
+                            }} className={`mt-4 w-full min-h-14 p-3 border-2 border-dashed rounded-xl text-center font-bold transition active:scale-[0.97] active:brightness-95 ${activeAction.type === 'Log Foul' ? 'border-red-400 bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950 dark:text-red-300 dark:hover:bg-red-900' : 'border-slate-400 bg-white text-slate-600 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'}`}>
                                 {activeAction.type === 'Goal / Assist' ? "Own Goal" : (activeAction.type === 'Log Foul' ? "Leave Unattributed (Assign Later)" : "Attribute to Team / Bench")}
                             </button>
                         </>

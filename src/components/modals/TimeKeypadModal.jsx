@@ -1,6 +1,6 @@
 import React from 'react';
 import { QUARTERS } from '../../config';
-import { formatTime } from '../../utils';
+import { formatTime, readableTextOn } from '../../utils';
 
 export default function TimeKeypadModal({
     modalStep, setModalStep, activeAction, flowTeamName, flowTeamColor,
@@ -26,52 +26,56 @@ export default function TimeKeypadModal({
     else if (isRelease) subtitle = 'Manually override the penalty expiration time.';
     else if (isMajorRelease) subtitle = 'Enter the stoppage time when the player was released (first stoppage after 7 min).';
 
+    const primaryBg = isManualTime ? null : (activeAction.team === 'SYSTEM' ? '#000000' : flowTeamColor);
+    const flagBtn = (on) => `flex-1 min-h-11 px-1 text-sm rounded-lg font-bold transition active:scale-[0.97] active:brightness-95 ${on ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600'}`;
+    const digitKey = 'min-h-16 bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-100 text-3xl font-bold tabular-nums rounded-xl border border-slate-300 dark:border-slate-600 transition active:scale-[0.97] active:brightness-95';
+
     return (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-6">
-            <div className={`bg-white p-8 rounded-2xl shadow-2xl w-96 flex flex-col items-center ${isManualTime ? 'border-4 border-blue-500' : ''}`}>
-                <h3 className={`text-2xl font-bold mb-1 uppercase ${isManualTime ? 'text-blue-600' : ''}`} style={{ color: !isManualTime && activeAction.team !== 'SYSTEM' ? flowTeamColor : '' }}>
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+            <div className={`bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 p-5 rounded-2xl shadow-2xl w-full max-w-md max-h-[96dvh] overflow-y-auto flex flex-col items-center ${isManualTime ? 'border-4 border-blue-500' : ''}`}>
+                <h3 className={`text-2xl font-black mb-1 uppercase text-center ${isManualTime ? 'text-blue-600 dark:text-blue-400' : ''}`} style={{ color: !isManualTime && activeAction.team !== 'SYSTEM' ? flowTeamColor : '' }}>
                     {title}
                 </h3>
-                
-                {isManualTime && <p className="text-gray-500 font-bold mb-6 text-center text-sm">{subtitle}</p>}
+
+                {isManualTime && <p className="text-slate-500 dark:text-slate-400 font-bold mb-3 text-center text-sm">{subtitle}</p>}
 
                 {(!isPeriodRunning || editingEventId || isManualTime) ? (
-                    <div className="w-full mb-6">
-                        <label className={`block text-xs font-bold mb-2 uppercase text-center tracking-widest ${isManualTime ? 'text-blue-800' : 'text-gray-600'}`}>
+                    <div className="w-full mb-3">
+                        <label className={`block text-xs font-bold mb-1.5 uppercase text-center tracking-widest ${isManualTime ? 'text-blue-800 dark:text-blue-300' : 'text-slate-600 dark:text-slate-400'}`}>
                             {isPPG ? 'Quarter Scored:' : (isRelease || isMajorRelease) ? 'Release Quarter:' : 'Event Quarter'}
                         </label>
-                        <div className={`flex rounded-lg p-1 w-full justify-between shadow-inner ${isManualTime ? 'bg-blue-100' : 'bg-gray-200 border border-gray-300'}`}>
+                        <div className={`flex rounded-lg p-1 w-full justify-between gap-1 shadow-inner ${isManualTime ? 'bg-blue-100 dark:bg-blue-950' : 'bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-slate-700'}`}>
                             {QUARTERS.map(q => (
-                                <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 py-2 rounded-md font-bold text-sm transition-colors ${modalQuarter === q ? (isManualTime ? 'bg-blue-600 text-white shadow-md' : 'bg-black text-white shadow-md') : (isManualTime ? 'text-blue-800 hover:bg-blue-200' : 'text-gray-600 hover:bg-gray-300')}`}>{q}</button>
+                                <button key={q} onClick={() => setModalQuarter(q)} className={`flex-1 min-h-11 rounded-md font-bold text-sm transition active:scale-[0.97] ${modalQuarter === q ? (isManualTime ? 'bg-blue-600 text-white shadow-md' : 'bg-black text-white dark:bg-white dark:text-black shadow-md') : (isManualTime ? 'text-blue-800 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700')}`}>{q}</button>
                             ))}
                         </div>
                     </div>
                 ) : (
-                    <p className="text-gray-500 font-bold mb-6">Quarter: <span className="text-black">{modalQuarter}</span></p>
+                    <p className="text-slate-500 dark:text-slate-400 font-bold mb-2">Quarter: <span className="text-black dark:text-white">{modalQuarter}</span></p>
                 )}
 
-                <div className={`text-7xl font-mono font-black mb-4 px-6 py-4 rounded-xl tracking-widest text-center w-full border-2 ${isManualTime ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-100'}`} style={{ borderColor: !isManualTime && activeAction.team !== 'SYSTEM' ? flowTeamColor : '' }}>
+                <div className={`text-6xl font-mono font-black mb-3 px-4 py-2 rounded-xl tracking-widest tabular-nums text-center w-full border-2 ${isManualTime ? 'bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-300' : 'bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-700'}`} style={{ borderColor: !isManualTime && activeAction.team !== 'SYSTEM' ? flowTeamColor : '' }}>
                     {timeInput.length === 0 ? "00:00" : formatTime(timeInput)}
                 </div>
 
                 {activeAction.type === 'Goal / Assist' && !isManualTime && (
-                    <div className="flex justify-between w-full mb-4 space-x-2">
-                        <button onClick={() => setGoalFlags({...goalFlags, pp: !goalFlags.pp})} className={`flex-1 py-2 text-xs rounded font-bold transition ${goalFlags.pp ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Power Play</button>
-                        <button onClick={() => setGoalFlags({...goalFlags, shootout: !goalFlags.shootout})} className={`flex-1 py-2 text-xs rounded font-bold transition ${goalFlags.shootout ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Shootout</button>
-                        <button onClick={() => setGoalFlags({...goalFlags, pk: !goalFlags.pk})} className={`flex-1 py-2 text-xs rounded font-bold transition ${goalFlags.pk ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>Penalty Kick</button>
+                    <div className="flex justify-between w-full mb-3 gap-2">
+                        <button aria-pressed={!!goalFlags.pp} onClick={() => setGoalFlags({...goalFlags, pp: !goalFlags.pp})} className={flagBtn(goalFlags.pp)}>Power Play</button>
+                        <button aria-pressed={!!goalFlags.shootout} onClick={() => setGoalFlags({...goalFlags, shootout: !goalFlags.shootout})} className={flagBtn(goalFlags.shootout)}>Shootout</button>
+                        <button aria-pressed={!!goalFlags.pk} onClick={() => setGoalFlags({...goalFlags, pk: !goalFlags.pk})} className={flagBtn(goalFlags.pk)}>Penalty Kick</button>
                     </div>
                 )}
 
-                <div className="grid grid-cols-3 gap-3 w-full mb-6 mt-2">
+                <div className="grid grid-cols-3 gap-2 w-full mb-4">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                        <button key={num} onClick={() => handleKeypad(num.toString())} className="bg-gray-200 hover:bg-gray-300 text-2xl font-bold py-4 rounded-lg">{num}</button>
+                        <button key={num} onClick={() => handleKeypad(num.toString())} className={digitKey}>{num}</button>
                     ))}
-                    <button onClick={() => handleKeypad('clear')} className="bg-red-100 text-red-600 hover:bg-red-200 text-lg font-bold py-4 rounded-lg">Clear</button>
-                    <button onClick={() => handleKeypad('0')} className="bg-gray-200 hover:bg-gray-300 text-2xl font-bold py-4 rounded-lg">0</button>
-                    <button onClick={() => handleKeypad('del')} className="bg-gray-200 hover:bg-gray-300 text-lg font-bold py-4 rounded-lg">Del</button>
+                    <button onClick={() => handleKeypad('clear')} className="min-h-16 bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950 dark:text-red-300 dark:hover:bg-red-900 text-xl font-bold rounded-xl border border-red-300 dark:border-red-800 transition active:scale-[0.97] active:brightness-95">Clear</button>
+                    <button onClick={() => handleKeypad('0')} className={digitKey}>0</button>
+                    <button onClick={() => handleKeypad('del')} className="min-h-16 bg-slate-300 text-slate-800 hover:bg-slate-400 dark:bg-slate-600 dark:text-slate-100 dark:hover:bg-slate-500 text-xl font-bold rounded-xl transition active:scale-[0.97] active:brightness-95">Del</button>
                 </div>
 
-                <div className="flex space-x-4 w-full">
+                <div className="flex gap-3 w-full">
                     <button onClick={() => {
                         if (isRelease) {
                             setManualTimeMode(null);
@@ -79,7 +83,7 @@ export default function TimeKeypadModal({
                         } else {
                             setModalStep(null);
                         }
-                    }} className="flex-1 py-3 border-2 border-red-500 text-red-500 font-bold rounded-lg hover:bg-red-50">Cancel</button>
+                    }} className="flex-1 min-h-[52px] border-2 border-red-500 text-red-600 dark:text-red-400 font-bold rounded-lg hover:bg-red-50 dark:hover:bg-red-950 transition active:scale-[0.97] active:brightness-95">Cancel</button>
 
                     <button onClick={() => {
                         if (isManualTime) validateAndAdvanceTime('FINALIZE_MANUAL_TIME');
@@ -90,7 +94,7 @@ export default function TimeKeypadModal({
                             else if (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout') nextStr = 'FINALIZE_TEAM_EVENT';
                             validateAndAdvanceTime(nextStr);
                         }
-                    }} className={`flex-1 py-3 text-white font-bold rounded-lg shadow ${isManualTime ? 'bg-blue-600 hover:bg-blue-700' : ''}`} style={{ backgroundColor: !isManualTime ? (activeAction.team === 'SYSTEM' ? '#000' : flowTeamColor) : '' }}>
+                    }} className={`flex-1 min-h-[52px] font-black rounded-lg shadow transition active:scale-[0.97] active:brightness-95 ${isManualTime ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`} style={!isManualTime ? { backgroundColor: primaryBg, color: readableTextOn(primaryBg) } : undefined}>
                         {isManualTime ? 'Confirm' : (activeAction.type === 'Team Timeout' || activeAction.type === 'Media Timeout' ? 'Log Event' : 'Next ➔')}
                     </button>
                 </div>
