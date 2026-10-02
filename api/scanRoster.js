@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
-import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
+import { betaZodOutputFormat } from '@anthropic-ai/sdk/helpers/beta/zod';
 
 // Schema mirrors the three field blocks on the MASL 3 Official Lineup form.
 export const RosterSchema = z.object({
@@ -40,10 +40,14 @@ Rules:
 // so both exercise the identical prompt + schema + call. `mediaType` defaults
 // to JPEG (what the browser uploads); the harness may pass image/png.
 export async function extractRoster(client, imageBase64, mediaType = 'image/jpeg') {
-    const response = await client.messages.parse({
-        model: 'claude-opus-4-8',
+    // Opus 5.5 defaults to `medium` effort, so pin `high` for handwriting accuracy.
+    // If Opus 5.5 declines on policy grounds, the API retries on Opus 4.8 in the same call.
+    const response = await client.beta.messages.parse({
+        model: 'claude-opus-5-5',
         max_tokens: 16000,
         thinking: { type: 'adaptive' },
+        betas: ['server-side-fallback-2026-06-01'],
+        fallbacks: [{ model: 'claude-opus-4-8' }],
         system: SYSTEM_PROMPT,
         messages: [
             {
@@ -57,7 +61,7 @@ export async function extractRoster(client, imageBase64, mediaType = 'image/jpeg
                 ]
             }
         ],
-        output_config: { format: zodOutputFormat(RosterSchema) }
+        output_config: { effort: 'high', format: betaZodOutputFormat(RosterSchema) }
     });
 
     return response.parsed_output ?? null;
