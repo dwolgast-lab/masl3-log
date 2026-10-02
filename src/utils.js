@@ -13,6 +13,9 @@ export function useStickyState(defaultValue, key) {
     return [value, setValue];
 }
 
+// Length of a period in minutes: quarters are 15:00, OT is 10:00.
+export const quarterMinutes = (q) => (q === 'OT' ? 10 : 15);
+
 export const formatTimer = (secs) => {
     const m = Math.floor(secs / 60);
     const s = secs % 60;

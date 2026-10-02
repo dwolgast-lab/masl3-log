@@ -1,3 +1,5 @@
+import { quarterMinutes } from '../utils';
+
 export function useModalWorkflow({
     timeInput, setTimeInput,
     activeAction, setActiveAction,
@@ -36,8 +38,7 @@ export function useModalWorkflow({
         const mm = parseInt(padded.substring(0, 2));
         const ss = parseInt(padded.substring(2, 4));
 
-        // Quarters are 15:00; OT is 10:00.
-        const maxMin = modalQuarter === 'OT' ? 10 : 15;
+        const maxMin = quarterMinutes(modalQuarter);
         const isValid = (m, s) => (m <= maxMin && !(m === maxMin && s > 0) && s <= 59);
         const isPrimaryValid = isValid(mm, ss);
 

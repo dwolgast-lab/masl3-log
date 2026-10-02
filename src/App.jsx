@@ -5,7 +5,7 @@
  * ========================================================================= */
 
 import { useState, useEffect, useRef } from 'react';
-import { useStickyState, formatTime, calcReleaseTime, calcInjuryReturn, getTeamColor, textSafeColor, toElapsedSeconds } from './utils';
+import { useStickyState, formatTime, calcReleaseTime, calcInjuryReturn, getTeamColor, textSafeColor, toElapsedSeconds, quarterMinutes } from './utils';
 import { WARNING_ESCALATION } from './config';
 import { usePenaltyHandlers } from './hooks/usePenaltyHandlers';
 import { useModalWorkflow } from './hooks/useModalWorkflow';
@@ -536,7 +536,7 @@ export default function App() {
                 }}
                 onReject={(original, nextStepStr, isValid) => {
                     if (isValid) commitTime(original, nextStepStr);
-                    else alert("Invalid Time. Please enter a valid match time.");
+                    else alert(`Invalid Time. Please enter a valid match time between ${quarterMinutes(modalQuarter)}:00 and 00:00.`);
                     setTimeConfirmDialog(null);
                 }}
             />
