@@ -417,7 +417,7 @@ export default function App() {
         timeInput, setTimeInput,
         activeAction, setActiveAction,
         setModalStep, setTimeConfirmDialog,
-        setModalQuarter,
+        setModalQuarter, modalQuarter,
         quarter, gameData, gameEvents,
         setGoalScorer, setPlayerSearchInput,
         setPenaltyData, setBenchPenaltyEntity,

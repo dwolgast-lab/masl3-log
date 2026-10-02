@@ -18,7 +18,7 @@ Both phases shipped on branch `ccr-e180b837-31wzr5`. Every bug from B1 to B13 is
 
 A browser run drove the real UI through the B1 and B2 scenarios: a power-play goal releases only the live penalty, and Undo on a Y6 removes both linked events. Both passed. Timer drift (B6) and the wake lock were checked by code review only, because they need a real iPad going to sleep. Lineup scanning on Opus 5.5 needs one run of `scripts/scanLocal.mjs` with your API key.
 
-Still open: S1, B14 and U13, plus the backup button and the test suite listed at the end of section 6.
+Still open: S1 and U13, plus the backup button and the test suite listed at the end of section 6.
 
 ## Summary
 
@@ -53,7 +53,7 @@ Severity reflects what happens during a live match. "High" means the official re
 | B11 | Low | `VideoReviewModal.jsx` | Resets its own state from an effect when it opens (lint error). | Reset through a `key` from the parent. |
 | B12 | Low | `App.jsx` `clearAllGameData` | `localStorage.clear()` also wipes the dark-mode preference. | Remove only match data keys. |
 | B13 | Low | `RosterEditorModal.jsx` | Class name typo `space-x-1Actions` drops the spacing on bench staff buttons. | Fix the typo. |
-| B14 | Info | `useModalWorkflow.js` | Time entry accepts up to 15:00 in OT, while the penalty math treats OT as 10:00. | Needs your rule confirmation before any change. Not in this round. |
+| B14 | Info | `useModalWorkflow.js` | Time entry accepted up to 15:00 in OT, while the penalty math treats OT as 10:00. | **Done.** OT is 10 minutes (confirmed). Time entry now caps OT at 10:00 and other quarters at 15:00. |
 
 ## 2. Optimization & cleanup
 
@@ -137,4 +137,4 @@ A shared helper for readable text on team colors (U6) goes into `utils.js` durin
 
 Phase 2 gate: lint and build pass. A Playwright run captures screenshots of every main screen at 1180 × 820, 1366 × 1024 and 820 × 1180, in light and dark mode. I check those for clipping, overlap and contrast before committing.
 
-**Out of scope for this round:** S1 (endpoint passcode), B14 (OT length rule), U13 (alert-to-toast), a JSON backup/export button, and an automated test suite. Each needs a decision from you or adds a feature you did not ask for.
+**Out of scope for this round:** S1 (endpoint passcode), U13 (alert-to-toast), a JSON backup/export button, and an automated test suite. Each needs a decision from you or adds a feature you did not ask for.

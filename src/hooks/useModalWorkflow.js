@@ -2,7 +2,7 @@ export function useModalWorkflow({
     timeInput, setTimeInput,
     activeAction, setActiveAction,
     setModalStep, setTimeConfirmDialog,
-    setModalQuarter,
+    setModalQuarter, modalQuarter,
     quarter, gameData, gameEvents,
     setGoalScorer, setPlayerSearchInput,
     setPenaltyData, setBenchPenaltyEntity,
@@ -36,7 +36,9 @@ export function useModalWorkflow({
         const mm = parseInt(padded.substring(0, 2));
         const ss = parseInt(padded.substring(2, 4));
 
-        const isValid = (m, s) => (m <= 15 && !(m === 15 && s > 0) && s <= 59);
+        // Quarters are 15:00; OT is 10:00.
+        const maxMin = modalQuarter === 'OT' ? 10 : 15;
+        const isValid = (m, s) => (m <= maxMin && !(m === maxMin && s > 0) && s <= 59);
         const isPrimaryValid = isValid(mm, ss);
 
         const suggRaw = '0' + padded.substring(0, 3);
@@ -57,7 +59,7 @@ export function useModalWorkflow({
         if (isPrimaryValid) {
             commitTime(padded, nextStepStr);
         } else {
-            alert("Invalid Time. Please enter a valid match time between 15:00 and 00:00.");
+            alert(`Invalid Time. Please enter a valid match time between ${maxMin}:00 and 00:00.`);
         }
     };
 
