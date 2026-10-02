@@ -109,8 +109,8 @@ export default function PregameSetup({
             if (!window.confirm(errorMsg)) return; 
         }
         
-        awayRoster.sort(robustNumericalSort);
-        homeRoster.sort(robustNumericalSort);
+        setAwayRoster([...awayRoster].sort(robustNumericalSort));
+        setHomeRoster([...homeRoster].sort(robustNumericalSort));
         setCurrentView('ingame');
     };
 

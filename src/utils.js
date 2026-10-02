@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 
 export function useStickyState(defaultValue, key) {
     const [value, setValue] = useState(() => {
-        const stickyValue = window.localStorage.getItem(key);
-        return stickyValue !== null ? JSON.parse(stickyValue) : defaultValue;
+        try {
+            const stickyValue = window.localStorage.getItem(key);
+            return stickyValue !== null ? JSON.parse(stickyValue) : defaultValue;
+        } catch { return defaultValue; }
     });
     useEffect(() => {
-        window.localStorage.setItem(key, JSON.stringify(value));
+        try { window.localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage full/blocked */ }
     }, [key, value]);
     return [value, setValue];
 }
@@ -95,4 +97,53 @@ export const getPlayerFouls = (player, teamIdentifier, gameEvents) => {
     const redCards = penaltyEvents.filter(ev => ev.penalty?.color === 'Red').length;
 
     return { q1, q2, q3, q4, ot, firstHalf, secondHalf, total: firstHalf + secondHalf, blueCards, yellowCards, redCards };
+};
+export const ensureVisibleInDark = (hex, isDark) => {
+    if (!hex || !isDark) return hex || '#cccccc';
+    let r = parseInt(hex.substring(1,3), 16);
+    let g = parseInt(hex.substring(3,5), 16);
+    let b = parseInt(hex.substring(5,7), 16);
+
+    let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    if (luma < 90) {
+        const blend = 0.6;
+        r = Math.round(r + (255 - r) * blend);
+        g = Math.round(g + (255 - g) * blend);
+        b = Math.round(b + (255 - b) * blend);
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
+    }
+    return hex;
+};
+
+const parseHex = (hex) => {
+    if (typeof hex !== 'string') return null;
+    const m = hex.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+    if (!m) return null;
+    let h = m[1];
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    return [0, 2, 4].map(i => parseInt(h.substring(i, i + 2), 16));
+};
+const toHex = (rgb) => `#${rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+const relLuminance = ([r, g, b]) => {
+    const [R, G, B] = [r, g, b].map(v => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+    return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+};
+const contrast = (l1, l2) => (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+
+// '#000000' or '#ffffff', whichever has higher WCAG contrast against hex
+export const readableTextOn = (hex) => {
+    const rgb = parseHex(hex);
+    if (!rgb) return '#000000';
+    const l = relLuminance(rgb);
+    return contrast(l, 0) >= contrast(l, 1) ? '#000000' : '#ffffff';
+};
+
+// Version of hex usable as TEXT: darkened on light backgrounds until >= 3:1 vs white, lightened (existing behavior) in dark mode
+export const textSafeColor = (hex, isDark) => {
+    const rgb = parseHex(hex);
+    if (!rgb) return hex;
+    if (isDark) return ensureVisibleInDark(toHex(rgb), true);
+    let cur = rgb;
+    for (let i = 0; i < 20 && contrast(1, relLuminance(cur)) < 3; i++) cur = cur.map(v => v * 0.9);
+    return toHex(cur);
 };

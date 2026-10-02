@@ -30,20 +30,6 @@ export default function TeamConfigCard({
     
     const [showPicker, setShowPicker] = useState(false);
     const pickerRef = useRef(null);
-    const [updateQueue, setUpdateQueue] = useState(null);
-
-    // Sequential State Queue: Prevents React from clobbering the Hex code when updating the Name string
-    useEffect(() => {
-        if (!updateQueue) return;
-
-        if (updateQueue.phase === 'HEX') {
-            handleInputChange({ target: { name: `${type}Color`, value: updateQueue.hex } });
-            setUpdateQueue({ ...updateQueue, phase: 'NAME' });
-        } else if (updateQueue.phase === 'NAME') {
-            handleInputChange({ target: { name: `${type}ColorName`, value: updateQueue.name } });
-            setUpdateQueue(null);
-        }
-    }, [updateQueue]); 
 
     // Close the custom popover if the user clicks anywhere else on the screen
     useEffect(() => {
@@ -52,8 +38,8 @@ export default function TeamConfigCard({
                 setShowPicker(false);
             }
         };
-        if (showPicker) document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        if (showPicker) document.addEventListener('pointerdown', handleClickOutside);
+        return () => document.removeEventListener('pointerdown', handleClickOutside);
     }, [showPicker]);
 
     const getTeamSelectValue = () => {
@@ -82,8 +68,9 @@ export default function TeamConfigCard({
             finalName = `${primName} / ${secName}`;
         }
 
-        // Drop the update into the sequential queue instead of firing simultaneously
-        setUpdateQueue({ hex: newHex, name: finalName, phase: 'HEX' });
+        // handleInputChange uses a functional state update, so back-to-back calls are safe
+        handleInputChange({ target: { name: `${type}Color`, value: newHex } });
+        handleInputChange({ target: { name: `${type}ColorName`, value: finalName } });
         
         // Auto-dismiss the picker when the secondary color is chosen
         if (!isPrimary) {

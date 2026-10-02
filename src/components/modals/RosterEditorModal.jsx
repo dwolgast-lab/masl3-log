@@ -241,7 +241,7 @@ export default function RosterEditorModal({
                         
                         <div className="p-4 overflow-y-auto flex-1">
                             <div className="space-y-2">
-                                {(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)
+                                {[...(activeRosterModal === 'AWAY' ? awayRoster : homeRoster)]
                                     .sort(robustNumericalSort) 
                                     .map(player => (
                                     <div key={player.id} className={`flex items-center justify-between p-2 border rounded shadow-sm transition ${editingPlayerId === player.id ? 'bg-blue-50 border-blue-300' : 'bg-white border-gray-200'}`}>
@@ -291,7 +291,7 @@ export default function RosterEditorModal({
                                     <div key={person.id} className={`flex flex-col p-2 bg-white border rounded shadow-sm relative ${editingBenchId === person.id ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}>
                                         <span className="font-bold text-sm text-gray-800 pr-16">{person.name}</span>
                                         <span className="text-[10px] font-black mt-1 uppercase w-fit px-1.5 py-0.5 bg-gray-100 text-gray-600 border truncate max-w-full">{person.role}</span>
-                                        <div className="absolute top-2 right-2 flex space-x-1Actions shrink-0">
+                                        <div className="absolute top-2 right-2 flex space-x-1 shrink-0">
                                             <button onClick={() => { setEditingBenchId(person.id); setNewBench(person); }} className="text-blue-500 hover:bg-blue-100 px-2 py-1 text-xs rounded font-bold transition">Edit</button>
                                             <button onClick={() => removeBench(person.id)} className="text-red-500 hover:bg-red-50 px-2 py-1 text-xs rounded font-bold transition">Remove</button>
                                         </div>

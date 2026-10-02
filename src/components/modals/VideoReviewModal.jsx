@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { formatTime } from '../../utils';
 
 const VR_REASONS = {
@@ -9,20 +9,17 @@ const VR_REASONS = {
     "Goal/ No Goal": ["Ball Crossing Goal Line", "Time Expiration"]
 };
 
-export default function VideoReviewModal({ modalStep, setModalStep, modalQuarter, timeInput, gameData, gameEvents, onSave }) {
+export default function VideoReviewModal({ modalStep, ...props }) {
+    if (modalStep !== 'VIDEO_REVIEW') return null;
+    return <VideoReviewModalContent {...props} />;
+}
+
+// Mounts fresh each time the modal opens, so step/vrData start at their initial values.
+function VideoReviewModalContent({ setModalStep, modalQuarter, timeInput, gameData, gameEvents, onSave }) {
     const [step, setStep] = useState('INITIATOR');
     const [vrData, setVrData] = useState({
         initiator: null, team: null, reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false
     });
-
-    useEffect(() => {
-        if (modalStep === 'VIDEO_REVIEW') {
-            setStep('INITIATOR');
-            setVrData({ initiator: null, team: null, reason: null, subReason: null, otherDesc: '', result: null, flagCollected: false });
-        }
-    }, [modalStep]);
-
-    if (modalStep !== 'VIDEO_REVIEW') return null;
 
     // Evaluate Challenge Availability
     const checkVR = (teamId) => {

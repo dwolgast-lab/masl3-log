@@ -1,12 +1,12 @@
 /* =========================================================================
  * MASL 4th Official Log App
  * Author: Dave Wolgast
- * Version: 1.0.3-beta
+ * Version: see APP_VERSION
  * ========================================================================= */
 
-import { useState, useEffect } from 'react';
-import { useStickyState, formatTime, calcReleaseTime, calcInjuryReturn, getTeamColor } from './utils';
-import { generateAlternatePDF } from './alternatePdfEngine';
+import { useState, useEffect, useRef } from 'react';
+import { useStickyState, formatTime, calcReleaseTime, calcInjuryReturn, getTeamColor, textSafeColor, toElapsedSeconds } from './utils';
+import { WARNING_ESCALATION } from './config';
 import { usePenaltyHandlers } from './hooks/usePenaltyHandlers';
 import { useModalWorkflow } from './hooks/useModalWorkflow';
 
@@ -48,23 +48,6 @@ const playBells = (count) => {
         osc1.start(startTime); osc2.start(startTime);
         osc1.stop(startTime + 0.6); osc2.stop(startTime + 0.6);
     }
-};
-
-const ensureVisibleInDark = (hex, isDark) => {
-    if (!hex || !isDark) return hex || '#cccccc';
-    let r = parseInt(hex.substring(1,3), 16);
-    let g = parseInt(hex.substring(3,5), 16);
-    let b = parseInt(hex.substring(5,7), 16);
-
-    let luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    if (luma < 90) {
-        const blend = 0.6;
-        r = Math.round(r + (255 - r) * blend);
-        g = Math.round(g + (255 - g) * blend);
-        b = Math.round(b + (255 - b) * blend);
-        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
-    }
-    return hex;
 };
 
 export default function App() {
@@ -114,8 +97,8 @@ export default function App() {
 
     const rawAwayColor = getTeamColor(gameData.awayColor, '#1e40af');
     const rawHomeColor = getTeamColor(gameData.homeColor, '#991b1b');
-    const awayCSSColor = ensureVisibleInDark(rawAwayColor, isDarkMode);
-    const homeCSSColor = ensureVisibleInDark(rawHomeColor, isDarkMode);
+    const awayCSSColor = textSafeColor(rawAwayColor, isDarkMode);
+    const homeCSSColor = textSafeColor(rawHomeColor, isDarkMode);
 
     const activePenaltiesAway = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'AWAY' && !ev.clearedFromBoard && ev.releaseTime);
     const activePenaltiesHome = gameEvents.filter(ev => ev.type === 'Time Penalty' && ev.team === 'HOME' && !ev.clearedFromBoard && ev.releaseTime);
@@ -125,33 +108,62 @@ export default function App() {
     const filteredFlowRoster = playerSearchInput ? flowTeamRoster.filter(p => p.number.startsWith(playerSearchInput)) : flowTeamRoster;
     const activeBench = activeAction.team === 'AWAY' ? awayBench : homeBench;
 
+    const appTimerRef = useRef(appTimer);
+    useEffect(() => { appTimerRef.current = appTimer; }, [appTimer]);
+
     useEffect(() => {
+        const tick = () => {
+            const prev = appTimerRef.current;
+            if (!prev.active || !prev.endsAt) return;
+            const time = Math.round((prev.endsAt - Date.now()) / 1000);
+            if (time === prev.time) return;
+            const isTimeout = prev.label === 'MEDIA TIMEOUT' || prev.label === 'TEAM TIMEOUT';
+            let rang = prev.rang || [];
+            if (isTimeout) {
+                [[30, 1], [15, 2], [0, 4]].forEach(([t, n]) => {
+                    if (time <= t && !rang.includes(t)) { rang = [...rang, t]; playBells(n); }
+                });
+            }
+            const done = isTimeout ? time <= -15 : time <= 0;
+            const next = done ? { active: false, time: 0, initialTime: 0, label: '', minimized: false } : { ...prev, time, rang };
+            if (!done && !prev.minimized && !prev.autoMinimized && prev.initialTime - time >= 15) { next.minimized = true; next.autoMinimized = true; }
+            appTimerRef.current = next;
+            setAppTimer(next);
+        };
         let interval = null;
         if (appTimer.active) {
-            interval = setInterval(() => {
-                setAppTimer(prev => {
-                    const newTime = prev.time - 1;
-                    const elapsed = prev.initialTime - newTime;
-                    const isTimeout = prev.label === 'MEDIA TIMEOUT' || prev.label === 'TEAM TIMEOUT';
-                    let nextState = { ...prev, time: newTime };
-                    if (!prev.minimized && elapsed === 15) nextState.minimized = true;
-
-                    if (isTimeout) {
-                        if (newTime === 30) playBells(1);
-                        if (newTime === 15) playBells(2);
-                        if (newTime === 0) playBells(4);
-                        if (newTime <= -15) return { active: false, time: 0, initialTime: 0, label: '', minimized: false };
-                    } else {
-                        if (newTime <= 0) return { active: false, time: 0, initialTime: 0, label: '', minimized: false };
-                    }
-                    return nextState;
-                });
-            }, 1000);
+            interval = setInterval(tick, 1000);
+            document.addEventListener('visibilitychange', tick);
         }
-        return () => clearInterval(interval);
+        return () => { clearInterval(interval); document.removeEventListener('visibilitychange', tick); };
     }, [appTimer.active]);
 
-    const handleInputChange = (e) => setGameData({ ...gameData, [e.target.name]: e.target.value });
+    const startAppTimer = (label, secs) => setAppTimer({ active: true, time: secs, initialTime: secs, label, minimized: false, endsAt: Date.now() + secs * 1000, rang: [], autoMinimized: false });
+
+    useEffect(() => { document.documentElement.classList.toggle('dark', !!isDarkMode); }, [isDarkMode]);
+
+    const needsWake = isPeriodRunning || appTimer.active;
+    useEffect(() => {
+        if (!needsWake || !navigator.wakeLock) return;
+        let lock = null, cancelled = false;
+        const acquire = async () => {
+            try {
+                if (document.visibilityState !== 'visible' || (lock && !lock.released)) return;
+                const l = await navigator.wakeLock.request('screen');
+                if (cancelled) l.release().catch(() => {}); else lock = l;
+            } catch { /* unsupported or denied */ }
+        };
+        const onVis = () => { if (document.visibilityState === 'visible') acquire(); };
+        acquire();
+        document.addEventListener('visibilitychange', onVis);
+        return () => {
+            cancelled = true;
+            document.removeEventListener('visibilitychange', onVis);
+            try { lock?.release().catch(() => {}); } catch { /* ignore */ }
+        };
+    }, [needsWake]);
+
+    const handleInputChange = (e) => setGameData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleKeypad = (num) => {
         if (num === 'clear') setTimeInput('');
         else if (num === 'del') setTimeInput(prev => prev.slice(0, -1));
@@ -167,7 +179,7 @@ export default function App() {
     });
 
     const clearAllGameData = () => {
-        if(window.confirm("WARNING: This will permanently delete all rosters, settings, and game logs. Are you starting a new game?")) { localStorage.clear(); window.location.reload(); }
+        if(window.confirm("WARNING: This will permanently delete all rosters, settings, and game logs. Are you starting a new game?")) { Object.keys(localStorage).filter(k => k.startsWith('masl-') && k !== 'masl-dark-mode').forEach(k => localStorage.removeItem(k)); window.location.reload(); }
     };
 
     const togglePeriod = () => {
@@ -183,11 +195,11 @@ export default function App() {
             if (unattributed.length > 0) alert(`WARNING: There are ${unattributed.length} Unattributed Foul(s) in ${quarter}. Please assign them via the Game Log.`);
 
             if (quarter === 'Q1' || quarter === 'Q3') {
-                setAppTimer({ active: true, time: 180, initialTime: 180, label: 'QUARTER BREAK', minimized: false });
+                startAppTimer('QUARTER BREAK', 180);
             } else if (quarter === 'Q2') {
                 const isProLeague = ['MASL', 'MASL2'].includes(gameData.league);
                 const htSeconds = isProLeague ? 900 : 600;
-                setAppTimer({ active: true, time: htSeconds, initialTime: htSeconds, label: 'HALFTIME', minimized: false });
+                startAppTimer('HALFTIME', htSeconds);
             } else if (quarter === 'Q4') {
                 alert("The 4th Quarter has ended. If going to OT, please change the quarter manually.");
             }
@@ -217,14 +229,6 @@ export default function App() {
         const finalTimeRaw = activeAction.time || timeInput;
         const finalTimeStr = finalTimeRaw ? (finalTimeRaw.length === 0 ? "00:00" : formatTime(finalTimeRaw)) : "00:00";
 
-        const WARNING_TO_YELLOW_MAP = {
-            'Bench Dissent': 'Y2',
-            'Delay of Game': 'Y14',
-            'Embellishment': 'Y7',
-            'Encroachment': 'Y15',
-            'Shootout/PK': 'Y12'
-        };
-
         if (editingEventId) {
             setGameEvents(gameEvents.map(ev => ev.id === editingEventId ? {
                 ...ev, quarter: modalQuarter, time: finalTimeStr, warningReason: reason
@@ -239,7 +243,7 @@ export default function App() {
             setLastAddedEventId(newEventId);
 
             if (prevWarningCount >= 1) {
-                const mappedCode = WARNING_TO_YELLOW_MAP[reason] || 'Y';
+                const mappedCode = WARNING_ESCALATION[reason] || 'Y';
                 setActiveAction({ team: activeAction.team, type: 'Time Penalty', time: finalTimeRaw });
                 setPenaltyData({ color: 'Yellow', code: mappedCode, desc: `2nd Warning: ${reason}`, blueCode: null, blueDesc: null });
                 setModalStep('PLAYER');
@@ -258,8 +262,8 @@ export default function App() {
             setGameEvents([{ id: newId, team: activeAction.team, type: activeAction.type, quarter: modalQuarter, time: finalTimeStr, entity: 'Team' }, ...gameEvents]);
             setLastAddedEventId(newId);
             setModalStep(null); initAudio();
-            if (activeAction.type === 'Media Timeout') setAppTimer({ active: true, time: 90, initialTime: 90, label: 'MEDIA TIMEOUT', minimized: false });
-            if (activeAction.type === 'Team Timeout') setAppTimer({ active: true, time: 60, initialTime: 60, label: 'TEAM TIMEOUT', minimized: false });
+            if (activeAction.type === 'Media Timeout') startAppTimer('MEDIA TIMEOUT', 90);
+            if (activeAction.type === 'Team Timeout') startAppTimer('TEAM TIMEOUT', 60);
             return;
         }
 
@@ -290,7 +294,7 @@ export default function App() {
                 id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: servingPlayerEntity, servingPlayer: null, assist: null,
                 penalty: { color: 'Blue', code: existingBlueCombo.penalty.code, desc: `Serving Power Play for ${selectedEntity.name || '#' + selectedEntity.number}` },
-                goalFlags: null, eligibleReturnTime: null,
+                goalFlags: null, eligibleReturnTime: null, groupId: primaryAddedId,
                 isReleasable: true,
                 releaseTime: existingBlueCombo.releaseTime,
                 majorReleaseTime: null, actualReleaseTime: null,
@@ -300,7 +304,9 @@ export default function App() {
             const yellowEvent = {
                 id: primaryAddedId, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
                 entity: selectedEntity, servingPlayer: servingPlayerEntity, assist: null, penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
-                isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true
+                isReleasable: false, releaseTime: null, majorReleaseTime: null, actualReleaseTime: null, clearedFromBoard: true,
+                groupId: primaryAddedId, revertsComboOf: existingBlueCombo.id,
+                comboPrev: { releaseTime: existingBlueCombo.releaseTime, isReleasable: existingBlueCombo.isReleasable, desc: existingBlueCombo.penalty.desc }
             };
 
             updatedEvents = [serverEvent, yellowEvent, ...updatedEvents];
@@ -311,7 +317,7 @@ export default function App() {
                 entity: selectedEntity, servingPlayer: null, assist: null,
                 penalty: penaltyData, goalFlags: null, eligibleReturnTime: null,
                 isReleasable: false, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 7), majorReleaseTime: null, actualReleaseTime: null,
-                clearedFromBoard: false
+                clearedFromBoard: false, groupId: primaryAddedId
             };
             const serverEvent = {
                 id: primaryAddedId + 1, team: activeAction.team, type: 'Time Penalty', quarter: modalQuarter, time: finalTimeStr,
@@ -319,7 +325,7 @@ export default function App() {
                 penalty: { color: 'Blue', code: penaltyData.blueCode, desc: `Serving ${penaltyData.blueCode} for ${selectedEntity.name || '#' + selectedEntity.number}` },
                 goalFlags: null, eligibleReturnTime: null,
                 isReleasable: true, releaseTime: calcReleaseTime(modalQuarter, finalTimeStr, 2), majorReleaseTime: null, actualReleaseTime: null,
-                clearedFromBoard: false, isJustServing: true
+                clearedFromBoard: false, isJustServing: true, groupId: primaryAddedId
             };
             updatedEvents = [serverEvent, offenderEvent, ...gameEvents];
         }
@@ -370,17 +376,20 @@ export default function App() {
 
         if (activeAction.type === 'Goal / Assist' && !editingEventId && goalFlags.pp) {
             const oppTeam = activeAction.team === 'AWAY' ? 'HOME' : 'AWAY';
-            const targetEventIndex = [...updatedEvents].reverse().findIndex(ev => ev.type === 'Time Penalty' && ev.team === oppTeam && ev.isReleasable && !ev.actualReleaseTime);
-            if (targetEventIndex !== -1) {
-                const actualIndex = updatedEvents.length - 1 - targetEventIndex;
-                updatedEvents[actualIndex] = { ...updatedEvents[actualIndex], actualReleaseTime: { quarter: modalQuarter, time: finalTimeStr } };
-            }
+            const goalElapsed = toElapsedSeconds(modalQuarter, finalTimeStr);
+            let targetIdx = -1, bestRelease = Infinity;
+            updatedEvents.forEach((ev, i) => {
+                if (ev.type !== 'Time Penalty' || ev.team !== oppTeam || !ev.isReleasable || ev.clearedFromBoard || ev.actualReleaseTime || !ev.releaseTime) return;
+                const rel = toElapsedSeconds(ev.releaseTime.quarter, ev.releaseTime.time);
+                if (toElapsedSeconds(ev.quarter, ev.time) <= goalElapsed && goalElapsed <= rel && rel < bestRelease) { bestRelease = rel; targetIdx = i; }
+            });
+            if (targetIdx !== -1) updatedEvents[targetIdx] = { ...updatedEvents[targetIdx], actualReleaseTime: { quarter: modalQuarter, time: finalTimeStr }, clearedFromBoard: true };
         }
 
         setGameEvents(updatedEvents);
         if (!editingEventId) setLastAddedEventId(primaryAddedId);
 
-        if (['Log Foul', 'Time Penalty'].includes(activeAction.type) && selectedEntity !== 'Unattributed') {
+        if (['Log Foul', 'Time Penalty'].includes(activeAction.type) && selectedEntity && typeof selectedEntity === 'object' && selectedEntity.id) {
             const isFirstHalf = modalQuarter === 'Q1' || modalQuarter === 'Q2';
             const playerFouls = updatedEvents.filter(ev => ev.type === 'Log Foul' && ev.team === activeAction.team && ev.entity?.id === selectedEntity.id);
             const halfFouls = playerFouls.filter(ev => isFirstHalf ? (ev.quarter === 'Q1' || ev.quarter === 'Q2') : (ev.quarter === 'Q3' || ev.quarter === 'Q4' || ev.quarter === 'OT')).length;
@@ -417,7 +426,18 @@ export default function App() {
     });
 
     const deleteEvent = (id) => {
-        if(window.confirm("Are you sure you want to delete this event?")) setGameEvents(gameEvents.filter(ev => ev.id !== id));
+        const target = gameEvents.find(ev => ev.id === id);
+        if (!target) return;
+        if (!window.confirm("Are you sure you want to delete this event?")) return;
+        const removed = target.groupId ? gameEvents.filter(ev => ev.groupId === target.groupId) : [target];
+        const removedIds = new Set(removed.map(ev => ev.id));
+        const reverts = removed.filter(ev => ev.revertsComboOf && ev.comboPrev);
+        setGameEvents(gameEvents.filter(ev => !removedIds.has(ev.id)).map(ev => {
+            const r = reverts.find(x => x.revertsComboOf === ev.id);
+            if (!r) return ev;
+            const { isCombo: _isCombo, ...pen } = ev.penalty || {};
+            return { ...ev, isReleasable: r.comboPrev.isReleasable, releaseTime: r.comboPrev.releaseTime, penalty: { ...pen, desc: r.comboPrev.desc } };
+        }));
     };
 
     const startEditingEvent = (event) => {
@@ -456,7 +476,7 @@ export default function App() {
                 activeRosterModal={activeRosterModal} setActiveRosterModal={setActiveRosterModal} showStartersModal={showStartersModal} setShowStartersModal={setShowStartersModal}
                 newPlayer={newPlayer} setNewPlayer={setNewPlayer} newBench={newBench} setNewBench={setNewBench}
                 setCurrentView={setCurrentView} clearAllGameData={clearAllGameData}
-                onExportPDF={() => generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents)}
+                onExportPDF={() => import('./alternatePdfEngine').then(m => m.generateAlternatePDF(gameData, homeRoster, awayRoster, homeBench, awayBench, gameEvents))}
                 isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode}
             />
         );

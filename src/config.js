@@ -167,3 +167,10 @@ export const TEAMS = [
     { id: 'rpfc', name: 'RPFC', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/RPFC_logo.png' },
     { id: 'texas_lone_star_sc', name: 'Texas Lone Star SC', league: 'MASLW', division: 'South', color: '#B91C1C', colorName: 'Red', logo: '/logos/Texas_Lone_Star_SC_logo.png' }
 ];
+export const WARNING_ESCALATION = {
+    'Bench Dissent': 'Y2',
+    'Delay of Game': 'Y14',
+    'Embellishment': 'Y7',
+    'Encroachment': 'Y15',
+    'Shootout / PK': 'Y12'
+};
