@@ -1,9 +1,9 @@
 import React from 'react';
 import { PENALTY_CODES } from '../../config';
-import { readableTextOn } from '../../utils';
 
 const CARD_HEX = { Blue: '#0096FF', Yellow: '#FFCC00', Red: '#ED1C24' };
-const cardStyle = (c) => ({ backgroundColor: CARD_HEX[c], color: readableTextOn(CARD_HEX[c]) });
+// Card convention: white text on blue and red, black on yellow (labels are large and bold).
+const cardStyle = (c) => ({ backgroundColor: CARD_HEX[c], color: c === 'Yellow' ? '#000000' : '#ffffff' });
 
 const BACKDROP = "absolute inset-0 bg-black/60 flex items-center justify-center z-50 p-4";
 const PANEL = "bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90dvh] overflow-hidden";

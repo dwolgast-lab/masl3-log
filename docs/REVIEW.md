@@ -3,6 +3,23 @@
 **Reviewed:** v1.3.0-beta, October 2026
 **Target devices:** iPad Air / iPad Pro 10.9" (1180 × 820 landscape) and 12.9" (1366 × 1024 landscape). Landscape first; portrait must still work without clipping.
 
+## Outcome (October 2026)
+
+Both phases shipped on branch `ccr-e180b837-31wzr5`. Every bug from B1 to B13 is fixed, along with O1–O5, S2, offline install and the UI items U1–U12.
+
+| Check | Before | After |
+|---|---|---|
+| `npm run lint` | 4 errors, 1 warning | 0 |
+| JavaScript loaded at startup | 761 KB | 341 KB (PDF engine loads on Export) |
+| Unused files shipped | 9.4 MB | 0 |
+| Broken team logos | 2 | 0 |
+| Opens with no connection | No | Yes, after one online visit |
+| Screens checked at 1180×820, 1366×1024, 820×1180, light and dark | none | 8 screens, 48 shots, no page errors or horizontal scroll |
+
+A browser run drove the real UI through the B1 and B2 scenarios: a power-play goal releases only the live penalty, and Undo on a Y6 removes both linked events. Both passed. Timer drift (B6) and the wake lock were checked by code review only, because they need a real iPad going to sleep. Lineup scanning on Opus 5.5 needs one run of `scripts/scanLocal.mjs` with your API key.
+
+Still open: S1, B14 and U13, plus the backup button and the test suite listed at the end of section 6.
+
 ## Summary
 
 The app works and the game logic is careful. Penalty math, combo cards and Y6 serving all show real thought about the rulebook. The problems cluster in three places. A handful of logic bugs corrupt the record in edge cases that a 4th Official will hit during a real match. The interface was built on a desktop browser, so many controls are too small for a finger, the quarter indicator disappears on the 10.9" iPad, and dark mode only covers half the app. Finally, the app has no offline support, which is a real risk in arenas with weak Wi-Fi.
