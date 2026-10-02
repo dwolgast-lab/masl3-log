@@ -13,8 +13,8 @@ export default function EventLog({
             return (
                 <div>
                     <div className="font-bold">{ev.type} {code}</div>
-                    <div className="text-sm text-gray-700 mt-1">{ev.penalty?.desc}</div>
-                    <div className="text-xs text-gray-500 font-bold mt-2">
+                    <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">{ev.penalty?.desc}</div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-bold mt-2">
                         Exp: {outTimeObj ? `${outTimeObj.quarter} ${outTimeObj.time}` : '---'}
                     </div>
                 </div>
@@ -33,9 +33,9 @@ export default function EventLog({
             
             return (
                 <div>
-                    <div className="font-bold text-green-700">{ev.type}{flagStr}</div>
+                    <div className="font-bold text-green-700 dark:text-green-400">{ev.type}{flagStr}</div>
                     {!isPKorSO && hasAssist && <div className="text-sm mt-1">Assist: {assistName}</div>}
-                    {!isPKorSO && !hasAssist && <div className="text-sm text-gray-500 italic mt-1">--unassisted--</div>}
+                    {!isPKorSO && !hasAssist && <div className="text-sm text-slate-500 dark:text-slate-400 italic mt-1">--unassisted--</div>}
                 </div>
             );
         }
@@ -58,20 +58,20 @@ export default function EventLog({
             return (
                 <div>
                     <div className="font-bold">Foul Count (half): {halfCount}</div>
-                    <div className="text-sm text-gray-700 mt-1">Foul Count (game): {gameCount}</div>
+                    <div className="text-sm text-slate-700 dark:text-slate-300 mt-1">Foul Count (game): {gameCount}</div>
                 </div>
             );
         }
-        if (ev.type === 'Team Warnings') return <div><div className="font-bold text-orange-600">Warning</div><div className="text-sm">{ev.warningReason}</div></div>;
+        if (ev.type === 'Team Warnings') return <div><div className="font-bold text-orange-600 dark:text-orange-400">Warning</div><div className="text-sm">{ev.warningReason}</div></div>;
         if (ev.type === 'Team Timeout' || ev.type === 'Media Timeout') {
             return (
                 <div>
                     <div className="font-bold">{ev.type}</div>
-                    <div className={`text-sm font-bold mt-1 ${isSystemContext ? 'text-white/80' : 'text-gray-500'}`}>@ {ev.time}</div>
+                    <div className={`text-sm font-bold mt-1 ${isSystemContext ? 'text-white/80' : 'text-slate-500 dark:text-slate-400'}`}>@ {ev.time}</div>
                 </div>
             );
         }
-        if (ev.type === 'Injury') return <div><div className="font-bold text-red-600">Injury Time-Out</div><div className="text-xs text-gray-500 font-bold mt-1">Return: {ev.eligibleReturnTime ? `${ev.eligibleReturnTime.quarter} ${ev.eligibleReturnTime.time}` : '---'}</div></div>;
+        if (ev.type === 'Injury') return <div><div className="font-bold text-red-600 dark:text-red-400">Injury Time-Out</div><div className="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">Return: {ev.eligibleReturnTime ? `${ev.eligibleReturnTime.quarter} ${ev.eligibleReturnTime.time}` : '---'}</div></div>;
         if (ev.type === 'Period Marker') {
             return (
                 <div className="font-black text-white text-lg">
@@ -84,12 +84,12 @@ export default function EventLog({
             const isOverturned = ev.result === 'Overturned/Changed';
             return (
                 <div>
-                    <div className="font-bold text-purple-700">Reason: <span className="font-normal text-gray-800">{ev.reason}</span></div>
-                    {ev.subReason && <div className="text-sm font-bold text-gray-700 mt-1">Spec: <span className="font-normal text-gray-600">{ev.subReason}</span></div>}
-                    <div className={`text-sm font-black mt-2 uppercase tracking-wide ${isOverturned ? 'text-green-600' : 'text-red-600'}`}>
+                    <div className="font-bold text-purple-700 dark:text-purple-300">Reason: <span className="font-normal text-slate-800 dark:text-slate-100">{ev.reason}</span></div>
+                    {ev.subReason && <div className="text-sm font-bold text-slate-700 dark:text-slate-300 mt-1">Spec: <span className="font-normal text-slate-600 dark:text-slate-400">{ev.subReason}</span></div>}
+                    <div className={`text-sm font-black mt-2 uppercase tracking-wide ${isOverturned ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                         {ev.result}
                     </div>
-                    {ev.flagCollected && <div className="text-xs font-bold text-gray-400 mt-1">Flag Collected</div>}
+                    {ev.flagCollected && <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1">Flag Collected</div>}
                 </div>
             );
         }
@@ -106,30 +106,30 @@ export default function EventLog({
 
     return (
         <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
-            <div className="bg-gray-100 rounded-2xl shadow-2xl w-full max-w-5xl h-full max-h-[90vh] flex flex-col overflow-hidden relative">
+            <div className="bg-slate-100 dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl h-full max-h-[90dvh] flex flex-col overflow-hidden relative">
                 
                 {/* Header */}
-                <div className="bg-slate-800 p-4 text-white flex justify-between items-center shrink-0 shadow-md z-10">
+                <div className="bg-slate-800 dark:bg-slate-950 p-4 text-white flex justify-between items-center shrink-0 shadow-md z-10">
                     <h2 className="text-2xl font-black uppercase tracking-wider">Match Timeline</h2>
-                    <button onClick={() => setModalStep(null)} className="font-bold bg-slate-900 text-white px-5 py-2 rounded-lg hover:bg-slate-700 shadow transition">
+                    <button onClick={() => setModalStep(null)} className="min-h-11 font-bold bg-slate-900 dark:bg-slate-700 text-white px-5 py-2 rounded-lg hover:bg-slate-700 shadow transition active:scale-[0.97] active:brightness-95">
                         Close Log
                     </button>
                 </div>
 
                 {/* Legend & Column Headers */}
-                <div className="flex bg-white border-b shadow-sm z-10 shrink-0 px-8 py-3">
-                    <div className="flex-1 text-left font-black text-lg uppercase" style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</div>
-                    <div className="w-24 text-center font-bold text-gray-400 text-xs uppercase tracking-widest pt-1">Time</div>
-                    <div className="flex-1 text-right font-black text-lg uppercase" style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME'}</div>
+                <div className="flex bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm z-10 shrink-0 px-4 md:px-8 py-3">
+                    <div className="flex-1 min-w-0 truncate text-left font-black text-lg uppercase" style={{ color: awayCSSColor }}>{gameData.awayTeam || 'AWAY'}</div>
+                    <div className="w-24 text-center font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-widest pt-1">Time</div>
+                    <div className="flex-1 min-w-0 truncate text-right font-black text-lg uppercase" style={{ color: homeCSSColor }}>{gameData.homeTeam || 'HOME'}</div>
                 </div>
 
                 {/* Timeline Body */}
                 <div className="flex-1 overflow-y-auto p-4 relative pb-20">
                     {/* The Center Line */}
-                    <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-gray-300 transform -translate-x-1/2 rounded-full"></div>
+                    <div className="absolute left-1/2 top-0 bottom-0 w-1 bg-slate-300 dark:bg-slate-600 transform -translate-x-1/2 rounded-full"></div>
 
                     {gameEvents.length === 0 && (
-                        <div className="text-center text-gray-400 font-bold mt-10 text-xl relative z-10 bg-gray-100 inline-block mx-auto px-6 py-2 rounded-full border-2 border-gray-300 left-1/2 transform -translate-x-1/2">
+                        <div className="text-center text-slate-500 dark:text-slate-400 font-bold mt-10 text-xl relative z-10 bg-slate-100 dark:bg-slate-900 inline-block mx-auto px-6 py-2 rounded-full border-2 border-slate-300 dark:border-slate-600 left-1/2 transform -translate-x-1/2">
                             No Events Logged
                         </div>
                     )}
@@ -141,16 +141,16 @@ export default function EventLog({
                             const isSystem = ev.team === 'SYSTEM';
 
                             const timePill = (
-                                <div className={`w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white border-4 border-gray-300 shadow-md rounded-full px-2 z-20 ${ev.type === 'Log Foul' ? 'py-2' : 'py-1'}`}>
-                                    <span className={`font-black text-gray-500 uppercase ${ev.type === 'Log Foul' ? 'text-sm' : 'text-xs'}`}>{ev.quarter}</span>
+                                <div className={`w-20 md:w-28 shrink-0 flex flex-col items-center justify-center bg-white dark:bg-slate-800 border-4 border-slate-300 dark:border-slate-600 shadow-md rounded-full px-2 z-20 ${ev.type === 'Log Foul' ? 'py-2' : 'py-1'}`}>
+                                    <span className={`font-black text-slate-500 dark:text-slate-400 uppercase ${ev.type === 'Log Foul' ? 'text-sm' : 'text-xs'}`}>{ev.quarter}</span>
                                     {ev.type !== 'Log Foul' && (
-                                        <span className="text-lg font-mono font-bold text-slate-800 leading-none">{ev.time || '--:--'}</span>
+                                        <span className="text-lg font-mono font-bold tabular-nums text-slate-800 dark:text-slate-100 leading-none">{ev.time || '--:--'}</span>
                                     )}
                                 </div>
                             );
 
                             const eventCard = (
-                                <div className={`flex flex-col bg-white border-t-4 rounded-xl shadow-md py-4 w-full max-w-sm relative hover:shadow-lg transition-shadow ${isAway ? 'border-l pl-4 pr-12' : 'border-r pr-4 pl-12'}`} 
+                                <div className={`flex flex-col bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 border-t-4 rounded-xl shadow-md py-4 w-full min-w-0 max-w-md relative hover:shadow-lg transition-shadow ${isAway ? 'border-l pl-4 pr-12' : 'border-r pr-4 pl-12'}`} 
                                      style={{ borderTopColor: isAway ? awayCSSColor : (isHome ? homeCSSColor : '#64748b') }}>
                                     
                                     {!isSystem && (
@@ -162,8 +162,8 @@ export default function EventLog({
                                     )}
 
                                     {!isSystem && (
-                                        <div className="flex items-center justify-start mb-2 border-b pb-2">
-                                            <span className="font-black text-lg text-gray-800 mr-2">
+                                        <div className="flex items-center justify-start mb-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                                            <span className="font-black text-lg text-slate-800 dark:text-slate-100 mr-2">
                                                 {ev.entity?.number ? `#${ev.entity.number} ` : ''} 
                                                 
                                                 {/* MODIFIED: Safely Render Headers for special events like VR without Player Entities */}
@@ -188,32 +188,38 @@ export default function EventLog({
                                         </div>
                                     )}
 
-                                    <div className="flex-1 text-gray-800">
+                                    <div className="flex-1 text-slate-800 dark:text-slate-100">
                                         {getEventDescription(ev, false)}
                                     </div>
 
-                                    <div className={`flex mt-4 space-x-2 ${isHome ? 'justify-end' : 'justify-start'}`}>
-                                        <button onClick={() => startEditingEvent(ev)} className="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-black rounded hover:bg-blue-100 transition">Edit</button>
-                                        {ev.type === 'Time Penalty' && <button onClick={() => startEditingReleaseTime(ev.id)} className="px-3 py-1 bg-yellow-50 text-yellow-600 text-xs font-black rounded hover:bg-yellow-100 transition">Edit Exp.</button>}
-                                        <button onClick={() => deleteEvent(ev.id)} className="px-3 py-1 bg-red-50 text-red-600 text-xs font-black rounded hover:bg-red-100 transition">Delete</button>
+                                    <div className="flex flex-wrap items-center gap-2 mt-4">
+                                        <button onClick={() => startEditingEvent(ev)} className="min-h-11 px-4 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 text-sm font-bold rounded hover:bg-blue-100 transition active:scale-[0.97] active:brightness-95">Edit</button>
+                                        {ev.type === 'Time Penalty' && <button onClick={() => startEditingReleaseTime(ev.id)} className="min-h-11 px-4 bg-yellow-50 text-yellow-700 dark:bg-yellow-950 dark:text-yellow-300 text-sm font-bold rounded hover:bg-yellow-100 transition active:scale-[0.97] active:brightness-95">Edit Exp.</button>}
+                                        <button onClick={() => deleteEvent(ev.id)} className="min-h-11 px-4 ml-auto bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 text-sm font-bold rounded hover:bg-red-100 transition active:scale-[0.97] active:brightness-95">Delete</button>
                                     </div>
                                 </div>
                             );
 
+                            if (isSystem && ev.type !== 'Video Review') {
+                                return (
+                                    <div key={ev.id} className="flex justify-center w-full relative">
+                                        <div className={`flex flex-col items-center justify-center text-white border-4 shadow-xl rounded-xl py-2 px-6 z-20 w-full max-w-xs text-center ${ev.type === 'Media Timeout' ? 'bg-orange-500 border-orange-600' : 'bg-slate-800 border-slate-900 dark:bg-slate-700 dark:border-slate-500'}`}>
+                                            {getEventDescription(ev, true)}
+                                            <button onClick={() => deleteEvent(ev.id)} className={`min-h-11 px-4 mt-1 text-sm underline ${ev.type === 'Media Timeout' ? 'text-orange-100 hover:text-white' : 'text-gray-300 hover:text-red-300'}`}>Delete</button>
+                                        </div>
+                                    </div>
+                                );
+                            }
+
                             return (
                                 <div key={ev.id} className="flex items-center w-full relative">
-                                    <div className="flex-1 flex justify-end pr-4 md:pr-8">
+                                    <div className="flex-1 min-w-0 flex justify-end pr-4 md:pr-8">
                                         {isAway ? eventCard : null}
                                     </div>
 
-                                    {isSystem && ev.type !== 'Video Review' ? (
-                                        <div className={`shrink-0 flex flex-col items-center justify-center text-white border-4 shadow-xl rounded-xl py-2 px-6 z-20 w-48 md:w-64 text-center mx-[-4rem] ${ev.type === 'Media Timeout' ? 'bg-orange-500 border-orange-600' : 'bg-slate-800 border-slate-900'}`}>
-                                            {getEventDescription(ev, true)}
-                                            <button onClick={() => deleteEvent(ev.id)} className={`mt-2 text-[10px] underline ${ev.type === 'Media Timeout' ? 'text-orange-200 hover:text-white' : 'text-gray-400 hover:text-red-400'}`}>Delete</button>
-                                        </div>
-                                    ) : (ev.type !== 'Video Review' ? timePill : (isSystem ? timePill : null))}
+                                    {ev.type !== 'Video Review' ? timePill : (isSystem ? timePill : null)}
 
-                                    <div className="flex-1 flex justify-start pl-4 md:pl-8">
+                                    <div className="flex-1 min-w-0 flex justify-start pl-4 md:pl-8">
                                         {isHome ? eventCard : null}
                                     </div>
                                 </div>

@@ -483,7 +483,7 @@ export default function App() {
     }
 
     return (
-        <div className={`flex flex-col h-screen font-sans relative overflow-hidden transition-colors duration-300 ${isDarkMode ? 'bg-slate-900 text-gray-100' : 'bg-gray-100 text-gray-800'}`}>
+        <div className={`flex flex-col h-dvh pt-safe font-sans relative overflow-hidden transition-colors duration-300 bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100`}>
             <TimerOverlay appTimer={appTimer} setAppTimer={setAppTimer} />
             <AlertOverlay foulAlert={foulAlert} setFoulAlert={setFoulAlert} />
 
@@ -552,7 +552,6 @@ export default function App() {
                 }}
             />
 
-            <div className="absolute bottom-2 right-2 text-xs font-bold text-gray-400 z-[1000] drop-shadow-md">Author: Dave Wolgast | v{APP_VERSION}</div>
         </div>
     );
 }
