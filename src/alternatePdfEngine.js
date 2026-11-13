@@ -359,7 +359,28 @@ export const generateAlternatePDF = async (gameData, homeRoster, awayRoster, hom
             theme: 'grid', 
             headStyles: { fillColor: [40, 40, 40] }, 
             styles: { fontSize: 9, cellPadding: 4, valign: 'middle' },
-            columnStyles: { 3: { cellWidth: 40, halign: 'center' } } 
+            columnStyles: { 3: { cellWidth: 40, halign: 'center' } }
+        });
+
+        // --- SIGNATURES ---
+        // Pinned to the bottom of the last page, like the paper form; new page if the log reaches it.
+        const sigY = pageHeight - 90;
+        if (doc.lastAutoTable.finalY + 40 > sigY) doc.addPage();
+        currentY = sigY;
+        const sigWidth = 240;
+        const signers = [
+            { x: 40, label: 'Crew Chief', name: gameData.crewChief },
+            { x: doc.internal.pageSize.getWidth() - 40 - sigWidth, label: '4th Official', name: gameData.fourthOfficial }
+        ];
+        doc.setDrawColor(40, 40, 40);
+        doc.setTextColor(20, 20, 20);
+        signers.forEach(({ x, label, name }) => {
+            doc.line(x, currentY, x + sigWidth, currentY);
+            doc.setFontSize(9);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${label} Signature`, x, currentY + 12);
+            doc.setFont('helvetica', 'normal');
+            if (name) doc.text(name, x, currentY + 24);
         });
 
         // --- GLOBAL PAGE HEADER INJECTION ---

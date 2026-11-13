@@ -4,6 +4,13 @@
 
 ## Recent Updates
 
+## [v1.4.1-beta] - 2026-11-13 - Signature Lines on the PDF Worksheet
+
+**New Features**
+* **Official Signatures:** The exported PDF worksheet now ends with signature lines for the **Crew Chief** and the **4th Official**, with each official's name (from Officiating Crew) printed under the line. They sit at the bottom of the last page, and move to a new page if the game log reaches that space.
+
+---
+
 ## [v1.4.0-beta] - 2026-11-13 - 2026-27 Season Teams, iPad & Offline
 
 **2026-27 Season**
@@ -83,13 +90,6 @@
 **Features & Fixes**
 * **Custom Color Dictionary:** Replaced the native OS color picker with a curated, visual dropdown interface. Officials can now explicitly select a generic Primary Color and a Secondary Trim color (e.g., "Pink / White") from a defined grid of colored swatches. This ensures exact, standardized nomenclature is printed on the final PDF report, eliminating formatting inconsistencies.
 * **White-UI Contrast Fix:** Implemented a UI failsafe for teams wearing primary White kits. Selecting "White" mathematically sets the background UI engine to a dark silver (`#9CA3AF`) while explicitly saving the text "White" for the report, preventing the catastrophic UI failure of drawing invisible white text on a white dashboard background.
-
----
-
-## [v1.0.0-beta] - 2026-03-18 - Beta Release & OCR Refinements
-**Features & Fixes**
-* **Manual Color Overrides:** Fixed a bug where overriding the team's Color Name string on the setup screen failed to update the visual UI theme. The `TeamConfigCard` now features a native `<input type="color">` swatch picker, allowing officials to dynamically overwrite the underlying HEX code if a team is wearing alternate white/away kits.
-* **OCR Reliability Rollback:** Analyzed live-fire edge cases where the OCR engine misidentified Starters and Goalkeepers on heavily scrambled, handwritten lineup sheets. To improve data integrity on the sideline, the auto-guessing math was removed. The OCR engine now focuses strictly on extracting Names and Jersey Numbers, defaulting all `isGK` and `isStarter` flags to `false` and requiring the 4th official to perform a fast, manual verification step.
 
 ---
 

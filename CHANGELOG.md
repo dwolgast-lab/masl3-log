@@ -2,6 +2,13 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.4.1-beta] - 2026-11-13 - Signature Lines on the PDF Worksheet
+
+**New Features**
+* **Official Signatures:** The exported PDF worksheet now ends with signature lines for the **Crew Chief** and the **4th Official**, with each official's name (from Officiating Crew) printed under the line. They sit at the bottom of the last page, and move to a new page if the game log reaches that space.
+
+---
+
 ## [v1.4.0-beta] - 2026-11-13 - 2026-27 Season Teams, iPad & Offline
 
 **2026-27 Season**
