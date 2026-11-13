@@ -88,7 +88,7 @@ export const TEAMS = [
     { id: 'baltimore_blast', name: 'Baltimore Blast', league: 'MASL', color: '#E31837', colorName: 'Red', logo: '/logos/Baltimore_Blast_logo.png' },
     { id: 'empire_strykers', name: 'Empire Strykers', league: 'MASL', color: '#F26122', colorName: 'Orange', logo: '/logos/Empire_Strykers_logo.png' },
     { id: 'kansas_city_comets', name: 'Kansas City Comets', league: 'MASL', color: '#002F65', colorName: 'Navy', logo: '/logos/Kansas_City_Comets_logo.png' },
-    { id: 'lehigh_valley_spirits', name: 'Lehigh Valley Spirits', league: 'MASL', color: '#FF5400', colorName: 'Orange', logo: '/logos/Lehigh_Valley_Spirits_logo.png' },
+    { id: 'lehigh_valley_spirits', name: 'Lehigh Valley Spirits', league: 'MASL', color: '#FF5400', colorName: 'Orange / Black', logo: '/logos/Lehigh_Valley_Spirits_logo.png' },
     { id: 'milwaukee_wave', name: 'Milwaukee Wave', league: 'MASL', color: '#000000', colorName: 'Black', logo: '/logos/Milwaukee_Wave_logo.png' },
     { id: 'san_diego_sockers', name: 'San Diego Sockers', league: 'MASL', color: '#00205B', colorName: 'Royal Blue', logo: '/logos/San_Diego_Sockers_logo.png' },
     { id: 'st_louis_ambush', name: 'St. Louis Ambush', league: 'MASL', color: '#009CA6', colorName: 'Teal', logo: '/logos/St_Louis_Ambush_logo.png' },
