@@ -98,7 +98,7 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
-    // TODO: Chicago Mustangs, Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
+    // TODO: Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
     // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
     { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
@@ -106,7 +106,7 @@ export const TEAMS = [
     { id: 'harrisburg_heat', name: 'Harrisburg Heat', league: 'MASL2', division: 'East', color: '#C8102E', colorName: 'Red', logo: '/logos/Harrisburg_Heat_logo.png' },
     { id: 'salisbury_steaks', name: 'Salisbury Steaks', league: 'MASL2', division: 'East', color: '#5C4033', colorName: 'Brown', logo: '/logos/Salisbury_Steaks_logo.png' },
     { id: 'spice_city_fc', name: 'Spice City FC', league: 'MASL2', division: 'East', color: '#E35205', colorName: 'Orange', logo: '/logos/Spice_City_FC_logo.png' },
-    { id: 'chicago_mustangs', name: 'Chicago Mustangs', league: 'MASL2', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'chicago_mustangs', name: 'Chicago Mustangs', league: 'MASL2', division: 'Midwest', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
     { id: 'iowa_demon_hawks_masl2', name: 'Iowa Demon Hawks', league: 'MASL2', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASL2_logo.png' },
     { id: 'iowa_raptors_fc', name: 'Iowa Raptors FC', league: 'MASL2', division: 'Midwest', color: '#008000', colorName: 'Green', logo: '/logos/Iowa_Raptors_MASL2_logo.png' },
     { id: 'certified_lions_fc', name: 'OKC Certified Lions FC', league: 'MASL2', division: 'Midwest', color: '#B8860B', colorName: 'Gold', logo: '/logos/Certified_Lions_FC_logo.png' },
@@ -137,10 +137,10 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    // TODO: Chicago Mustangs, Indy Nights, Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
+    // TODO: Indy Nights, Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
     // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
     // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
-    { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
     { id: 'cincinnati_sirens_fc', name: 'Cincinnati Sirens FC', league: 'MASLW', division: 'Great Lakes', color: '#002244', colorName: 'Navy', logo: '/logos/Cincinnati_Sirens_FC_logo.png' },
     { id: 'columbus_eagles_fc', name: 'Columbus Eagles FC', league: 'MASLW', division: 'Great Lakes', color: '#F2A900', colorName: 'Gold', logo: '/logos/Columbus_Eagles_FC_logo.png' },
     { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
