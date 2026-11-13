@@ -134,7 +134,7 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    // TODO: Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
+    // TODO: Space City FC has provisional colors and no logo until official assets are provided
     // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
     // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
     { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
@@ -160,7 +160,7 @@ export const TEAMS = [
     { id: 'houston_indoor_club', name: 'Houston Indoor Club', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/Houston_Indoor_Club_logo.png' },
     { id: 'rgv_barracudas_maslw', name: 'RGV Barracudas', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/RGV_Barracudas_FC_logo.png' },
     { id: 'rpfc', name: 'RPFC (Dallas)', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/RPFC_logo.png' },
-    { id: 'simply_futbol', name: 'Simply Futbol (Dallas)', league: 'MASLW', division: 'South', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'simply_futbol', name: 'Simply Futbol (Dallas)', league: 'MASLW', division: 'South', color: '#111827', colorName: 'Black / Red', logo: '/logos/Simply_Futbol_logo.png' },
     { id: 'space_city_fc', name: 'Space City FC (Houston)', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '' },
     { id: 'texas_lone_star_sc', name: 'Texas Lone Star SC (Dallas)', league: 'MASLW', division: 'South', color: '#B91C1C', colorName: 'Red', logo: '/logos/Texas_Lone_Star_SC_logo.png' }
 ];
