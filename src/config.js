@@ -143,7 +143,7 @@ export const TEAMS = [
     { id: 'fc_berlin', name: 'FC Berlin (Kitchener, ON)', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
     { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#111827', colorName: 'Black / Yellow', logo: '/logos/Indy_Nights_logo.png' },
     { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
-    { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#16A34A', colorName: 'Green / Green', logo: '/logos/Muskegon_Risers_MASLW_logo.png' },
+    { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#16A34A', colorName: 'Green / Green', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
     { id: 'youngstown_nighthawks_maslw', name: 'Youngstown Nighthawks', league: 'MASLW', division: 'Great Lakes', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASLW_logo.png' },
     { id: 'ks_astras', name: 'Astras FC', league: 'MASLW', division: 'Heartland', color: '#1A1C5C', colorName: 'Navy Blue / White', logo: '/logos/Astras_FC_logo.png' },
