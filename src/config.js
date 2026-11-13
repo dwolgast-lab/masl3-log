@@ -98,10 +98,10 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
-    // TODO: Beachtown, Chicago Mustangs, Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
+    // TODO: Chicago Mustangs, Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
     // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
-    { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#0077B6', colorName: 'Blue', logo: '' },
+    { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
     { id: 'fc_baltimore_1729', name: 'FC Baltimore 1729', league: 'MASL2', division: 'East', color: '#800000', colorName: 'Burgundy', logo: '/logos/FC_Baltimore_1729_logo.png' },
     { id: 'harrisburg_heat', name: 'Harrisburg Heat', league: 'MASL2', division: 'East', color: '#C8102E', colorName: 'Red', logo: '/logos/Harrisburg_Heat_logo.png' },
     { id: 'salisbury_steaks', name: 'Salisbury Steaks', league: 'MASL2', division: 'East', color: '#5C4033', colorName: 'Brown', logo: '/logos/Salisbury_Steaks_logo.png' },
