@@ -60,6 +60,10 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. Increment version on every commit unless told otherwise
+
+Update each change and version increment in CHANGELOG.md and maintain the most recent 10 changes in README.md. Continue in the same style that already exists for logging these changes.
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
