@@ -123,10 +123,10 @@ export const TEAMS = [
     { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', colorName: 'Blue', logo: '/logos/Cleveland_Samba_logo.png' },
     { id: 'detroit_waza_flo', name: 'Detroit Waza Flo', league: 'MASL3', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
     { id: 'fc_indiana', name: 'FC Indiana', league: 'MASL3', color: '#9CA3AF', colorName: 'White / Red', logo: '/logos/FC_Indiana_logo.png' },
-    { id: 'rockford_fc', name: 'Rockford FC', league: 'MASL3', color: '#0078F8', colorName: 'Royal Blue / Yellow', logo: '/logos/Rockford_FC_logo.png' },
     { id: 'kalamazoo_united', name: 'Kalamazoo United FC', league: 'MASL3', color: '#FBBF24', colorName: 'Yellow', logo: '/logos/Kalamazoo_United_logo.png' },
     { id: 'muskegon_risers', name: 'Muskegon Risers', league: 'MASL3', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'roc_city_boom', name: 'ROC City Boom', league: 'MASL3', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/ROC_City_Boom_logo.png' },
+    { id: 'rockford_fc', name: 'Rockford FC', league: 'MASL3', color: '#0078F8', colorName: 'Royal Blue / Yellow', logo: '/logos/Rockford_FC_logo.png' },
     { id: 'summit_city_sentinels', name: 'Summit City Sentinels', league: 'MASL3', color: '#3C0070', colorName: 'Purple / Black', logo: '/logos/Summit_City_Sentinels_logo.png' },
     { id: 'syracuse_knights', name: 'Syracuse Knights', league: 'MASL3', color: '#0040AC', colorName: 'Royal Blue / Black', logo: '/logos/Syracuse_Knights_logo.png' },
     { id: 'youngstown_nighthawks_masl3', name: 'Youngstown Nighthawks', league: 'MASL3', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASL3_logo.png' },
@@ -134,7 +134,6 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    // TODO: Space City FC has provisional colors and no logo until official assets are provided
     // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
     // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
     { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
@@ -161,7 +160,7 @@ export const TEAMS = [
     { id: 'rgv_barracudas_maslw', name: 'RGV Barracudas', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/RGV_Barracudas_FC_logo.png' },
     { id: 'rpfc', name: 'RPFC (Dallas)', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/RPFC_logo.png' },
     { id: 'simply_futbol', name: 'Simply Futbol (Dallas)', league: 'MASLW', division: 'South', color: '#111827', colorName: 'Black / Red', logo: '/logos/Simply_Futbol_logo.png' },
-    { id: 'space_city_fc', name: 'Space City FC (Houston)', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '' },
+    { id: 'space_city_fc', name: 'Space City FC (Houston)', league: 'MASLW', division: 'South', color: '#9CA3AF', colorName: 'White / Purple', logo: '/logos/Space_City_FC_logo.png' },
     { id: 'texas_lone_star_sc', name: 'Texas Lone Star SC (Dallas)', league: 'MASLW', division: 'South', color: '#B91C1C', colorName: 'Red', logo: '/logos/Texas_Lone_Star_SC_logo.png' }
 ];
 export const WARNING_ESCALATION = {
