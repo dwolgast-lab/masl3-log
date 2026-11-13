@@ -134,7 +134,7 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    // TODO: Indy Nights, Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
+    // TODO: Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
     // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
     // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
     { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
@@ -143,7 +143,7 @@ export const TEAMS = [
     { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
     { id: 'detroit_waza_flo_maslw', name: 'Detroit Waza Flo', league: 'MASLW', division: 'Great Lakes', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
     { id: 'fc_berlin', name: 'FC Berlin (Kitchener, ON)', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
-    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '' },
+    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#111827', colorName: 'Black / Yellow', logo: '/logos/Indy_Nights_logo.png' },
     { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
     { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
