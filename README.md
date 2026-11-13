@@ -4,6 +4,21 @@
 
 ## Recent Updates
 
+## [v1.4.0-beta] - 2026-11-13 - 2026-27 Season Teams, iPad & Offline
+
+**2026-27 Season**
+* **Realignment & New Teams:** Team lists updated for 2026-27. MASL and MASL3 are single-division; MASL2 is East / Midwest / West; MASLW is Great Lakes / Heartland / South. 17 new team entries (Chicago Mustangs in both MASL2 and MASLW) with logos and colors, three renames, new logos for Salisbury Steaks and Astras FC, and departed teams removed from the picker.
+
+**New Features**
+* **Offline & Home Screen Install:** Install to the iPad Home Screen and the app runs with no connection once opened online. The screen stays awake while a period or timer runs.
+* **Automatic PPG Release** when a goal is logged with PP on, and the **Video Review outcome** is now recorded.
+
+**Improvements & Fixes**
+* iPad interface pass (44px touch targets, full dark mode, numeric jersey keypad); overtime time entry capped at 10:00; scanner on Claude Opus 5.5.
+* Undo/Delete removes linked Y6 and blue-card-extension entries; second Shootout/PK warning escalates to Y12; timers survive iPad sleep; a corrupted save no longer blanks the app.
+
+---
+
 ## [v1.3.0-beta] - 2026-06-23 - Head Coach From the Signature Line
 
 **New Features**

@@ -2,6 +2,40 @@
 
 All notable changes to the MASL 3 4th Official Log App will be documented in this file.
 
+## [v1.4.0-beta] - 2026-11-13 - 2026-27 Season Teams, iPad & Offline
+
+**2026-27 Season**
+* **Division Realignment:** Team lists updated for the 2026-27 season. **MASL** and **MASL3** are now single-division leagues. **MASL2** is East / Midwest / West, and **MASLW** is Great Lakes / Heartland / South.
+* **New Teams:** MASL: Lehigh Valley Spirits. MASL2: Beachtown FC, Chicago Mustangs, Chihuahua Savage, Gricks TJ (Tijuana, MX), Valley Kings FC. MASL3: FC Indiana, Rockford FC, Summit City Sentinels, Syracuse Knights. MASLW: Chicago Mustangs, Detroit Waza Flo, Indy Nights, Muskegon Risers, RGV Barracudas, Simply Futbol (Dallas), Space City FC (Houston). Each has its logo plus a primary color and secondary trim.
+* **Renames:** Certified Lions FC is now OKC Certified Lions FC (MASL2), Kalamazoo United is now Kalamazoo United FC (MASL3), and KS Astras is now Astras FC (MASLW). Several MASLW names now carry the city shown on the league site, for example "512 FC (Austin)".
+* **Updated Logos:** New logos and colors for Salisbury Steaks and Astras FC.
+* **Departed Teams:** Teams no longer in a league are removed from the team picker. Their logo files are kept in `public/logos/`.
+
+**New Features**
+* **Works Offline / Install to Home Screen:** The app can be installed to the iPad Home Screen and, once opened with a connection, loads and runs with no connection. Installing also keeps Safari from clearing the saved match. Lineup scanning and bug reports still need a connection.
+* **Screen Stays Awake:** The screen no longer dims or locks while a period or break timer is running.
+* **Automatic Power-Play Release:** Logging a goal with the PP switch on now releases the opposing team's penalty that was running at the goal time.
+* **Video Review Outcome:** The review wizard now records the outcome.
+
+**Improvements**
+* **iPad Interface Pass:** Pregame setup, roster editor, in-game dashboard, event log and overlays reworked for iPad: 44px touch targets, numeric keypad for jersey numbers, full dark mode, readable text on team-color buttons, and layouts that fit portrait and short landscape screens. The event-entry modals are partly done.
+* **Time Entry Limits:** Overtime time entry is capped at 10:00 (regular quarters at 15:00), and the out-of-range alerts name the period length.
+* **Lineup Scanner:** Now runs on Claude Opus 5.5.
+
+**Fixes**
+* PP goals only release a penalty whose window contains the goal time.
+* Undo and Delete now also remove linked entries (the Y6 teammate entry, and a yellow card that extended a blue card) and restore the original blue card.
+* A second "Shootout / PK" warning now escalates to Y12.
+* Team / Bench penalties no longer trigger a per-player ejection alert.
+* Timers keep correct time after the iPad sleeps.
+* A corrupted saved match no longer blanks the app.
+* Fixed two broken team logo paths.
+
+**Internal**
+* The PDF engine loads on demand (main bundle 761 KB → 325 KB). The offline cache is renamed so installed copies pick up replaced logos.
+
+---
+
 ## [v1.3.0-beta] - 2026-06-23 - Head Coach From the Signature Line
 
 **New Features**

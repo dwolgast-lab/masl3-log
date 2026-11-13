@@ -3,7 +3,7 @@
 // Hashed /assets/* never change under the same name, so cache-first is safe;
 // navigations are network-first so a new deploy (new index.html) is picked up
 // whenever the device is online.
-const CACHE = 'masl-log-v1'
+const CACHE = 'masl-log-v2'
 const PRECACHE = [
   '/',
   '/index.html',

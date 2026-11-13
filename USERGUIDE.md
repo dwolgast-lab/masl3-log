@@ -1,5 +1,5 @@
 # MASL 4th Official Log App: User Guide
-**Version 1.3.0-beta+**
+**Version 1.4.0-beta+**
 
 Welcome to the digital MASL 4th Official Log App. This platform is designed to replace the traditional paper worksheet, automating penalty math, foul accumulation, and timeline tracking so Assistant Referees and 4th Officials can keep their eyes on the game.
 
@@ -27,7 +27,17 @@ When you first load the app, you will land on the **Pregame Setup** screen. This
 
 *Note: The app features an Auto-Save function. If you accidentally close your browser or refresh the page, your data will remain safely stored on your device.*
 
-`[Insert Screenshot: The main Pregame Setup screen showing Match Info and Team panels]`
+### Installing on Your iPad (Recommended)
+Arena Wi-Fi is unreliable, so install the app to your Home Screen before your first match:
+1. Open the app in **Safari** while you have a connection.
+2. Tap the **Share** button, then **Add to Home Screen**.
+3. From then on, launch the app from its Home Screen icon.
+
+Once installed and opened at least once with a connection, the app loads and runs with **no connection at all**. Installing also protects your saved match: Safari may clear stored data for websites you haven't visited in a while, but not for apps on your Home Screen. (Lineup scanning and bug reports still need a connection.)
+
+While a period or a break timer is running, the app keeps your screen from dimming or locking.
+
+![The Pregame Setup screen, showing Match Info and both Team panels](docs/screenshots/01-pregame-setup.png)
 
 ### Match Information & Crew
 1. **Select League:** Choose the appropriate league (MASL, MASL2, MASL3, MASLW). *Note: Choosing MASL activates specific features like the 15-minute halftime and Video Review.*
@@ -43,7 +53,7 @@ Use the Team Configuration cards to set up the Home and Away teams.
 
 > **💡 PRO TIP:** While the app is fully touch-compatible for tablets like the iPad, **using a physical keyboard (like an iPad Magic Keyboard or a Bluetooth keyboard) for entering and editing team rosters is highly recommended, but not strictly necessary.** It will make pregame data entry significantly faster.
 
-`[Insert Screenshot: The Roster Editor Modal]`
+![The Roster Editor](docs/screenshots/02-roster-editor.png)
 
 * **Adding Players Manually:** Enter the player's number and name (formatted "Last Name, First Name"), tick the **GK**, **Start**, or **Capt** boxes as needed, and press **+ Add**. Manually added players start as non-starting field players, so set those flags yourself.
 * **Scanning a Lineup Sheet:** Instead of typing each player, you can photograph the team's paper lineup sheet and let the app fill the roster in for you — see *Scanning a Lineup Sheet* below.
@@ -62,9 +72,9 @@ Most teams hand you a paper lineup sheet before the match. Instead of typing eve
 
 **What scanning fills in for you:** unlike manual entry, a scanned import carries over what the form actually shows — goalkeepers (from the Position column), the starters-vs-substitutes split (from which block a player is in), names reformatted to "Last, First", and bench-staff roles. The head coach is taken from the Bench Staff section, or — if a coach only signed the bottom of the sheet without listing themselves there — from that signature line.
 
-`[Insert Screenshot: The "📷 Scan Lineup Sheet" button in the Roster Editor top bar]`
-`[Insert Screenshot: The "Reading lineup sheet with Claude AI..." spinner]`
-`[Insert Screenshot: The VERIFY SCANNED ROSTER screen]`
+![The Scan Lineup Sheet button in the Roster Editor top bar](docs/screenshots/03-scan-button.png)
+![The "Reading lineup sheet with Claude AI..." spinner](docs/screenshots/04-scan-spinner.png)
+![The Verify Scanned Roster screen, with GK and Starter tags](docs/screenshots/05-verify-scanned-roster.png)
 
 > **⚠️ Always verify a scan.** The scanner is very good at putting data in the *right fields*, but it is **not** a perfect transcriber — especially with messy handwriting. Expect a few minor corrections after importing (a misspelled name, a wrong jersey digit, a GK/Starter flag). On each player row, tap the **GK / STARTER / © CAPT** buttons to fix flags, or **Edit** to change a number or name. Always confirm the imported roster against the paper sheet before kickoff.
 
@@ -74,7 +84,7 @@ Most teams hand you a paper lineup sheet before the match. Instead of typing eve
 
 Once setup is complete, click **PROCEED TO KICKOFF ➔** to enter the live game view.
 
-`[Insert Screenshot: The main In-Game Dashboard layout in either light or dark mode]`
+![The In-Game Dashboard](docs/screenshots/06-in-game-dashboard.png)
 
 ### Dashboard Layout
 * **The Header:** Displays the current score, team logos, and the active quarter.
@@ -92,12 +102,13 @@ To start the match clock, click the green **▶ START Q1** button in the bottom 
 
 To log an event, tap the corresponding button under the offending/scoring team's name.
 
-`[Insert Screenshot: The Time Keypad Modal]`
+![The Time Keypad](docs/screenshots/07-time-keypad.png)
 
 ### The Time Keypad
 Almost all events begin by asking for the game clock time. 
 * Enter the time exactly as it appears on the scoreboard (e.g., for 12:45, type `1 2 4 5`).
 * If you make a mistake, use **DEL** or **CLEAR**.
+* Times must fall within the period: 15:00 to 00:00 in a regular quarter, or 10:00 to 00:00 in overtime. The app will alert you if a time is out of range.
 * Press **NEXT ➔** to proceed.
 
 ### Logging a Goal
@@ -125,13 +136,17 @@ The app automates all penalty math, including release times and power play relea
 4. Select the offending player.
 5. If the penalty requires a substitute server (e.g., a Goalkeeper penalty or a Bench penalty), the app will automatically prompt you to select the player serving the time.
 
-`[Insert Screenshot: The Active Penalties Widget showing a blue card counting down]`
+![The Active Penalties widget, showing a blue card counting down](docs/screenshots/08-active-penalties.png)
 
 ### Releasing a Penalty Early (PPG)
 If the opposing team scores a Power Play Goal, the penalized player may be eligible for early release.
-1. Look at the **Active Penalties** board at the bottom of the screen.
-2. Locate the releasable penalty and tap the **PPG Scored** button next to it.
-3. The app will verify if a valid Power Play goal was logged during the penalty window. If it finds one, it will automatically release the player and remove them from the active board.
+
+**Automatic release:** When you log the goal with the **PP** switch turned on, the app releases the penalized player automatically. It finds the opposing team's releasable penalty that was running when the goal was scored (if more than one qualifies, the one due to expire soonest), records the goal time as the release time, and removes it from the **Active Penalties** board. There is nothing else to tap.
+
+**Manual release (fallback):** If the goal was logged *without* the PP switch, the penalty stays on the board. In that case:
+1. Locate the penalty on the **Active Penalties** board and tap **PPG Scored**.
+2. If the app finds a Power Play goal logged during the penalty window, it releases the player at that goal's time.
+3. If it does not find one, the time keypad opens. Enter the clock time of the goal to release the player.
 
 ### Major Penalty (Y6) Release
 A Y6 (Major Penalty) creates two entries on the Active Penalties board:
@@ -165,13 +180,14 @@ Tap the orange **MEDIA TIMEOUT** button in the footer. Enter the time. The app w
 
 If you need to review the game, edit a mistake, or audit a foul count, tap the **Log (X)** button in the top right corner.
 
-`[Insert Screenshot: The Event Log Timeline view]`
+![The Event Log timeline view](docs/screenshots/09-event-log.png)
 
 This opens the Match Timeline. Events are displayed in reverse-chronological order (newest at the top), split cleanly between the Away team (left) and Home team (right).
 * **Live Foul Counts:** Under every logged foul, you will see the player's exact Foul Count for the half and the game at that specific moment in time.
 * **Editing:** Tap **Edit** on any event to change the player, time, or penalty code.
 * **Edit Exp:** For time penalties, you can manually override the calculated Expiration/Release time if necessary.
 * **Undo/Delete:** Tap **Delete** to permanently remove an errant entry.
+* **Linked Entries:** Some penalties create more than one entry. A Y6 adds a teammate's serving entry, and a yellow card on a player already serving a blue card extends the blue card. Deleting the penalty (or tapping **Undo** in the footer right after logging it) removes the linked entries too and restores the original blue card, so you don't need to clean them up one by one.
 
 ---
 
@@ -195,10 +211,10 @@ Once you have saved your PDF and are ready to prepare for your next assignment, 
 
 If you encounter an issue during a match, or if you have a feature request to make the app better, you can report it directly to the developer from within the app.
 
-`[Insert Screenshot: The Bug Report Form]`
+![The Bug Report form](docs/screenshots/10-bug-report.png)
 
 1. Navigate to the **Pregame Setup** screen.
-2. In the bottom left corner of the screen, tap the **🐞 Report a Bug / Feedback** button.
+2. Scroll to the bottom of the page and tap the **🐞 Report a Bug / Feedback** button on the left.
 3. Fill out the form with a clear title, a description of the issue, and the steps to reproduce it. 
 4. **Note:** The app will automatically capture your current App Version, Device Type, and Browser Information to help the developer diagnose the issue quickly.
 5. Tap **Submit Bug Report** to send the information directly to the development team.
