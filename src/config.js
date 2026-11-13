@@ -118,7 +118,7 @@ export const TEAMS = [
     // ==========================================
     // MASL 3
     // ==========================================
-    // TODO: Summit City Sentinels, Syracuse Knights have provisional colors and no logo until official assets are provided
+    // TODO: Syracuse Knights has provisional colors and no logo until official assets are provided
     // Departed after 2025-26 (logo files kept in public/logos): Baltimore Kings, Cumberland Valley SC, Delaware City FC, Maryland Storm, Northern Virginia FC, Virginia Marauders FC, Buffalo Gunners FC, Deportivo Shaolin, OKC Certified Lions, RGV Barracudas, Springfield Demize, The Bold Dream FC, Wichita Selection
     { id: 'cincinnati_swerve', name: 'Cincinnati Swerve', league: 'MASL3', color: '#000000', colorName: 'Black', logo: '/logos/Cincinnati_Swerve_logo.png' },
     { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', colorName: 'Blue', logo: '/logos/Cleveland_Samba_logo.png' },
@@ -128,7 +128,7 @@ export const TEAMS = [
     { id: 'kalamazoo_united', name: 'Kalamazoo United FC', league: 'MASL3', color: '#FBBF24', colorName: 'Yellow', logo: '/logos/Kalamazoo_United_logo.png' },
     { id: 'muskegon_risers', name: 'Muskegon Risers', league: 'MASL3', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'roc_city_boom', name: 'ROC City Boom', league: 'MASL3', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/ROC_City_Boom_logo.png' },
-    { id: 'summit_city_sentinels', name: 'Summit City Sentinels', league: 'MASL3', color: '#4B2E83', colorName: 'Purple', logo: '' },
+    { id: 'summit_city_sentinels', name: 'Summit City Sentinels', league: 'MASL3', color: '#3C0070', colorName: 'Purple / Black', logo: '/logos/Summit_City_Sentinels_logo.png' },
     { id: 'syracuse_knights', name: 'Syracuse Knights', league: 'MASL3', color: '#1E3A8A', colorName: 'Navy', logo: '' },
     { id: 'youngstown_nighthawks_masl3', name: 'Youngstown Nighthawks', league: 'MASL3', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASL3_logo.png' },
 
