@@ -146,7 +146,7 @@ export const TEAMS = [
     { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
     { id: 'detroit_waza_flo_maslw', name: 'Detroit Waza Flo', league: 'MASLW', division: 'Great Lakes', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
     { id: 'fc_berlin', name: 'FC Berlin (Kitchener, ON)', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
-    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chihuahua_Savage_logo.png' },
+    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '' },
     { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
     { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
