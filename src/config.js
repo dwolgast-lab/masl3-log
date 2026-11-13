@@ -120,12 +120,12 @@ export const TEAMS = [
     // ==========================================
     // MASL 3
     // ==========================================
-    // TODO: FC Indiana, FC Rockford, Summit City Sentinels, Syracuse Knights have provisional colors and no logo until official assets are provided
+    // TODO: FC Rockford, Summit City Sentinels, Syracuse Knights have provisional colors and no logo until official assets are provided
     // Departed after 2025-26 (logo files kept in public/logos): Baltimore Kings, Cumberland Valley SC, Delaware City FC, Maryland Storm, Northern Virginia FC, Virginia Marauders FC, Buffalo Gunners FC, Deportivo Shaolin, OKC Certified Lions, RGV Barracudas, Springfield Demize, The Bold Dream FC, Wichita Selection
     { id: 'cincinnati_swerve', name: 'Cincinnati Swerve', league: 'MASL3', color: '#000000', colorName: 'Black', logo: '/logos/Cincinnati_Swerve_logo.png' },
     { id: 'cleveland_samba', name: 'Cleveland Samba', league: 'MASL3', color: '#1E40AF', colorName: 'Blue', logo: '/logos/Cleveland_Samba_logo.png' },
     { id: 'detroit_waza_flo', name: 'Detroit Waza Flo', league: 'MASL3', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
-    { id: 'fc_indiana', name: 'FC Indiana', league: 'MASL3', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'fc_indiana', name: 'FC Indiana', league: 'MASL3', color: '#9CA3AF', colorName: 'White / Red', logo: '/logos/FC_Indiana_logo.png' },
     { id: 'fc_rockford', name: 'FC Rockford', league: 'MASL3', color: '#4A90C2', colorName: 'Light Blue', logo: '' },
     { id: 'kalamazoo_united', name: 'Kalamazoo United FC', league: 'MASL3', color: '#FBBF24', colorName: 'Yellow', logo: '/logos/Kalamazoo_United_logo.png' },
     { id: 'muskegon_risers', name: 'Muskegon Risers', league: 'MASL3', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
