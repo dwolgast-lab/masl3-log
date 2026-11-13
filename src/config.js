@@ -99,22 +99,23 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
+    // TODO: Beachtown, Chicago Mustangs, Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
+    // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
+    // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
+    { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#0077B6', colorName: 'Blue', logo: '' },
     { id: 'fc_baltimore_1729', name: 'FC Baltimore 1729', league: 'MASL2', division: 'East', color: '#800000', colorName: 'Burgundy', logo: '/logos/FC_Baltimore_1729_logo.png' },
     { id: 'harrisburg_heat', name: 'Harrisburg Heat', league: 'MASL2', division: 'East', color: '#C8102E', colorName: 'Red', logo: '/logos/Harrisburg_Heat_logo.png' },
     { id: 'salisbury_steaks', name: 'Salisbury Steaks', league: 'MASL2', division: 'East', color: '#5C4033', colorName: 'Brown', logo: '/logos/Salisbury_Steaks_logo.png' },
     { id: 'spice_city_fc', name: 'Spice City FC', league: 'MASL2', division: 'East', color: '#E35205', colorName: 'Orange', logo: '/logos/Spice_City_FC_logo.png' },
-    { id: 'utica_elite_krajisnik_fc', name: 'Utica Elite Krajisnik FC', league: 'MASL2', division: 'East', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/Utica_Elite_Krajisnik_FC_logo.png' },
+    { id: 'chicago_mustangs', name: 'Chicago Mustangs', league: 'MASL2', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '' },
     { id: 'iowa_demon_hawks_masl2', name: 'Iowa Demon Hawks', league: 'MASL2', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASL2_logo.png' },
     { id: 'iowa_raptors_fc', name: 'Iowa Raptors FC', league: 'MASL2', division: 'Midwest', color: '#008000', colorName: 'Green', logo: '/logos/Iowa_Raptors_MASL2_logo.png' },
-    { id: 'minnesota_blizzard', name: 'Minnesota Blizzard', league: 'MASL2', division: 'Midwest', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Minnesota_Blizzard_logo.png' },
-    { id: 'omaha_kings', name: 'Omaha Kings', league: 'MASL2', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Omaha_Kings_logo.png' },
-    { id: 'wichita_wings', name: 'Wichita Wings', league: 'MASL2', division: 'Midwest', color: '#F58220', colorName: 'Orange', logo: '/logos/Wichita_Wings_logo.png' },
-    { id: 'certified_lions_fc', name: 'Certified Lions FC', league: 'MASL2', division: 'West', color: '#B8860B', colorName: 'Gold', logo: '/logos/Certified_Lions_FC_logo.png' },
+    { id: 'certified_lions_fc', name: 'OKC Certified Lions FC', league: 'MASL2', division: 'Midwest', color: '#B8860B', colorName: 'Gold', logo: '/logos/Certified_Lions_FC_logo.png' },
+    { id: 'texas_spurs', name: 'Texas Spurs', league: 'MASL2', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Texas_Spurs_logo.png' },
+    { id: 'chihuahua_savage', name: 'Chihuahua Savage', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '' },
+    { id: 'fresno', name: 'Fresno', league: 'MASL2', division: 'West', color: '#4B5563', colorName: 'Gray', logo: '' },
+    { id: 'gricks_tj', name: 'Gricks TJ (Tijuana, MX)', league: 'MASL2', division: 'West', color: '#C8102E', colorName: 'Red', logo: '' },
     { id: 'guadalajara_mariachis_fc', name: 'Guadalajara Mariachis FC', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Guadalajara_Mariachis_FC_logo.png' },
-    { id: 'mexico_city', name: 'Mexico City', league: 'MASL2', division: 'West', color: '#006847', colorName: 'Green', logo: '/logos/Mexico_City_logo.png' },
-    { id: 'soccer_central_fc', name: 'Soccer Central FC', league: 'MASL2', division: 'West', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/Soccer_Central_FC_logo.png' },
-    { id: 'soles_de_sonora', name: 'Soles De Sonora', league: 'MASL2', division: 'West', color: '#FFD100', colorName: 'Yellow', logo: '/logos/Soles_De_Sonora_logo.png' },
-    { id: 'texas_spurs', name: 'Texas Spurs', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Texas_Spurs_logo.png' },
     { id: 'turlock_cal_express', name: 'Turlock Cal Express', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Turlock_Cal_Express_logo.png' },
 
     // ==========================================
