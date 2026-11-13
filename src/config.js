@@ -98,7 +98,7 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
-    // TODO: Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
+    // TODO: Gricks TJ has provisional colors and no logo until official assets are provided
     // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
     { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
@@ -112,7 +112,7 @@ export const TEAMS = [
     { id: 'certified_lions_fc', name: 'OKC Certified Lions FC', league: 'MASL2', division: 'Midwest', color: '#B8860B', colorName: 'Gold', logo: '/logos/Certified_Lions_FC_logo.png' },
     { id: 'texas_spurs', name: 'Texas Spurs', league: 'MASL2', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Texas_Spurs_logo.png' },
     { id: 'chihuahua_savage', name: 'Chihuahua Savage', league: 'MASL2', division: 'West', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chihuahua_Savage_logo.png' },
-    { id: 'fresno', name: 'Fresno', league: 'MASL2', division: 'West', color: '#4B5563', colorName: 'Gray', logo: '' },
+    { id: 'valley_kings_fc', name: 'Valley Kings FC', league: 'MASL2', division: 'West', color: '#111827', colorName: 'Black / Yellow', logo: '/logos/Valley_Kings_FC_logo.png' },
     { id: 'gricks_tj', name: 'Gricks TJ (Tijuana, MX)', league: 'MASL2', division: 'West', color: '#C8102E', colorName: 'Red', logo: '' },
     { id: 'guadalajara_mariachis_fc', name: 'Guadalajara Mariachis FC', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Guadalajara_Mariachis_FC_logo.png' },
     { id: 'turlock_cal_express', name: 'Turlock Cal Express', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Turlock_Cal_Express_logo.png' },
