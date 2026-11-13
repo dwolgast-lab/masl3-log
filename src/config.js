@@ -134,7 +134,7 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
+    // TODO: Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
     // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
     { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
     { id: 'cincinnati_sirens_fc', name: 'Cincinnati Sirens FC', league: 'MASLW', division: 'Great Lakes', color: '#002244', colorName: 'Navy', logo: '/logos/Cincinnati_Sirens_FC_logo.png' },
@@ -147,7 +147,7 @@ export const TEAMS = [
     { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
     { id: 'youngstown_nighthawks_maslw', name: 'Youngstown Nighthawks', league: 'MASLW', division: 'Great Lakes', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASLW_logo.png' },
-    { id: 'ks_astras', name: 'Astras FC', league: 'MASLW', division: 'Heartland', color: '#002244', colorName: 'Navy', logo: '/logos/KS_Astras_logo.png' },
+    { id: 'ks_astras', name: 'Astras FC', league: 'MASLW', division: 'Heartland', color: '#1A1C5C', colorName: 'Navy Blue / White', logo: '/logos/Astras_FC_logo.png' },
     { id: 'ict_aztecs', name: 'ICT Aztecs (Wichita)', league: 'MASLW', division: 'Heartland', color: '#E31837', colorName: 'Red', logo: '/logos/ICT_Aztecs_logo.png' },
     { id: 'iowa_demon_hawks_maslw', name: 'Iowa Demon Hawks', league: 'MASLW', division: 'Heartland', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASLW_logo.png' },
     { id: 'okc_ghosts', name: 'OKC Ghosts', league: 'MASLW', division: 'Heartland', color: '#000000', colorName: 'Black', logo: '/logos/OKC_Ghosts_logo.png' },
