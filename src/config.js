@@ -99,12 +99,11 @@ export const TEAMS = [
     // MASL 2
     // ==========================================
     // TODO: Gricks TJ logo pending (colors set)
-    // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
     { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
     { id: 'fc_baltimore_1729', name: 'FC Baltimore 1729', league: 'MASL2', division: 'East', color: '#800000', colorName: 'Burgundy', logo: '/logos/FC_Baltimore_1729_logo.png' },
     { id: 'harrisburg_heat', name: 'Harrisburg Heat', league: 'MASL2', division: 'East', color: '#C8102E', colorName: 'Red', logo: '/logos/Harrisburg_Heat_logo.png' },
-    { id: 'salisbury_steaks', name: 'Salisbury Steaks', league: 'MASL2', division: 'East', color: '#5C4033', colorName: 'Brown', logo: '/logos/Salisbury_Steaks_logo.png' },
+    { id: 'salisbury_steaks', name: 'Salisbury Steaks', league: 'MASL2', division: 'East', color: '#620000', colorName: 'Maroon / Yellow', logo: '/logos/Salisbury_Steaks_logo.png' },
     { id: 'spice_city_fc', name: 'Spice City FC', league: 'MASL2', division: 'East', color: '#E35205', colorName: 'Orange', logo: '/logos/Spice_City_FC_logo.png' },
     { id: 'chicago_mustangs', name: 'Chicago Mustangs', league: 'MASL2', division: 'Midwest', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chicago_Mustangs_logo.png' },
     { id: 'iowa_demon_hawks_masl2', name: 'Iowa Demon Hawks', league: 'MASL2', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASL2_logo.png' },
