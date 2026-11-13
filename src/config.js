@@ -138,30 +138,35 @@ export const TEAMS = [
     // ==========================================
     // MASLW
     // ==========================================
-    { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes North', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
-    { id: 'fc_berlin', name: 'FC Berlin', league: 'MASLW', division: 'Great Lakes North', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
-    { id: 'indiana_united_fc', name: 'Indiana United FC', league: 'MASLW', division: 'Great Lakes North', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/Indiana_United_FC_logo.png' },
-    { id: 'youngstown_nighthawks_maslw', name: 'Youngstown Nighthawks', league: 'MASLW', division: 'Great Lakes North', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASLW_logo.png' },
-    { id: 'cincinnati_sirens_fc', name: 'Cincinnati Sirens FC', league: 'MASLW', division: 'Great Lakes South', color: '#002244', colorName: 'Navy', logo: '/logos/Cincinnati_Sirens_FC_logo.png' },
-    { id: 'columbus_eagles_fc', name: 'Columbus Eagles FC', league: 'MASLW', division: 'Great Lakes South', color: '#F2A900', colorName: 'Gold', logo: '/logos/Columbus_Eagles_FC_logo.png' },
-    { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes South', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
-    { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein', league: 'MASLW', division: 'Great Lakes South', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
-    { id: 'ict_aztecs', name: 'ICT Aztecs', league: 'MASLW', division: 'Heartland', color: '#E31837', colorName: 'Red', logo: '/logos/ICT_Aztecs_logo.png' },
+    // TODO: Chicago Mustangs, Indy Nights, Simply Futbol, Space City FC have provisional colors and no logo until official assets are provided
+    // TODO: Astras FC (formerly KS Astras) logo appears changed (magenta ring); Muskegon Risers MASLW logo may differ from MASL3 (blue tint) - confirm
+    // Departed after 2025-26 (logo files kept in public/logos): Indiana United FC, Wichita Lady Luck, Iowa Raptors, Omaha Queens, Houston Bolt
+    { id: 'chicago_mustangs_maslw', name: 'Chicago Mustangs', league: 'MASLW', division: 'Great Lakes', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'cincinnati_sirens_fc', name: 'Cincinnati Sirens FC', league: 'MASLW', division: 'Great Lakes', color: '#002244', colorName: 'Navy', logo: '/logos/Cincinnati_Sirens_FC_logo.png' },
+    { id: 'columbus_eagles_fc', name: 'Columbus Eagles FC', league: 'MASLW', division: 'Great Lakes', color: '#F2A900', colorName: 'Gold', logo: '/logos/Columbus_Eagles_FC_logo.png' },
+    { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
+    { id: 'detroit_waza_flo_maslw', name: 'Detroit Waza Flo', league: 'MASLW', division: 'Great Lakes', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
+    { id: 'fc_berlin', name: 'FC Berlin (Kitchener, ON)', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
+    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '' },
+    { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
+    { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
+    { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
+    { id: 'youngstown_nighthawks_maslw', name: 'Youngstown Nighthawks', league: 'MASLW', division: 'Great Lakes', color: '#4B5563', colorName: 'Gray', logo: '/logos/Youngstown_Nighthawks_MASLW_logo.png' },
+    { id: 'ks_astras', name: 'Astras FC', league: 'MASLW', division: 'Heartland', color: '#002244', colorName: 'Navy', logo: '/logos/KS_Astras_logo.png' },
+    { id: 'ict_aztecs', name: 'ICT Aztecs (Wichita)', league: 'MASLW', division: 'Heartland', color: '#E31837', colorName: 'Red', logo: '/logos/ICT_Aztecs_logo.png' },
+    { id: 'iowa_demon_hawks_maslw', name: 'Iowa Demon Hawks', league: 'MASLW', division: 'Heartland', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASLW_logo.png' },
     { id: 'okc_ghosts', name: 'OKC Ghosts', league: 'MASLW', division: 'Heartland', color: '#000000', colorName: 'Black', logo: '/logos/OKC_Ghosts_logo.png' },
-    { id: 'side_fc_cyclones', name: 'Side FC Cyclones', league: 'MASLW', division: 'Heartland', color: '#000000', colorName: 'Black', logo: '/logos/Side_FC_Cyclones_logo.png' },
+    { id: 'side_fc_cyclones', name: 'Side FC Cyclones (OKC)', league: 'MASLW', division: 'Heartland', color: '#000000', colorName: 'Black', logo: '/logos/Side_FC_Cyclones_logo.png' },
     { id: 'tulsa_fc_channel_cats', name: 'Tulsa FC Channel Cats', league: 'MASLW', division: 'Heartland', color: '#F58220', colorName: 'Orange', logo: '/logos/Tulsa_FC_Channel_Cats_logo.png' },
     { id: 'wichita_aero', name: 'Wichita Aero', league: 'MASLW', division: 'Heartland', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Wichita_Aero_logo.png' },
-    { id: 'wichita_lady_luck', name: 'Wichita Lady Luck', league: 'MASLW', division: 'Heartland', color: '#00873F', colorName: 'Green', logo: '/logos/Wichita_Lady_Luck_logo.png' },
-    { id: 'iowa_demon_hawks_maslw', name: 'Iowa Demon Hawks', league: 'MASLW', division: 'Midwest', color: '#C8102E', colorName: 'Red', logo: '/logos/Iowa_Demon_Hawks_MASLW_logo.png' },
-    { id: 'iowa_raptors_maslw', name: 'Iowa Raptors', league: 'MASLW', division: 'Midwest', color: '#008000', colorName: 'Green', logo: '/logos/Iowa_Raptors_MASLW_logo.png' },
-    { id: 'ks_astras', name: 'KS Astras', league: 'MASLW', division: 'Midwest', color: '#002244', colorName: 'Navy', logo: '/logos/KS_Astras_logo.png' },
-    { id: 'omaha_queens', name: 'Omaha Queens', league: 'MASLW', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Omaha_Queens_logo.png' },
-    { id: '512_fc', name: '512 FC', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/512_FC_logo.png' },
+    { id: '512_fc', name: '512 FC (Austin)', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/512_FC_logo.png' },
     { id: 'atletico_monterrey', name: 'Atletico Monterrey', league: 'MASLW', division: 'South', color: '#00205B', colorName: 'Royal Blue', logo: '/logos/Atletico_Monterrey_logo.png' },
-    { id: 'houston_bolt', name: 'Houston Bolt', league: 'MASLW', division: 'South', color: '#FFD700', colorName: 'Yellow', logo: '/logos/Houston_Bolt_logo.png' },
     { id: 'houston_indoor_club', name: 'Houston Indoor Club', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/Houston_Indoor_Club_logo.png' },
-    { id: 'rpfc', name: 'RPFC', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/RPFC_logo.png' },
-    { id: 'texas_lone_star_sc', name: 'Texas Lone Star SC', league: 'MASLW', division: 'South', color: '#B91C1C', colorName: 'Red', logo: '/logos/Texas_Lone_Star_SC_logo.png' }
+    { id: 'rgv_barracudas_maslw', name: 'RGV Barracudas', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '/logos/RGV_Barracudas_FC_logo.png' },
+    { id: 'rpfc', name: 'RPFC (Dallas)', league: 'MASLW', division: 'South', color: '#000000', colorName: 'Black', logo: '/logos/RPFC_logo.png' },
+    { id: 'simply_futbol', name: 'Simply Futbol (Dallas)', league: 'MASLW', division: 'South', color: '#C8102E', colorName: 'Red', logo: '' },
+    { id: 'space_city_fc', name: 'Space City FC (Houston)', league: 'MASLW', division: 'South', color: '#1E3A8A', colorName: 'Navy', logo: '' },
+    { id: 'texas_lone_star_sc', name: 'Texas Lone Star SC (Dallas)', league: 'MASLW', division: 'South', color: '#B91C1C', colorName: 'Red', logo: '/logos/Texas_Lone_Star_SC_logo.png' }
 ];
 export const WARNING_ESCALATION = {
     'Bench Dissent': 'Y2',
