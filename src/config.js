@@ -98,7 +98,6 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
-    // TODO: Gricks TJ logo pending (colors set)
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
     { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
     { id: 'fc_baltimore_1729', name: 'FC Baltimore 1729', league: 'MASL2', division: 'East', color: '#800000', colorName: 'Burgundy', logo: '/logos/FC_Baltimore_1729_logo.png' },
@@ -112,7 +111,7 @@ export const TEAMS = [
     { id: 'texas_spurs', name: 'Texas Spurs', league: 'MASL2', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Texas_Spurs_logo.png' },
     { id: 'chihuahua_savage', name: 'Chihuahua Savage', league: 'MASL2', division: 'West', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chihuahua_Savage_logo.png' },
     { id: 'valley_kings_fc', name: 'Valley Kings FC', league: 'MASL2', division: 'West', color: '#111827', colorName: 'Black / Yellow', logo: '/logos/Valley_Kings_FC_logo.png' },
-    { id: 'gricks_tj', name: 'Gricks TJ (Tijuana, MX)', league: 'MASL2', division: 'West', color: '#111827', colorName: 'Black / Red', logo: '' },
+    { id: 'gricks_tj', name: 'Gricks TJ (Tijuana, MX)', league: 'MASL2', division: 'West', color: '#111827', colorName: 'Black / Red', logo: '/logos/Gricks_TJ_logo.png' },
     { id: 'guadalajara_mariachis_fc', name: 'Guadalajara Mariachis FC', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Guadalajara_Mariachis_FC_logo.png' },
     { id: 'turlock_cal_express', name: 'Turlock Cal Express', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Turlock_Cal_Express_logo.png' },
 
