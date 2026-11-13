@@ -98,7 +98,7 @@ export const TEAMS = [
     // ==========================================
     // MASL 2
     // ==========================================
-    // TODO: Chihuahua Savage, Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
+    // TODO: Fresno, Gricks TJ have provisional colors and no logo until official assets are provided
     // TODO: Salisbury Steaks logo changed for 2026-27 (now brown/gold); replace Salisbury_Steaks_logo.png
     // Departed after 2025-26 (logo files kept in public/logos): Utica Elite Krajisnik FC, Minnesota Blizzard, Omaha Kings, Wichita Wings, Mexico City, Soccer Central FC, Soles De Sonora
     { id: 'beachtown_fc', name: 'Beachtown FC', league: 'MASL2', division: 'East', color: '#38BDF8', colorName: 'Sky Blue / White', logo: '/logos/Beachtown_FC_logo.png' },
@@ -111,7 +111,7 @@ export const TEAMS = [
     { id: 'iowa_raptors_fc', name: 'Iowa Raptors FC', league: 'MASL2', division: 'Midwest', color: '#008000', colorName: 'Green', logo: '/logos/Iowa_Raptors_MASL2_logo.png' },
     { id: 'certified_lions_fc', name: 'OKC Certified Lions FC', league: 'MASL2', division: 'Midwest', color: '#B8860B', colorName: 'Gold', logo: '/logos/Certified_Lions_FC_logo.png' },
     { id: 'texas_spurs', name: 'Texas Spurs', league: 'MASL2', division: 'Midwest', color: '#000000', colorName: 'Black', logo: '/logos/Texas_Spurs_logo.png' },
-    { id: 'chihuahua_savage', name: 'Chihuahua Savage', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '' },
+    { id: 'chihuahua_savage', name: 'Chihuahua Savage', league: 'MASL2', division: 'West', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chihuahua_Savage_logo.png' },
     { id: 'fresno', name: 'Fresno', league: 'MASL2', division: 'West', color: '#4B5563', colorName: 'Gray', logo: '' },
     { id: 'gricks_tj', name: 'Gricks TJ (Tijuana, MX)', league: 'MASL2', division: 'West', color: '#C8102E', colorName: 'Red', logo: '' },
     { id: 'guadalajara_mariachis_fc', name: 'Guadalajara Mariachis FC', league: 'MASL2', division: 'West', color: '#000000', colorName: 'Black', logo: '/logos/Guadalajara_Mariachis_FC_logo.png' },
@@ -146,7 +146,7 @@ export const TEAMS = [
     { id: 'detroit_city_fc', name: 'Detroit City FC', league: 'MASLW', division: 'Great Lakes', color: '#612530', colorName: 'Maroon', logo: '/logos/Detroit_City_FC_logo.png' },
     { id: 'detroit_waza_flo_maslw', name: 'Detroit Waza Flo', league: 'MASLW', division: 'Great Lakes', color: '#1D4ED8', colorName: 'Blue', logo: '/logos/Detroit_Waza_Flow_logo.png' },
     { id: 'fc_berlin', name: 'FC Berlin (Kitchener, ON)', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/FC_Berlin_logo.png' },
-    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '' },
+    { id: 'indy_nights', name: 'Indy Nights', league: 'MASLW', division: 'Great Lakes', color: '#DC2626', colorName: 'Red / Black', logo: '/logos/Chihuahua_Savage_logo.png' },
     { id: 'louisville_triumph_fc', name: 'Louisville Triumph FC', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Louisville_Triumph_FC_logo.png' },
     { id: 'muskegon_risers_maslw', name: 'Muskegon Risers', league: 'MASLW', division: 'Great Lakes', color: '#000000', colorName: 'Black', logo: '/logos/Muskegon_Risers_FC.png' },
     { id: 'susserfuss_ballverein', name: 'Süsserfuss Ballverein (Akron)', league: 'MASLW', division: 'Great Lakes', color: '#00A3E0', colorName: 'Light Blue', logo: '/logos/Susserfuss_Ballverein_logo.png' },
